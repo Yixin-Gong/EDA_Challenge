@@ -21,5 +21,5 @@ jobs:
           mkdir build && cd build && cmake ..
       - name: Run Software
         run: |
-          cd build && cmake --build . --target version_h && cmake --build . --target version_h
+          cd build && cmake --build . --target version_h && cmake --build . --target EDA_Challenge -j$(nproc)
           ls && cd build && ls && ./EDA_Challenge
