@@ -18,7 +18,7 @@ jobs:
       - name: Configure Software
         run: |
           sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get install -y cmake gcc g++ automake autoconf libtool make build-essential wget
-          mkdir build && cd build && cmake .. && make -j$(nproc)
+          mkdir build && cd build && cmake --target version_h .. && cmake --target EDA_Challenge .. && make -j$(nproc)
       - name: Run Software
         run: |
           ls && cd build && ls && ./EDA_Challenge
