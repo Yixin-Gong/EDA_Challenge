@@ -1,0 +1,21 @@
+name: Compile
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '40 15 * * *'      # compile at 23:50 each day
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - name: Configure Software
+        run: |
+          sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get install -y cmake gcc g++ automake autoconf libtool make build-essential wget
+          ls
