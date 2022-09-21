@@ -25,3 +25,13 @@ jobs:
       - name: Run Software
         run: |
           ls && cd build && ls && ./EDA_Challenge
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - name: Install gtest
+        run: |
+          wget https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
+          tar -zxvf release-1.12.1.tar.gz
