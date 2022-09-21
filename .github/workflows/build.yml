@@ -17,7 +17,10 @@ jobs:
           fetch-depth: 1
       - name: Configure Software
         run: |
-          sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get install -y cmake gcc g++ automake autoconf libtool make build-essential wget
+          sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get install -y cmake gcc g++ automake autoconf libtool make build-essential
+          sudo apt install unzip wget -y
+          wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/gtest/gtest.zip
+          unzip gtest.zip && rm gtest.zip
           mkdir build && cd build && cmake ..
       - name: Build Software
         run: |
@@ -33,6 +36,4 @@ jobs:
           fetch-depth: 1
       - name: Install gtest
         run: |
-          sudo apt install unzip -y
-          wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/gtest/gtest.zip
-          unzip gtest.zip && rm gtest.zip
+          ls
