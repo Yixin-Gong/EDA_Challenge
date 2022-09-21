@@ -33,5 +33,6 @@ jobs:
           fetch-depth: 1
       - name: Install gtest
         run: |
-          wget https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
-          tar -zxvf release-1.12.1.tar.gz
+          sudo apt install unzip -y
+          wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/gtest/gtest.zip
+          unzip gtest.zip && rm gtest.zip
