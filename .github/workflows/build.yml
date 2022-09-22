@@ -17,7 +17,8 @@ jobs:
           fetch-depth: 1
       - name: Configure Software
         run: |
-          sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get install -y cmake gcc g++ automake autoconf libtool make build-essential wget
+          sudo apt-get update && sudo apt-get -y upgrade
+          sudo apt-get install -y cmake gcc g++ automake autoconf libtool make build-essential wget libncurses5-dev
           mkdir build && cd build && cmake ..
       - name: Build Software
         run: |

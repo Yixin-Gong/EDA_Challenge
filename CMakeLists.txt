@@ -23,7 +23,7 @@ find_library(GTEST gtest ${CMAKE_SOURCE_DIR}/gtest)
 find_library(GTEST_MAIN gtest_main ${CMAKE_SOURCE_DIR}/gtest)
 
 target_link_libraries(Google_Test ${GTEST} ${GTEST_MAIN} m)
-target_link_libraries(${PROJECT_NAME} m)
+target_link_libraries(${PROJECT_NAME} m ncurses)
 add_dependencies(${PROJECT_NAME} version_h)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS "IS_NOT_RUNNING_GOOGLE_TEST")
