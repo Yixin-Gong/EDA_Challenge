@@ -8,8 +8,8 @@
 
 #ifdef IS_NOT_RUNNING_GOOGLE_TEST
 #include <iostream>
-#include "ncurses.h"
 #include "system.h"
+#include "gui.h"
 #else
 #include "gtest/gtest.h"
 #endif
@@ -22,8 +22,9 @@
 */
 int main(int argc, char **argv) {
 #ifdef IS_NOT_RUNNING_GOOGLE_TEST
+    std::cout << argc << "args: " << argv[0] << "\n";
     SystemInfo::DisplayCompileInfo();
-    std::cout << "Hello, World!" << std::endl;
+    gui_display_main_window(argc, argv);
     return 0;
 #else
     ::testing::InitGoogleTest(&argc, argv);

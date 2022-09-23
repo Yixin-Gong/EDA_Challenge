@@ -18,7 +18,7 @@ jobs:
       - name: Configure Software
         run: |
           sudo apt-get update && sudo apt-get -y upgrade
-          sudo apt-get install -y cmake gcc g++ automake autoconf libtool make build-essential wget libncurses5-dev
+          sudo apt-get install -y cmake gcc g++ automake autoconf libtool make build-essential wget libgtk-4-dev
           sudo apt install unzip wget -y
           wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/gtest/gtest.zip
           unzip gtest.zip && rm gtest.zip
