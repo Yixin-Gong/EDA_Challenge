@@ -13,7 +13,8 @@
 /*!
     \brief  Show software system compilation time and version
 */
-void SystemInfo::DisplayCompileInfo() {
+void SystemInfo::DisplayCompileInfo(const std::string &version) {
     std::cout << "Git version: " << GIT_VERSION_HASH << "\n";
-    std::cout << "Compile Time: " << __TIMESTAMP__ << "\n";
+    std::cout << "Compile time: " << __TIMESTAMP__ << "\n";
+    std::cout << "Software version: " << version << "\n";
 }

@@ -17,14 +17,18 @@ jobs:
           fetch-depth: 1
       - name: Configure Software
         run: |
-          sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get install -y cmake gcc g++ automake autoconf libtool make build-essential wget
+          sudo apt-get update && sudo apt-get -y upgrade
+          sudo apt-get install -y cmake gcc g++ automake autoconf libtool make build-essential wget libgtk-4-dev
+          sudo apt install unzip wget -y
+          wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/gtest/gtest.zip
+          unzip gtest.zip && rm gtest.zip
           mkdir build && cd build && cmake ..
       - name: Build Software
         run: |
           cd build && cmake --build . --target version_h && cmake --build . --target EDA_Challenge -j$(nproc)
       - name: Run Software
         run: |
-          ls && cd build && ls && ./EDA_Challenge
+          ls && cd build && ls && ./EDA_Challenge -v && ./EDA_Challenge -h && ./EDA_Challenge -f ../testcase/case0/test.vcd
   test:
     runs-on: ubuntu-22.04
     steps:
@@ -33,5 +37,4 @@ jobs:
           fetch-depth: 1
       - name: Install gtest
         run: |
-          wget https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
-          tar -zxvf release-1.12.1.tar.gz
+          ls
