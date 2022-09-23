@@ -28,7 +28,7 @@ jobs:
           cd build && cmake --build . --target version_h && cmake --build . --target EDA_Challenge -j$(nproc)
       - name: Run Software
         run: |
-          ls && cd build && ls && ./EDA_Challenge
+          ls && cd build && ls && ./EDA_Challenge -v && ./EDA_Challenge -h && ./EDA_Challenge -f ../testcase/case0/test.vcd
   test:
     runs-on: ubuntu-22.04
     steps:

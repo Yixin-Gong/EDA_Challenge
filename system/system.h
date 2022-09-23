@@ -9,9 +9,10 @@
 #ifndef EDA_CHALLENGE_SYSTEM_SYSTEM_H_
 #define EDA_CHALLENGE_SYSTEM_SYSTEM_H_
 
+#include <string>
 class SystemInfo {
  public:
-  static void DisplayCompileInfo();
+  static void DisplayCompileInfo(const std::string &version);
 };
 
 #endif //EDA_CHALLENGE_SYSTEM_SYSTEM_H_

@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_compile_options(-O2 -g)
 
-include_directories(system gtest/include gui)
+include_directories(system gtest/include gui .)
 file(GLOB_RECURSE SOURCES "main.cc" "system/*.cc" "gui/*.cc")
 file(GLOB_RECURSE TEST_SOURCES "testbench/*.cc")
 
