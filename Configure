@@ -1,0 +1,5 @@
+#!/bin/bash
+
+sudo apt install -y cmake gcc g++ automake autoconf libtool make build-essential wget libncurses5-dev unzip wget
+wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/gtest/gtest.zip
+unzip gtest.zip && rm gtest.zip
