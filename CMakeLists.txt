@@ -14,6 +14,7 @@ file(GLOB_RECURSE TEST_SOURCES "testbench/*.cc")
 add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/../system/version.h"
         COMMAND ${CMAKE_COMMAND} -D SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}"
         -P ${CMAKE_CURRENT_SOURCE_DIR}/gitversion.cmake
+        COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/gui && glib-compile-resources gresource.xml --target=resources.cc --generate-source
         COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/system/system.cc)
 
 find_package(PkgConfig REQUIRED)

@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 
         if (using_gui_flag) {
             std::cout << "Using gui with file: " << filepath << "\n";
-            gui_display_main_window(1, argv);
+            return gui_display_main_window(1, argv);
         } else {
             std::cout << "No gui with file: " << filepath << "\n";
         }

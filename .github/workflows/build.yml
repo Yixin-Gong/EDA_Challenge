@@ -19,13 +19,13 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get -y upgrade
           sudo apt-get install -y cmake gcc g++ automake autoconf libtool make build-essential wget libgtk-4-dev
-          sudo apt install unzip wget -y
+          sudo apt install unzip wget libxml2-utils -y
           wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/gtest/gtest.zip
           unzip gtest.zip && rm gtest.zip
           mkdir build && cd build && cmake ..
       - name: Build Software
         run: |
-          cd build && cmake --build . --target version_h && cmake --build . --target EDA_Challenge -j$(nproc)
+          cd build && cmake --build . --target version_h && cmake .. && cmake --build . --target EDA_Challenge -j$(nproc)
       - name: Run Software
         run: |
           ls && cd build && ls && ./EDA_Challenge -v && ./EDA_Challenge -h && ./EDA_Challenge -f ../testcase/case0/test.vcd

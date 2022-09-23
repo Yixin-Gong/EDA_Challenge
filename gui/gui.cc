@@ -9,23 +9,26 @@
 #include "gui.h"
 #include <gtk/gtk.h>
 
-static void gui_button_callback(GtkWidget *widget, gpointer data) {
-    g_print("Hello World\n");
+static void quit_cb(GtkWindow *window) {
+    gtk_window_close(window);
 }
 
 static void gui_app_active(GtkApplication *app, gpointer user_data) {
-    GtkWidget *window;
-    GtkWidget *button;
+    /* Construct a GtkBuilder instance and load our UI description */
+    GtkBuilder *builder = gtk_builder_new();
+    gtk_builder_add_from_resource(builder, "/ui/mainwindow.ui", nullptr);
 
-    window = gtk_application_window_new(app);
-    gtk_window_set_title(GTK_WINDOW (window), "Window");
-    gtk_window_set_default_size(GTK_WINDOW (window), 200, 200);
+    /* Connect signal handlers to the constructed widgets. */
+    GObject *window = gtk_builder_get_object(builder, "window");
+    gtk_window_set_application(GTK_WINDOW (window), app);
 
-    button = gtk_button_new_with_label("Hello World");
-    g_signal_connect (button, "clicked", G_CALLBACK(gui_button_callback), NULL);
-    gtk_window_set_child(GTK_WINDOW (window), button);
+    GObject *button = gtk_builder_get_object(builder, "button");
+    g_signal_connect_swapped (button, "clicked", G_CALLBACK(quit_cb), window);
 
-    gtk_window_present(GTK_WINDOW (window));
+    gtk_widget_show(GTK_WIDGET (window));
+
+    /* We do not need the builder anymore */
+    g_object_unref(builder);
 }
 
 int gui_display_main_window(int argc, char **argv) {
