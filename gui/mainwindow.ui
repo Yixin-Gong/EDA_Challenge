@@ -3,16 +3,73 @@
 <interface>
     <!-- interface-name mainwindow -->
     <requires lib="gtk" version="4.6"/>
-    <object id="window" class="GtkWindow">
+    <object class="GtkWindow" id="mainwindow">
+        <property name="default-height">200</property>
+        <property name="default-width">400</property>
+        <property name="title">Main Window</property>
         <child>
-            <object class="GtkCenterBox">
-                <property name="halign">baseline</property>
-                <property name="margin-bottom">120</property>
-                <property name="margin-top">120</property>
-                <child type="center">
-                    <object class="GtkButton" id="button">
-                        <property name="label">Quit Button</property>
-                        <property name="name">button</property>
+            <object class="GtkBox">
+                <property name="margin-bottom">10</property>
+                <property name="margin-top">10</property>
+                <property name="orientation">vertical</property>
+                <child>
+                    <object class="GtkBox" id="menu_box">
+                        <property name="homogeneous">True</property>
+                        <property name="margin-end">50</property>
+                        <property name="margin-start">50</property>
+                        <property name="spacing">50</property>
+                        <property name="valign">center</property>
+                        <child>
+                            <object class="GtkButton" id="openfile_btn">
+                                <property name="label">Open File</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkButton" id="parse_btn">
+                                <property name="label">Parse file</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkButton" id="quit_btn">
+                                <property name="label">Quit Application</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkFixed" id="fixed">
+                        <property name="margin-bottom">120</property>
+                        <property name="margin-top">120</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkGrid">
+                        <property name="column-homogeneous">True</property>
+                        <property name="column-spacing">30</property>
+                        <property name="margin-end">50</property>
+                        <property name="margin-start">50</property>
+                        <child>
+                            <object class="GtkProgressBar" id="progressbar">
+                                <property name="valign">center</property>
+                                <layout>
+                                    <property name="column">0</property>
+                                    <property name="column-span">2</property>
+                                    <property name="row">1</property>
+                                </layout>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkLabel" id="status_label">
+                                <property name="label">Status Label</property>
+                                <property name="valign">center</property>
+                                <layout>
+                                    <property name="column">2</property>
+                                    <property name="column-span">1</property>
+                                    <property name="row">1</property>
+                                    <property name="row-span">1</property>
+                                </layout>
+                            </object>
+                        </child>
                     </object>
                 </child>
             </object>

@@ -19,10 +19,10 @@ static void gui_app_active(GtkApplication *app, gpointer user_data) {
     gtk_builder_add_from_resource(builder, "/ui/mainwindow.ui", nullptr);
 
     /* Connect signal handlers to the constructed widgets. */
-    GObject *window = gtk_builder_get_object(builder, "window");
+    GObject *window = gtk_builder_get_object(builder, "mainwindow");
     gtk_window_set_application(GTK_WINDOW (window), app);
 
-    GObject *button = gtk_builder_get_object(builder, "button");
+    GObject *button = gtk_builder_get_object(builder, "quit_btn");
     g_signal_connect_swapped (button, "clicked", G_CALLBACK(quit_cb), window);
 
     gtk_widget_show(GTK_WIDGET (window));
