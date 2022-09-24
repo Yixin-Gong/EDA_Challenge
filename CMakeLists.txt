@@ -7,8 +7,8 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_compile_options(-O2 -g)
 
-include_directories(system gtest/include gui .)
-file(GLOB_RECURSE SOURCES "main.cc" "system/*.cc" "gui/*.cc")
+include_directories(system gtest/include gui . parser)
+file(GLOB_RECURSE SOURCES "main.cc" "system/*.cc" "gui/*.cc" "parser/*.cc")
 file(GLOB_RECURSE TEST_SOURCES "testbench/*.cc")
 
 add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/../system/version.h"
@@ -19,6 +19,9 @@ add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/../system/ve
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK4 REQUIRED gtk4)
+
+add_compile_definitions(GTK_LIBRARY_VERSION="${GTK4_VERSION}")
+add_compile_definitions(CXX_COMPILER_VERSION="${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 
 include_directories(${GTK4_INCLUDE_DIRS})
 link_directories(${GTK4_LIBRARY_DIRS})
