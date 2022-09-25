@@ -10,6 +10,7 @@
 #include <iostream>
 #include "system.h"
 #include "gui.h"
+#include "parser.h"
 #include "tclap/CmdLine.h"
 #else
 #include "gtest/gtest.h"
@@ -44,9 +45,13 @@ int main(int argc, char **argv) {
 
         if (using_gui_flag) {
             std::cout << "Using gui with file: " << filepath << "\n";
+            VCDParser *parser = new VCDParser(filepath);
+            delete parser;
             return gui_display_main_window(1, argv);
         } else {
             std::cout << "No gui with file: " << filepath << "\n";
+            VCDParser *parser = new VCDParser(filepath);
+            delete parser;
         }
     } catch (TCLAP::ArgException &e) {
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
