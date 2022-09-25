@@ -11,25 +11,24 @@
 
 #include <string>
 
+struct VCDHeaderStruct {
+  struct tm vcd_create_time;
+  unsigned int vcd_time_scale;
+  std::string vcd_time_unit;
+  std::string vcd_comment_str;
+};
+
 class VCDParser {
  public:
   explicit VCDParser(const std::string &filename) {
       parse_vcd_header_(filename);
   }
-  struct tm *get_vcd_create_time() {
-      return &vcd_create_time_;
-  }
-  int get_vcd_time_scale() {
-      return vcd_time_scale_;
-  }
-  std::string get_vcd_comment_str() {
-      return vcd_comment_str_;
+  struct VCDHeaderStruct *get_vcd_header() {
+      return &vcd_header_struct_;
   }
 
  private:
-  struct tm vcd_create_time_{};
-  unsigned int vcd_time_scale_{};
-  std::string vcd_comment_str_{};
+  struct VCDHeaderStruct vcd_header_struct_{};
   void parse_vcd_header_(const std::string &filename);
 };
 

@@ -31,25 +31,17 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
                     parse_status = 2;
                 else if (read_string.find("$comment") != std::string::npos) {
                     std::istringstream read_stream(read_string);
-                    read_stream >> vcd_comment_str_ >> vcd_comment_str_ >> vcd_comment_str_ >> vcd_comment_str_;
+                    read_stream >> vcd_header_struct_.vcd_comment_str >> vcd_header_struct_.vcd_comment_str
+                                >> vcd_header_struct_.vcd_comment_str >> vcd_header_struct_.vcd_comment_str;
                 } else if (read_string.find("$end") != std::string::npos)
                     parse_status = 0;
                 break;
-            case 1:strptime(read_string.c_str(), "\t%c", &(this->vcd_create_time_));
+            case 1:strptime(read_string.c_str(), "\t%c", &(vcd_header_struct_.vcd_create_time));
                 parse_status = 0;
                 break;
             case 2: {
-                int time_number;
-                char time_scale[2];
-                sscanf(read_string.c_str(), "\t%d%s", &time_number, time_scale);
-                if (time_scale[0] == 'n' && time_scale[1] == 's')
-                    this->vcd_time_scale_ = time_number;
-                else if (time_scale[0] == 'u' && time_scale[1] == 's')
-                    this->vcd_time_scale_ = time_number * 1000;
-                else if (time_scale[0] == 'm' && time_scale[1] == 's')
-                    this->vcd_time_scale_ = time_number * 1000000;
-                else if (time_scale[0] == 's')
-                    this->vcd_time_scale_ = time_number * 1000000000;
+                std::istringstream read_stream(read_string);
+                read_stream >> vcd_header_struct_.vcd_time_scale >> vcd_header_struct_.vcd_time_unit;
                 parse_status = 0;
             }
                 break;
@@ -60,8 +52,9 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
     file.close();
 
     char tmp_buf[64] = {0};
-    strftime(tmp_buf, sizeof(tmp_buf), "%Y-%m-%d %H:%M:%S", &(this->vcd_create_time_));
+    strftime(tmp_buf, sizeof(tmp_buf), "%Y-%m-%d %H:%M:%S", &(vcd_header_struct_.vcd_create_time));
     std::cout << "File create time: " << tmp_buf << "\n";
-    std::cout << "File time scale: " << this->vcd_time_scale_ << "ns\n";
-    std::cout << "File hash value: " << this->vcd_comment_str_ << "\n";
+    std::cout << "File time scale: " << this->vcd_header_struct_.vcd_time_scale << vcd_header_struct_.vcd_time_unit
+              << "\n";
+    std::cout << "File hash value: " << this->vcd_header_struct_.vcd_comment_str << "\n";
 }
