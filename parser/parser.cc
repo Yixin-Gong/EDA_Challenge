@@ -13,18 +13,20 @@
 
 void VCDParser::parse_vcd_header_(const std::string &filename) {
     std::ifstream file;
+    std::string read_string;
+    unsigned int parse_status = 0;
+
+    std::cout << "Open file: " << filename << "\n";
     file.open(filename, std::ios_base::in);
     if (!file.is_open()) {
         std::cout << "File open failed!\n";
         return;
     }
 
-    std::string read_string;
-    unsigned int parse_status = 0;
     while (getline(file, read_string)) {
         switch (parse_status) {
             default:
-            case 0:
+            case 0: {
                 if (read_string.find("$date") != std::string::npos)
                     parse_status = 1;
                 else if (read_string.find("$timescale") != std::string::npos)
@@ -36,9 +38,13 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
                 } else if (read_string.find("$end") != std::string::npos)
                     parse_status = 0;
                 break;
-            case 1:strptime(read_string.c_str(), "\t%c", &(vcd_header_struct_.vcd_create_time));
+            }
+            case 1: {
+                std::cout << read_string.c_str() << "\n";
+                strptime(read_string.c_str(), "\t%c", &(vcd_header_struct_.vcd_create_time));
                 parse_status = 0;
                 break;
+            }
             case 2: {
                 std::istringstream read_stream(read_string);
                 read_stream >> vcd_header_struct_.vcd_time_scale >> vcd_header_struct_.vcd_time_unit;

@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
 
         /* Define value arguments and add it to the command line */
         TCLAP::ValueArg<std::string> filename_arg("f", "file", "The vcd file to be parsed",
-                                                  true, "./test.vcd", "string");
+                                                  false, "", "string");
         TCLAP::SwitchArg using_gui_switch("g", "gui", "Whether to display the gui interface",
                                           cmd, false);
         cmd.add(filename_arg);
@@ -44,11 +44,13 @@ int main(int argc, char **argv) {
         bool using_gui_flag = using_gui_switch.getValue();
 
         if (using_gui_flag) {
-            std::cout << "Using gui with file: " << filepath << "\n";
-            VCDParser *parser = new VCDParser(filepath);
-            delete parser;
+            std::cout << "Starting software with GUI ...\n";
             return gui_display_main_window(1, argv);
         } else {
+            if (filepath.empty()) {
+                std::cout << "Please input vcd file path with -f <file path>\n";
+                return 1;
+            }
             std::cout << "No gui with file: " << filepath << "\n";
             VCDParser *parser = new VCDParser(filepath);
             delete parser;
