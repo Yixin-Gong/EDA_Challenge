@@ -58,3 +58,22 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
               << "\n";
     std::cout << "File hash value: " << this->vcd_header_struct_.vcd_comment_str << "\n";
 }
+
+long long VCDParser::find_dumpvars_line(const std::string &filename) {
+    std::ifstream file;
+    file.open(filename, std::ios_base::in);
+    long long line = 0;
+    if (!file.is_open()) {
+        std::cout << "File open failed!\n";
+        return 0;
+    }
+    std::string read_string;
+    while (getline(file, read_string)) {
+        line++;
+        if (read_string.find("$dumpvars") != std::string::npos) {
+            vcd_signal_struct_.dump_vars_line = line;
+        }
+    }
+    //std::cout << vcd_signal_struct_.dump_vars_line;
+    return vcd_signal_struct_.dump_vars_line;
+}
