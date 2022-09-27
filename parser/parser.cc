@@ -10,7 +10,6 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-
 void VCDParser::parse_vcd_header_(const std::string &filename) {
     std::ifstream file;
     file.open(filename, std::ios_base::in);
@@ -62,18 +61,34 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
 long long VCDParser::find_dumpvars_line(const std::string &filename) {
     std::ifstream file;
     file.open(filename, std::ios_base::in);
-    long long line = 0;
     if (!file.is_open()) {
         std::cout << "File open failed!\n";
-        return 0;
+        return -1;
     }
     std::string read_string;
     while (getline(file, read_string)) {
-        line++;
         if (read_string.find("$dumpvars") != std::string::npos) {
-            vcd_signal_struct_.dump_vars_line = line;
+            vcd_signal_struct_.dump_vars_line = file.tellg();
         }
     }
-    //std::cout << vcd_signal_struct_.dump_vars_line;
     return vcd_signal_struct_.dump_vars_line;
+}
+void VCDParser::read_signal(const std::string &filename) {
+    std::ifstream handle;
+    long long now_location = find_dumpvars_line(filename);
+    char buf[1024] = {0};
+    handle.open(filename, std::ios_base::in);
+
+    if (!handle.is_open()) {
+        std::cout << "open file failed" << filename << std::endl;
+    }
+    handle.seekg(now_location, std::ios_base::beg);
+    while (handle.getline(buf, sizeof(buf))) {
+        now_location = handle.tellg();
+        if (now_location == -1) {
+            break;
+        }
+        std::cout << buf << std::endl;
+    }
+    handle.close();
 }
