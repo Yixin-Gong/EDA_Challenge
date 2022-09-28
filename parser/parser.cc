@@ -40,14 +40,32 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
                 break;
             }
             case 1: {
-                std::cout << read_string.c_str() << "\n";
-                strptime(read_string.c_str(), "\t%c", &(vcd_header_struct_.vcd_create_time));
+                char week[32], month[32];
+                static const char ab_month_name[12][4] =
+                    {
+                        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                    };
+                sscanf(read_string.c_str(),
+                       "\t%s %s %d %d:%d:%d %d", week, month,
+                       &vcd_header_struct_.vcd_create_time.tm_mday,
+                       &vcd_header_struct_.vcd_create_time.tm_hour,
+                       &vcd_header_struct_.vcd_create_time.tm_min,
+                       &vcd_header_struct_.vcd_create_time.tm_sec,
+                       &vcd_header_struct_.vcd_create_time.tm_year);
+                vcd_header_struct_.vcd_create_time.tm_year = vcd_header_struct_.vcd_create_time.tm_year - 1900;
+
+                for (int i = 0; i < 12; ++i) {
+                    if (std::string(ab_month_name[i]) == std::string(month))
+                        vcd_header_struct_.vcd_create_time.tm_mon = i;
+                }
+
                 parse_status = 0;
                 break;
             }
             case 2: {
                 std::istringstream read_stream(read_string);
-                read_stream >> vcd_header_struct_.vcd_time_scale >> vcd_header_struct_.vcd_time_unit;
+                read_stream >> this->vcd_header_struct_.vcd_time_scale >> this->vcd_header_struct_.vcd_time_unit;
                 parse_status = 0;
             }
                 break;
@@ -58,7 +76,7 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
     file.close();
 
     char tmp_buf[64] = {0};
-    strftime(tmp_buf, sizeof(tmp_buf), "%Y-%m-%d %H:%M:%S", &(vcd_header_struct_.vcd_create_time));
+    strftime(tmp_buf, sizeof(tmp_buf), "%Y-%m-%d %H:%M:%S", &(this->vcd_header_struct_.vcd_create_time));
     std::cout << "File create time: " << tmp_buf << "\n";
     std::cout << "File time scale: " << this->vcd_header_struct_.vcd_time_scale << vcd_header_struct_.vcd_time_unit
               << "\n";
