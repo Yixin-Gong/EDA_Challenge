@@ -50,12 +50,14 @@ int main(int argc, char **argv) {
             return app->run(main_window);
         } else {
             if (filepath.empty()) {
-                std::cout << "Please input vcd file path with -f <file path>\n";
+                std::cout << "Please input VCD file path with -f <file path>\n";
                 return 1;
+            } else if (filepath.find(".vcd") == std::string::npos) {
+                std::cout << "Please input the VCD file with the .vcd extension\n";
+                return 2;
             }
             std::cout << "No gui with file: " << filepath << "\n";
-            VCDParser *parser = new VCDParser(filepath);
-            delete parser;
+            VCDParser parser(filepath);
         }
     } catch (TCLAP::ArgException &e) {
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;

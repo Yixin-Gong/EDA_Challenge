@@ -19,7 +19,7 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
     std::cout << "Open file: " << filename << "\n";
     file.open(filename, std::ios_base::in);
     if (!file.is_open()) {
-        std::cout << "File open failed!\n";
+        std::cout << "Cannot open file " << filename << "\n";
         return;
     }
 
