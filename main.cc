@@ -8,7 +8,6 @@
 
 #ifdef IS_NOT_RUNNING_GOOGLE_TEST
 #include <iostream>
-#include "system.h"
 #include "gui.h"
 #include "parser.h"
 #include "tclap/CmdLine.h"

@@ -14,15 +14,15 @@ MainWindow::~MainWindow() = default;
 
 MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app) {
     this->app = std::move(app);
-    ui_ = Gtk::Builder::create_from_resource("/ui_/mainwindow.ui_");
+    ui_ = Gtk::Builder::create_from_resource("/ui/mainwindow.ui");
     if (ui_) {
-        ui_->get_widget<Gtk::Box>("box_", box_);
-        status_label_ = Glib::RefPtr<Gtk::Label>::cast_dynamic(ui_->get_object("status_label_"));
-        plot_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("plot_button"));
-        open_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("open_btn_"));
-        parse_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("parse_btn_"));
-        about_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("about_btn_"));
-        quit_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("quit_btn_"));
+        ui_->get_widget<Gtk::Box>("box", box_);
+        status_label_ = Glib::RefPtr<Gtk::Label>::cast_dynamic(ui_->get_object("status_label"));
+        plot_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("plot_btn"));
+        open_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("open_btn"));
+        parse_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("parse_btn"));
+        about_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("about_btn"));
+        quit_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("quit_btn"));
         parse_btn_->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::parse_button_clicked));
         open_btn_->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::open_button_clicked));
         quit_btn_->signal_clicked().connect([this]() { this->app->quit(); });
