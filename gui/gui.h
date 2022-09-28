@@ -9,6 +9,29 @@
 #ifndef EDA_CHALLENGE_GUI_GUI_H_
 #define EDA_CHALLENGE_GUI_GUI_H_
 
-int gui_display_main_window(int argc, char **argv);
+#include <gtkmm.h>
+#include <iostream>
+
+class MainWindow : public Gtk::ApplicationWindow {
+ public:
+  explicit MainWindow(Glib::RefPtr<Gtk::Application> app);
+  ~MainWindow() override;
+
+ protected:
+  Glib::RefPtr<Gtk::Application> app;
+  void open_button_clicked();
+  void parse_button_clicked();
+
+ private:
+  Gtk::Box *box_{};
+  Glib::RefPtr<Gtk::Label> status_label_;
+  Glib::RefPtr<Gtk::Button> plot_btn_;
+  Glib::RefPtr<Gtk::Button> open_btn_;
+  Glib::RefPtr<Gtk::Button> parse_btn_;
+  Glib::RefPtr<Gtk::Button> about_btn_;
+  Glib::RefPtr<Gtk::Button> quit_btn_;
+  Glib::RefPtr<Gtk::Builder> ui_;
+  std::string vcd_file_name_;
+};
 
 #endif //EDA_CHALLENGE_GUI_GUI_H_

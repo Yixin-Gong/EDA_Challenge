@@ -7,69 +7,51 @@
  ******************************************************************************/
 
 #include "gui.h"
-#include <gtk/gtk.h>
+#include <utility>
 #include "parser.h"
 
-static GObject *quit_button, *open_button, *parse_button;
-static GObject *status_label;
-static std::string filepath;
+MainWindow::~MainWindow() = default;
 
-static void parsebtn_cb(GtkWindow *window) {
-    VCDParser *parser = new VCDParser(filepath);
-    delete parser;
-}
-
-static void on_open_response(GtkDialog *dialog, int response) {
-    if (response == GTK_RESPONSE_ACCEPT) {
-        GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
-        g_autoptr(GFile) file = gtk_file_chooser_get_file(chooser);
-        gtk_label_set_label(GTK_LABEL(status_label), g_file_get_basename(file));
-        filepath = g_file_get_parse_name(file);
+MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app) {
+    this->app = std::move(app);
+    ui_ = Gtk::Builder::create_from_resource("/ui_/mainwindow.ui_");
+    if (ui_) {
+        ui_->get_widget<Gtk::Box>("box_", box_);
+        status_label_ = Glib::RefPtr<Gtk::Label>::cast_dynamic(ui_->get_object("status_label_"));
+        plot_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("plot_button"));
+        open_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("open_btn_"));
+        parse_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("parse_btn_"));
+        about_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("about_btn_"));
+        quit_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("quit_btn_"));
+        parse_btn_->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::parse_button_clicked));
+        open_btn_->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::open_button_clicked));
+        quit_btn_->signal_clicked().connect([this]() { this->app->quit(); });
+        add(*box_);
     }
-    gtk_window_destroy(GTK_WINDOW (dialog));
+    set_title("Main Window");
+    set_default_size(600, 360);
+    show_all();
 }
 
-static void openfile_cb(GtkWindow *window) {
-    GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
-    GtkWidget *dialog = gtk_file_chooser_dialog_new("Choose File", window, action, "_Cancel",
-                                                    GTK_RESPONSE_CANCEL, "_Choose", GTK_RESPONSE_ACCEPT, NULL);
-    gtk_widget_show(dialog);
-    GtkFileFilter *filter = gtk_file_filter_new();
-    gtk_file_filter_set_name(filter, "*.vcd");
-    gtk_file_filter_add_pattern(filter, "*.vcd");
-    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filter);
-    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER (dialog), "beamdata1.BeamData");
-    g_signal_connect (dialog, "response", G_CALLBACK(on_open_response), NULL);
+void MainWindow::parse_button_clicked() {
+    VCDParser parser(vcd_file_name_);
 }
 
-static void gui_app_active(GtkApplication *app, gpointer user_data) {
-    /* Construct a GtkBuilder instance and load our UI description */
-    GtkBuilder *builder = gtk_builder_new();
-    gtk_builder_add_from_resource(builder, "/ui/mainwindow.ui", nullptr);
+void MainWindow::open_button_clicked() {
+    Gtk::FileChooserDialog dialog("Please choose a file",
+                                  Gtk::FILE_CHOOSER_ACTION_OPEN);
+    dialog.set_transient_for(*this);
+    dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+    dialog.add_button("_Open", Gtk::RESPONSE_OK);
 
-    /* Connect signal handlers to the constructed widgets. */
-    GObject *window = gtk_builder_get_object(builder, "mainwindow");
-    gtk_window_set_application(GTK_WINDOW (window), app);
+    auto filter_text = Gtk::FileFilter::create();
+    filter_text->set_name("VCD files");
+    filter_text->add_pattern("*.vcd");
+    dialog.add_filter(filter_text);
 
-    status_label = gtk_builder_get_object(builder, "status_label");
-    quit_button = gtk_builder_get_object(builder, "quit_btn");
-    g_signal_connect_swapped (quit_button, "clicked", G_CALLBACK(gtk_window_close), window);
-    open_button = gtk_builder_get_object(builder, "openfile_btn");
-    g_signal_connect_swapped (open_button, "clicked", G_CALLBACK(openfile_cb), window);
-    parse_button = gtk_builder_get_object(builder, "parse_btn");
-    g_signal_connect_swapped (parse_button, "clicked", G_CALLBACK(parsebtn_cb), window);
-
-    gtk_widget_show(GTK_WIDGET (window));
-
-    /* We do not need the builder anymore */
-    g_object_unref(builder);
-}
-
-int gui_display_main_window(int argc, char **argv) {
-    GtkApplication *app;
-    app = gtk_application_new("eda.statistic.tools", G_APPLICATION_FLAGS_NONE);
-    g_signal_connect (app, "activate", G_CALLBACK(gui_app_active), NULL);
-    int status = g_application_run(G_APPLICATION (app), argc, argv);
-    g_object_unref(app);
-    return status;
+    int result = dialog.run();
+    if (result == Gtk::RESPONSE_OK) {
+        vcd_file_name_ = dialog.get_filename();
+        status_label_->set_label(vcd_file_name_);
+    }
 }

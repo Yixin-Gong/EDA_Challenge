@@ -45,7 +45,10 @@ int main(int argc, char **argv) {
 
         if (using_gui_flag) {
             std::cout << "Starting software with GUI ...\n";
-            return gui_display_main_window(1, argv);
+            argc = 1;
+            auto app = Gtk::Application::create(argc, argv, "eda.challenge");
+            MainWindow main_window(app);
+            return app->run(main_window);
         } else {
             if (filepath.empty()) {
                 std::cout << "Please input vcd file path with -f <file path>\n";
