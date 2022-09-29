@@ -8,8 +8,7 @@
 
 #ifdef IS_NOT_RUNNING_GOOGLE_TEST
 #include <iostream>
-#include "system.h"
-#include "gui.h"
+#include "mainwindow.h"
 #include "parser.h"
 #include "tclap/CmdLine.h"
 #else
@@ -31,7 +30,7 @@ int main(int argc, char **argv) {
 
         /* Define value arguments and add it to the command line */
         TCLAP::ValueArg<std::string> filename_arg("f", "file", "The vcd file to be parsed",
-                                                  true, "./test.vcd", "string");
+                                                  false, "", "string");
         TCLAP::SwitchArg using_gui_switch("g", "gui", "Whether to display the gui interface",
                                           cmd, false);
         cmd.add(filename_arg);
@@ -44,14 +43,21 @@ int main(int argc, char **argv) {
         bool using_gui_flag = using_gui_switch.getValue();
 
         if (using_gui_flag) {
-            std::cout << "Using gui with file: " << filepath << "\n";
-            VCDParser *parser = new VCDParser(filepath);
-            delete parser;
-            return gui_display_main_window(1, argv);
+            std::cout << "Starting software with GUI ...\n";
+            argc = 1;
+            auto app = Gtk::Application::create(argc, argv, "eda.challenge");
+            MainWindow main_window(app);
+            return app->run(main_window);
         } else {
+            if (filepath.empty()) {
+                std::cout << "Please input VCD file path with -f <file path>\n";
+                return 1;
+            } else if (filepath.find(".vcd") == std::string::npos) {
+                std::cout << "Please input the VCD file with the .vcd extension\n";
+                return 2;
+            }
             std::cout << "No gui with file: " << filepath << "\n";
-            VCDParser *parser = new VCDParser(filepath);
-            delete parser;
+            VCDParser parser(filepath);
         }
     } catch (TCLAP::ArgException &e) {
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;

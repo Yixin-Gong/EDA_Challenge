@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+
 struct VCDHeaderStruct {
   struct tm vcd_create_time;
   unsigned int vcd_time_scale;
@@ -20,14 +21,13 @@ struct VCDHeaderStruct {
 
 class VCDParser {
  public:
-  explicit VCDParser(const std::string &filename) {
-      parse_vcd_header_(filename);
-      get_vcd_value_change_time(filename);
-  }
+  VCDParser();
+  explicit VCDParser(const std::string &filename);
   struct VCDHeaderStruct *get_vcd_header() {
       return &vcd_header_struct_;
   }
   static void get_vcd_value_change_time(const std::string &filename);
+  
  private:
   struct VCDHeaderStruct vcd_header_struct_{};
   void parse_vcd_header_(const std::string &filename);
