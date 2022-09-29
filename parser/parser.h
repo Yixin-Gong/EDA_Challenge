@@ -20,9 +20,8 @@ struct VCDHeaderStruct {
 
 class VCDParser {
  public:
-  explicit VCDParser(const std::string &filename) {
-      parse_vcd_header_(filename);
-  }
+  VCDParser();
+  explicit VCDParser(const std::string &filename);
   struct VCDHeaderStruct *get_vcd_header() {
       return &vcd_header_struct_;
   }

@@ -10,6 +10,18 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cstring>
+
+VCDParser::VCDParser() {
+    vcd_header_struct_.vcd_comment_str = "";
+    vcd_header_struct_.vcd_time_unit = "";
+    vcd_header_struct_.vcd_time_scale = 0;
+    memset(&vcd_header_struct_.vcd_create_time, 0x00, sizeof(struct tm));
+}
+
+VCDParser::VCDParser(const std::string &filename) {
+    parse_vcd_header_(filename);
+}
 
 void VCDParser::parse_vcd_header_(const std::string &filename) {
     std::ifstream file;
