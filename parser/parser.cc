@@ -10,6 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <map>
 #include <cstring>
 
 VCDParser::VCDParser() {
@@ -93,4 +94,38 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
     std::cout << "File time scale: " << this->vcd_header_struct_.vcd_time_scale << vcd_header_struct_.vcd_time_unit
               << "\n";
     std::cout << "File hash value: " << this->vcd_header_struct_.vcd_comment_str << "\n";
+}
+
+void VCDParser::get_vcd_value_change_time(const std::string &filename) {
+    long line = 0;
+    std::map<long, int> map;
+    std::map<long, int>::iterator it;
+    std::map<long, int>::iterator itEnd;
+    map.clear();
+    std::ifstream file;
+    file.open(filename, std::ios_base::in);
+    if (!file.is_open()) {
+        std::cout << "File open failed!\n";
+        return;
+    }
+    std::string read_string;
+    while (getline(file, read_string)) {
+        line++;
+        if (read_string.c_str()[0] == '#') {
+            int time_stamp = 0;
+            sscanf(read_string.c_str(), "#%d", &time_stamp);
+            map.insert(std::pair<long, int>(time_stamp, line));
+        }
+    }
+
+//    it = map.begin();
+//    itEnd = map.end();
+//    while (it != itEnd) {
+//        std::cout << it->first << ' ' << it->second << std::endl;
+//        it++;
+//    }
+//    it = map.find(1300);
+//    if (it == map.end())
+//        std::cout << "we do not find the time_stamp" << std::endl;
+//    else std::cout << it->second << std::endl;
 }

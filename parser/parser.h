@@ -10,6 +10,7 @@
 #define EDA_CHALLENGE_PARSER_PARSER_H_
 
 #include <string>
+#include <vector>
 
 struct VCDHeaderStruct {
   struct tm vcd_create_time;
@@ -25,7 +26,8 @@ class VCDParser {
   struct VCDHeaderStruct *get_vcd_header() {
       return &vcd_header_struct_;
   }
-
+  static void get_vcd_value_change_time(const std::string &filename);
+  
  private:
   struct VCDHeaderStruct vcd_header_struct_{};
   void parse_vcd_header_(const std::string &filename);
