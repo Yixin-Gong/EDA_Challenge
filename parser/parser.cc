@@ -10,6 +10,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <map>
+
 void VCDParser::parse_vcd_header_(const std::string &filename) {
     std::ifstream file;
     file.open(filename, std::ios_base::in);
@@ -58,37 +60,30 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
     std::cout << "File hash value: " << this->vcd_header_struct_.vcd_comment_str << "\n";
 }
 
-long long VCDParser::find_dumpvars_line(const std::string &filename) {
+void VCDParser::get_vcd_value_change_time(const std::string &filename) {
+    long line = 0;
+    std::map<long, std::string> map;
+    std::map<long, std::string>::iterator it;
+    std::map<long, std::string>::iterator itEnd;
+    map.clear();
     std::ifstream file;
     file.open(filename, std::ios_base::in);
     if (!file.is_open()) {
         std::cout << "File open failed!\n";
-        return -1;
+        return;
     }
     std::string read_string;
     while (getline(file, read_string)) {
-        if (read_string.find("$dumpvars") != std::string::npos) {
-            vcd_signal_struct_.dump_vars_line = file.tellg();
+        line++;
+        if (read_string.c_str()[0] == '#') {
+            map.insert(std::pair<long, std::string>(file.tellg(), read_string));
         }
     }
-    return vcd_signal_struct_.dump_vars_line;
-}
-void VCDParser::read_signal(const std::string &filename) {
-    std::ifstream handle;
-    long long now_location = find_dumpvars_line(filename);
-    char buf[1024] = {0};
-    handle.open(filename, std::ios_base::in);
 
-    if (!handle.is_open()) {
-        std::cout << "open file failed" << filename << std::endl;
-    }
-    handle.seekg(now_location, std::ios_base::beg);
-    while (handle.getline(buf, sizeof(buf))) {
-        now_location = handle.tellg();
-        if (now_location == -1) {
-            break;
-        }
-        std::cout << buf << std::endl;
-    }
-    handle.close();
+//    it = map.begin();
+//    itEnd = map.end();
+//    while (it != itEnd) {
+//        std::cout << it->first << ' ' << it->second << std::endl;
+//        it++;
+//    }
 }
