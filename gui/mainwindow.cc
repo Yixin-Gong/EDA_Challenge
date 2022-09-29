@@ -6,9 +6,8 @@
   \date     23. September 2022
  ******************************************************************************/
 
-#include "gui.h"
+#include "mainwindow.h"
 #include <utility>
-#include "parser.h"
 
 MainWindow::~MainWindow() = default;
 
@@ -23,6 +22,8 @@ MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app) {
         parse_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("parse_btn"));
         about_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("about_btn"));
         quit_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("quit_btn"));
+        plot_btn_->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::plot_button_clicked));
+        about_btn_->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::about_button_clicked));
         parse_btn_->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::parse_button_clicked));
         open_btn_->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::open_button_clicked));
         quit_btn_->signal_clicked().connect([this]() { this->app->quit(); });
@@ -33,8 +34,16 @@ MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app) {
     show_all();
 }
 
+void MainWindow::plot_button_clicked() {
+
+}
+
+void MainWindow::about_button_clicked() {
+
+}
+
 void MainWindow::parse_button_clicked() {
-    VCDParser parser(vcd_file_name_);
+
 }
 
 void MainWindow::open_button_clicked() {
@@ -52,6 +61,11 @@ void MainWindow::open_button_clicked() {
     int result = dialog.run();
     if (result == Gtk::RESPONSE_OK) {
         vcd_file_name_ = dialog.get_filename();
-        status_label_->set_label(vcd_file_name_);
+        std::string label_text = vcd_file_name_.substr(vcd_file_name_.find_last_of('/') + 1, vcd_file_name_.length());
+        parser_ = new VCDParser(vcd_file_name_);
+        struct VCDHeaderStruct *vcdheader = parser_->get_vcd_header();
+        label_text =
+            "File: " + label_text + "    " + std::to_string(vcdheader->vcd_time_scale) + vcdheader->vcd_time_unit;
+        status_label_->set_label(label_text);
     }
 }

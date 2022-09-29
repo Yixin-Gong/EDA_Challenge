@@ -6,11 +6,12 @@
   \date     23. September 2022
  ******************************************************************************/
 
-#ifndef EDA_CHALLENGE_GUI_GUI_H_
-#define EDA_CHALLENGE_GUI_GUI_H_
+#ifndef EDA_CHALLENGE_GUI_MAINWINDOW_H_
+#define EDA_CHALLENGE_GUI_MAINWINDOW_H_
 
 #include <gtkmm.h>
 #include <iostream>
+#include "parser.h"
 
 class MainWindow : public Gtk::ApplicationWindow {
  public:
@@ -21,6 +22,8 @@ class MainWindow : public Gtk::ApplicationWindow {
   Glib::RefPtr<Gtk::Application> app;
   void open_button_clicked();
   void parse_button_clicked();
+  void plot_button_clicked();
+  void about_button_clicked();
 
  private:
   Gtk::Box *box_{};
@@ -32,6 +35,7 @@ class MainWindow : public Gtk::ApplicationWindow {
   Glib::RefPtr<Gtk::Button> quit_btn_;
   Glib::RefPtr<Gtk::Builder> ui_;
   std::string vcd_file_name_;
+  VCDParser *parser_{};
 };
 
-#endif //EDA_CHALLENGE_GUI_GUI_H_
+#endif //EDA_CHALLENGE_GUI_MAINWINDOW_H_
