@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 struct VCDHeaderStruct {
   struct tm vcd_create_time;
@@ -27,9 +28,11 @@ class VCDParser {
       return &vcd_header_struct_;
   }
   void get_vcd_value_change_time();
+  void get_vcd_value_from_time(unsigned long long time);
 
  private:
   std::string vcd_filename_{};
+  std::map<unsigned long long, unsigned long long> signal_map_;
   struct VCDHeaderStruct vcd_header_struct_{};
   void parse_vcd_header_(const std::string &filename);
 };

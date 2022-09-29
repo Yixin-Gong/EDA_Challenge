@@ -10,7 +10,6 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <map>
 #include <cstring>
 
 VCDParser::VCDParser() {
@@ -99,10 +98,7 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
 
 void VCDParser::get_vcd_value_change_time() {
     long line = 0;
-    std::map<unsigned long long, unsigned long long> map;
-    std::map<unsigned long long, unsigned long long>::iterator it;
-    std::map<unsigned long long, unsigned long long>::iterator itEnd;
-    map.clear();
+    signal_map_.clear();
     std::ifstream file;
     file.open(vcd_filename_, std::ios_base::in);
     if (!file.is_open()) {
@@ -115,18 +111,46 @@ void VCDParser::get_vcd_value_change_time() {
         if (read_string.c_str()[0] == '#') {
             unsigned long long time_stamp = 0;
             sscanf(read_string.c_str(), "#%lld", &time_stamp);
-            map.insert(std::pair<unsigned long long, unsigned long long>(time_stamp, line));
+            signal_map_.insert(std::pair<unsigned long long, unsigned long long>(time_stamp, file.tellg()));
         }
     }
 
-    it = map.begin();
-    itEnd = map.end();
-    while (it != itEnd) {
-        std::cout << it->first << ' ' << it->second << std::endl;
-        it++;
+//    std::map<unsigned long long, unsigned long long>::iterator it;
+//    std::map<unsigned long long, unsigned long long>::iterator itEnd;
+//    it = map.begin();
+//    itEnd = map.end();
+//    while (it != itEnd) {
+//        std::cout << it->first << ' ' << it->second << std::endl;
+//        it++;
+//    }
+}
+
+void VCDParser::get_vcd_value_from_time(unsigned long long time) {
+    std::map<unsigned long long, unsigned long long>::iterator it;
+    it = signal_map_.find(time);
+    if (it == signal_map_.end())
+        std::cout << "we do not find the time_stamp" << std::endl;
+    else std::cout << "Time Stamp: " << time << "  in byte: " << it->second << std::endl;
+
+    std::ifstream file;
+    file.open(vcd_filename_, std::ios_base::in);
+    if (!file.is_open()) {
+        std::cout << "File open failed!\n";
+        return;
     }
-//    it = map.find(1300);
-//    if (it == map.end())
-//        std::cout << "we do not find the time_stamp" << std::endl;
-//    else std::cout << it->second << std::endl;
+    file.seekg(it->second);
+    std::string read_string;
+    while (getline(file, read_string)) {
+        if (read_string.c_str()[0] == '#')
+            break;
+        if (read_string.c_str()[0] == 'b') {
+            std::string signal_alias = read_string.substr(read_string.find_last_of(' ') + 1, read_string.length());
+            std::string signal_value = read_string.substr(1, read_string.find_first_of(' '));
+            std::cout << "Signal " << signal_alias << " is " << signal_value << "\n";
+        } else {
+            std::string signal_alias = (char *) (&read_string.c_str()[1]);
+            std::cout << "Signal " << signal_alias << " is " << read_string.c_str()[0] << "\n";
+        }
+        std::cout << read_string << "\n";
+    }
 }
