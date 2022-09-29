@@ -12,10 +12,11 @@
 #include <gtkmm.h>
 #include <iostream>
 #include "parser.h"
+#include "aboutwindow.h"
 
 class MainWindow : public Gtk::ApplicationWindow {
  public:
-  explicit MainWindow(Glib::RefPtr<Gtk::Application> app);
+  MainWindow(Glib::RefPtr<Gtk::Application> app, const std::string &software_version);
   ~MainWindow() override;
 
  protected:
@@ -35,7 +36,9 @@ class MainWindow : public Gtk::ApplicationWindow {
   Glib::RefPtr<Gtk::Button> quit_btn_;
   Glib::RefPtr<Gtk::Builder> ui_;
   std::string vcd_file_name_;
+  std::string software_version_;
   VCDParser *parser_{};
+  AboutWindow *about_window_{};
 };
 
 #endif //EDA_CHALLENGE_GUI_MAINWINDOW_H_

@@ -23,10 +23,11 @@
 */
 int main(int argc, char **argv) {
 #ifdef IS_NOT_RUNNING_GOOGLE_TEST
+    const std::string software_version = "1.0.1";
     try {
         TCLAP::CmdLine cmd("This software is VCD file parsing and statistics software, optimized for large files."
                            " You can visit https://github.com/ZhuYanzhen1/EDA_Challenge to get more information about this software.",
-                           ' ', "1.0.1");
+                           ' ', software_version);
 
         /* Define value arguments and add it to the command line */
         TCLAP::ValueArg<std::string> filename_arg("f", "file", "The vcd file to be parsed",
@@ -46,7 +47,7 @@ int main(int argc, char **argv) {
             std::cout << "Starting software with GUI ...\n";
             argc = 1;
             auto app = Gtk::Application::create(argc, argv, "eda.challenge");
-            MainWindow main_window(app);
+            MainWindow main_window(app, software_version);
             return app->run(main_window);
         } else {
             if (filepath.empty()) {

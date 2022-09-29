@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.38.2 -->
+<interface>
+  <requires lib="gtk+" version="3.24"/>
+  <object class="GtkBox" id="box">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="margin-left">10</property>
+    <property name="margin-right">10</property>
+    <property name="margin-top">10</property>
+    <property name="margin-bottom">10</property>
+    <property name="orientation">vertical</property>
+    <property name="spacing">6</property>
+    <child>
+      <object class="GtkLabel" id="software_version">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="xpad">10</property>
+        <property name="label" translatable="yes">Software version: 1.0.1</property>
+        <property name="xalign">0</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="git_hash_value">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="xpad">10</property>
+        <property name="label" translatable="yes">Git hash: f65fcd9ce74a4b38eb4a2c83d99c319ddcaa7056</property>
+        <property name="xalign">0</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="compile_time">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="xpad">10</property>
+        <property name="label" translatable="yes">Compile time: Thu Sep 29 20:48:49 2022</property>
+        <property name="xalign">0</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="gtk_version">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="xpad">10</property>
+        <property name="label" translatable="yes">GTK library version: 3.24.33</property>
+        <property name="xalign">0</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">3</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="gtkmm_version">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="xpad">10</property>
+        <property name="label" translatable="yes">GTKMM library version: 3.24.5</property>
+        <property name="xalign">0</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">4</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="author_label">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="xpad">10</property>
+        <property name="label" translatable="yes">Author: Yanzhen Zhu, Yixin Gong, Zijie Chou</property>
+        <property name="xalign">0</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">5</property>
+      </packing>
+    </child>
+  </object>
+</interface>

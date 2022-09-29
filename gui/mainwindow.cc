@@ -11,8 +11,9 @@
 
 MainWindow::~MainWindow() = default;
 
-MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app) {
+MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app, const std::string &software_version) {
     this->app = std::move(app);
+    this->software_version_ = software_version;
     ui_ = Gtk::Builder::create_from_resource("/ui/mainwindow.ui");
     if (ui_) {
         ui_->get_widget<Gtk::Box>("box", box_);
@@ -39,7 +40,8 @@ void MainWindow::plot_button_clicked() {
 }
 
 void MainWindow::about_button_clicked() {
-
+    about_window_ = new AboutWindow(software_version_);
+    about_window_->show();
 }
 
 void MainWindow::parse_button_clicked() {
