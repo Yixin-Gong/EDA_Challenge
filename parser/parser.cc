@@ -62,9 +62,9 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
 
 void VCDParser::get_vcd_value_change_time(const std::string &filename) {
     long line = 0;
-    std::map<long, std::string> map;
-    std::map<long, std::string>::iterator it;
-    std::map<long, std::string>::iterator itEnd;
+    std::map<long, int> map;
+    std::map<long, int>::iterator it;
+    std::map<long, int>::iterator itEnd;
     map.clear();
     std::ifstream file;
     file.open(filename, std::ios_base::in);
@@ -76,7 +76,9 @@ void VCDParser::get_vcd_value_change_time(const std::string &filename) {
     while (getline(file, read_string)) {
         line++;
         if (read_string.c_str()[0] == '#') {
-            map.insert(std::pair<long, std::string>(file.tellg(), read_string));
+            int time_stamp = 0;
+            sscanf(read_string.c_str(), "#%d", &time_stamp);
+            map.insert(std::pair<long, int>(time_stamp, line));
         }
     }
 
@@ -86,4 +88,8 @@ void VCDParser::get_vcd_value_change_time(const std::string &filename) {
 //        std::cout << it->first << ' ' << it->second << std::endl;
 //        it++;
 //    }
+//    it = map.find(1300);
+//    if (it == map.end())
+//        std::cout << "we do not find the time_stamp" << std::endl;
+//    else std::cout << it->second << std::endl;
 }
