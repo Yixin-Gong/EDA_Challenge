@@ -26,9 +26,10 @@ class VCDParser {
   struct VCDHeaderStruct *get_vcd_header() {
       return &vcd_header_struct_;
   }
-  static void get_vcd_value_change_time(const std::string &filename);
-  
+  void get_vcd_value_change_time();
+
  private:
+  std::string vcd_filename_{};
   struct VCDHeaderStruct vcd_header_struct_{};
   void parse_vcd_header_(const std::string &filename);
 };

@@ -21,6 +21,7 @@ VCDParser::VCDParser() {
 }
 
 VCDParser::VCDParser(const std::string &filename) {
+    vcd_filename_ = filename;
     parse_vcd_header_(filename);
 }
 
@@ -96,14 +97,14 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
     std::cout << "File hash value: " << this->vcd_header_struct_.vcd_comment_str << "\n";
 }
 
-void VCDParser::get_vcd_value_change_time(const std::string &filename) {
+void VCDParser::get_vcd_value_change_time() {
     long line = 0;
     std::map<long, int> map;
     std::map<long, int>::iterator it;
     std::map<long, int>::iterator itEnd;
     map.clear();
     std::ifstream file;
-    file.open(filename, std::ios_base::in);
+    file.open(vcd_filename_, std::ios_base::in);
     if (!file.is_open()) {
         std::cout << "File open failed!\n";
         return;
