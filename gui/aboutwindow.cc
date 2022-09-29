@@ -23,6 +23,7 @@ AboutWindow::AboutWindow(const std::string &software_version) {
     compile_time_->set_label("Compile time: " + std::string(__TIMESTAMP__));
     gtk_version_->set_label("GTK library version: " + std::string(GTK_LIBRARY_VERSION));
     gtkmm_version_->set_label("GTKMM library version: " + std::string(GTKMM_LIBRARY_VERSION));
+    set_resizable(false);
     set_title("About Window");
     set_default_size(300, 155);
 }

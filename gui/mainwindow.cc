@@ -30,6 +30,7 @@ MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app, const std::string &so
         quit_btn_->signal_clicked().connect([this]() { this->app->quit(); });
         add(*box_);
     }
+    set_resizable(false);
     set_title("Main Window");
     set_default_size(600, 360);
     show_all();
