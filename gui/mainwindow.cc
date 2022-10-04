@@ -7,37 +7,19 @@
  ******************************************************************************/
 
 #include "mainwindow.h"
-#include <utility>
 
 MainWindow::~MainWindow() = default;
 
-MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app, const std::string &software_version) {
-    this->app = std::move(app);
-    this->software_version_ = software_version;
-    ui_ = Gtk::Builder::create_from_resource("/ui/mainwindow.ui");
-    if (ui_) {
-        ui_->get_widget<Gtk::Box>("box", box_);
-        status_label_ = Glib::RefPtr<Gtk::Label>::cast_dynamic(ui_->get_object("status_label"));
-        plot_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("plot_btn"));
-        open_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("open_btn"));
-        parse_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("parse_btn"));
-        about_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("about_btn"));
-        quit_btn_ = Glib::RefPtr<Gtk::Button>::cast_dynamic(ui_->get_object("quit_btn"));
-        plot_btn_->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::plot_button_clicked));
-        about_btn_->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::about_button_clicked));
-        parse_btn_->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::parse_button_clicked));
-        open_btn_->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::open_button_clicked));
-        quit_btn_->signal_clicked().connect([this]() { this->app->quit(); });
-        add(*box_);
-    }
-    set_resizable(false);
-    set_title("Main Window");
-    set_default_size(600, 360);
-    show_all();
-}
-
 void MainWindow::plot_button_clicked() {
-
+    std::valarray<double> x_va(1000), y_va(1000);
+    for (unsigned int i = 0; i < 1000; i++)
+        x_va[i] = 4 * M_PI * i / 999;
+    y_va = sin(x_va);
+    auto plot_data = Gtk::manage(new Gtk::PLplot::PlotData2D(x_va, y_va, curve_color_,
+                                                             Gtk::PLplot::LineStyle::CONTINUOUS, 2.5));
+    plot_ = Gtk::manage(new Gtk::PLplot::Plot2D(*plot_data, x_title_, y_title_, plot_title_));
+    canvas_.add_plot(*plot_);
+    plot_->hide_legend();
 }
 
 void MainWindow::about_button_clicked() {
