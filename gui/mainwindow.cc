@@ -55,5 +55,8 @@ void MainWindow::open_button_clicked() {
         label_text =
             "File: " + label_text + "    " + std::to_string(vcdheader->vcd_time_scale) + vcdheader->vcd_time_unit;
         status_label_->set_label(label_text);
+        to_label_->set_label(vcdheader->vcd_time_unit + " to");
+        unit_label_->set_label(vcdheader->vcd_time_unit);
+        x_title_ = "Time(" + vcdheader->vcd_time_unit + ")";
     }
 }
