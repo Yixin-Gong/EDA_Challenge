@@ -30,15 +30,31 @@ jobs:
       - name: Build Software
         run: |
           cd build && cmake --build . --target version_h && cmake .. && cmake --build . --target EDA_Challenge -j$(nproc)
+          cmake --build . --target Google_Test -j$(nproc)
       - name: Run Software
         run: |
-          ls && cd build && ls && ./EDA_Challenge -v && ./EDA_Challenge -h && ./EDA_Challenge -f ../testcase/case0/test.vcd
+          ls && cd build && ls && ./EDA_Challenge -v && ./EDA_Challenge -h
+      - name: Upload Binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: EDA_Challenge-bin
+          path: build/Google_Test
   test:
+    needs: build
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 1
+      - uses: actions/download-artifact@v2
+        with:
+          name: EDA_Challenge-bin
+          path: ./
       - name: Install gtest
         run: |
-          ls
+          ls && sudo apt install p7zip-full -y && mkdir testcase && cd testcase
+          wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/testcase/testcase_small.7z
+          7z x testcase_small.7z && rm testcase_small.7z &7 cd ..
+      - name: Running gtest
+        run: |
+          ls && ./Google_Test
