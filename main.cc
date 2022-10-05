@@ -24,6 +24,10 @@
 int main(int argc, char **argv) {
 #ifdef IS_NOT_RUNNING_GOOGLE_TEST
     const std::string software_version = "1.0.1";
+    char buffer[512];
+    std::string software_path = "./";
+    if (getcwd(buffer, 512) != nullptr)
+        software_path = buffer;
     try {
         TCLAP::CmdLine cmd("This software is VCD file parsing and statistics software, optimized for large files."
                            " You can visit https://github.com/ZhuYanzhen1/EDA_Challenge to get more information about this software.",
@@ -32,15 +36,34 @@ int main(int argc, char **argv) {
         /* Define value arguments and add it to the command line */
         TCLAP::ValueArg<std::string> filename_arg("f", "file", "The vcd file to be parsed",
                                                   false, "", "string");
+        TCLAP::ValueArg<std::string> begin_time_arg("b", "begin",
+                                                    "Specify the start time of the signal to be counted",
+                                                    false, "", "string");
+        TCLAP::ValueArg<std::string> end_time_arg("e", "end",
+                                                  "Specify the termination time of the signal to be counted",
+                                                  false, "", "string");
+        TCLAP::ValueArg<std::string> scope_arg("s", "scope",
+                                               "Specify the module where the signal to be counted is located",
+                                               false, "", "string");
+        TCLAP::ValueArg<std::string> output_arg("o", "output", "Location of the output csv file",
+                                                false, software_path + "/output.csv", "string");
         TCLAP::SwitchArg using_gui_switch("g", "gui", "Whether to display the gui interface",
                                           cmd, false);
         cmd.add(filename_arg);
+        cmd.add(begin_time_arg);
+        cmd.add(end_time_arg);
+        cmd.add(scope_arg);
+        cmd.add(output_arg);
 
         /* Parse the argv array */
         cmd.parse(argc, argv);
 
         /* Get the value parsed by each arg */
         std::string filepath = filename_arg.getValue();
+        std::string begin_time = begin_time_arg.getValue();
+        std::string end_time = end_time_arg.getValue();
+        std::string scope = scope_arg.getValue();
+        std::string output = output_arg.getValue();
         bool using_gui_flag = using_gui_switch.getValue();
 
         if (using_gui_flag) {
@@ -70,6 +93,7 @@ int main(int argc, char **argv) {
                 return 2;
             }
             std::cout << "No gui with file: " << filepath << "\n";
+            std::cout << "Output file path: " << output << "\n";
             VCDParser parser(filepath);
         }
     } catch (TCLAP::ArgException &e) {
