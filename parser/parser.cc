@@ -96,7 +96,7 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
     std::cout << "File hash value: " << this->vcd_header_struct_.vcd_comment_str << "\n";
 }
 
-void VCDParser::get_vcd_scope(const std::string &filename) {
+void VCDParser::get_vcd_scope() {
     long line = 0;
     std::map<std::string, unsigned long long> vcd_module;
     std::unordered_map<std::string, unsigned long long> vcd_signal;
@@ -104,7 +104,7 @@ void VCDParser::get_vcd_scope(const std::string &filename) {
     vcd_module.clear();
     vcd_signal_umap.clear();
     std::ifstream file;
-    file.open(filename, std::ios_base::in);
+    file.open(vcd_filename_, std::ios_base::in);
     if (!file.is_open()) {
         std::cout << "File open failed!\n";
         return;
@@ -113,13 +113,13 @@ void VCDParser::get_vcd_scope(const std::string &filename) {
     while (getline(file, read_string)) {
         line++;
         if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
-            int pos = read_string.rfind(" ");
+            unsigned long pos = read_string.rfind(' ');
             std::string scope_module = read_string.substr(14, pos - 14);
             vcd_module.insert(std::pair<std::string, unsigned long long>(scope_module, line));
             vcd_signal.clear();
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
             struct VCDSignalStruct signal;
-            int pos = read_string.rfind(" ");
+            unsigned long pos = read_string.rfind(' ');
             std::string signal_info = read_string.substr(5, pos - 5);
             vcd_module.insert(std::pair<std::string, unsigned long long>(signal_info, line));
             signal.vcd_signal_type = signal_info.substr(0, signal_info.find(' '));
@@ -141,8 +141,8 @@ void VCDParser::get_vcd_scope(const std::string &filename) {
                 vcd_module.insert(std::pair<std::string, unsigned long long>("enddefinitions", line));
         }
     }
-    for (auto iter = vcd_module.begin(); iter != vcd_module.end(); ++iter) {
-        std::cout << iter->first << " " << iter->second << std::endl;
+    for (auto & iter : vcd_module) {
+        std::cout << iter.first << " " << iter.second << std::endl;
     }
 
 //    std::unordered_map<std::string, unsigned long long>::const_iterator module = vcd_module.find("test");

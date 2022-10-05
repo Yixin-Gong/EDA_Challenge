@@ -35,7 +35,7 @@ class VCDParser {
   struct VCDHeaderStruct *get_vcd_header() {
       return &vcd_header_struct_;
   }
-  void get_vcd_scope(const std::string &filename);
+  void get_vcd_scope();
   void get_vcd_value_change_time();
   void get_vcd_value_from_time(unsigned long long time);
 
