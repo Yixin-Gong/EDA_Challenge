@@ -47,8 +47,20 @@ int main(int argc, char **argv) {
             std::cout << "Starting software with GUI ...\n";
             argc = 1;
             auto app = Gtk::Application::create(argc, argv, "eda.challenge");
-            MainWindow main_window(app, software_version);
-            return app->run(main_window);
+            MainWindow *main_window;
+            if (filepath.empty() || (filepath.find(".vcd") == std::string::npos)) {
+                if ((!filepath.empty()) && (filepath.find(".vcd") == std::string::npos))
+                    std::cout << "Please input the VCD file with the .vcd extension\n";
+                main_window = new MainWindow(app, software_version);
+            } else {
+                if (SystemInfo::FileExists(filepath))
+                    main_window = new MainWindow(app, software_version, filepath);
+                else {
+                    std::cout << "File " << filepath << " doesn't exists!\n";;
+                    main_window = new MainWindow(app, software_version);
+                }
+            }
+            return app->run(*main_window);
         } else {
             if (filepath.empty()) {
                 std::cout << "Please input VCD file path with -f <file path>\n";

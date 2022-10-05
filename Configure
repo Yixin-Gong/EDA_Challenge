@@ -10,7 +10,7 @@ wget https://github.com/tschoonj/gtkmm-plplot/releases/download/gtkmm-plplot-2.5
 tar xfvz gtkmm-plplot-2.5.tar.gz && rm gtkmm-plplot-2.5.tar.gz
 # shellcheck disable=SC2164
 cd gtkmm-plplot-2.5 && mkdir build && cd build && meson ..
-ninja && sudo ninja install
+ninja && sudo ninja install && cd ../.. && rm -rf gtkmm-plplot-2.5
 
 # shellcheck disable=SC2164
 rm -rf build && mkdir build && cd build
