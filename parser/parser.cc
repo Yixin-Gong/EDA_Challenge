@@ -142,12 +142,10 @@ void VCDParser::get_vcd_value_from_time(unsigned long long time) {
     fseeko64(fp, it->second, SEEK_SET);
     char buf[1024];
     while (fgets(buf, sizeof(buf), fp) != nullptr) {
-        std::string bufs;
-        int i = 0;
-        while (buf[i] != '\0') {
-            bufs += buf[i];
-            i++;
-        }
+        buf[strlen(buf) - 1] = '\0';
+        std::string bufs = buf;
+        if (buf[0] == '$')
+            continue;
         if (buf[0] == '#')
             break;
         if (buf[0] == 'b') {
@@ -155,9 +153,9 @@ void VCDParser::get_vcd_value_from_time(unsigned long long time) {
             std::string signal_value = bufs.substr(1, bufs.find_first_of(' '));
             std::cout << "Signal " << signal_alias << " is " << signal_value << "\n";
         } else {
-            std::string signal_alias = (char *) (&bufs.c_str()[1]);
-            std::cout << "Signal " << signal_alias << " is " << bufs.c_str()[0] << "\n";
+            std::string signal_alias = std::string((char *) (&buf[1])).substr(0, bufs.length());
+            std::cout << "Signal " << signal_alias << " is " << buf[0] << "\n";
         }
-        std::cout << bufs << "\n";
+//        std::cout << bufs << "\n";
     }
 }
