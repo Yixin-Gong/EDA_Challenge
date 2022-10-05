@@ -7,6 +7,7 @@
  ******************************************************************************/
 
 #include "mainwindow.h"
+#include <ctime>
 
 MainWindow::~MainWindow() = default;
 MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app, const std::string &software_version) {
@@ -44,10 +45,14 @@ void MainWindow::about_button_clicked() {
 }
 
 void MainWindow::parse_button_clicked() {
+    clock_t startTime, endTime;
+    startTime = clock();
     if (parser_ != nullptr) {
         parser_->get_vcd_value_change_time();
         parser_->get_vcd_value_from_time(350);
     }
+    endTime = clock();
+    std::cout << "Running time is:" << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
 void MainWindow::open_button_clicked() {

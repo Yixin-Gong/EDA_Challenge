@@ -2,7 +2,8 @@
 
 sudo apt update && sudo apt -y upgrade
 sudo apt install -y cmake gcc g++ automake autoconf libtool make build-essential wget libgtk-3-dev unzip wget
-sudo apt install -y libxml2-utils libgtkmm-3.0-dev meson libplplot-dev plplot-driver-cairo
+sudo apt install -y libxml2-utils libgtkmm-3.0-dev meson libplplot-dev plplot-driver-cairo valgrind
+sudo snap install massif-visualizer --edge
 wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/gtest/gtest.zip
 rm -rf gtest && unzip gtest.zip && rm gtest.zip
 
