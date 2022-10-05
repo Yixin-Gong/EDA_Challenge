@@ -30,15 +30,18 @@ struct VCDSignalStruct{
 
 class VCDParser {
  public:
-  explicit VCDParser(const std::string &filename) {
-      parse_vcd_header_(filename);
-  }
+  VCDParser();
+  explicit VCDParser(const std::string &filename);
   struct VCDHeaderStruct *get_vcd_header() {
       return &vcd_header_struct_;
   }
   void get_vcd_scope(const std::string &filename);
+  void get_vcd_value_change_time();
+  void get_vcd_value_from_time(unsigned long long time);
 
  private:
+  std::string vcd_filename_{};
+  std::map<unsigned long long, unsigned long long> signal_map_;
   struct VCDHeaderStruct vcd_header_struct_{};
   void parse_vcd_header_(const std::string &filename);
 };
