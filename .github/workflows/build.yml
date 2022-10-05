@@ -54,7 +54,7 @@ jobs:
         run: |
           ls && sudo apt install p7zip-full -y && mkdir testcase && cd testcase
           wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/testcase/testcase_small.7z
-          7z x testcase_small.7z && rm testcase_small.7z &7 cd ..
+          7z x testcase_small.7z && rm testcase_small.7z && cd ..
       - name: Running gtest
         run: |
           mkdir build && mv ./Google_Test build && cd build
