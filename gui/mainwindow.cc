@@ -48,7 +48,7 @@ void MainWindow::about_button_clicked() {
 void MainWindow::parse_button_clicked() {
     if (parser_ != nullptr) {
         parser_->get_vcd_value_change_time();
-        parser_->get_vcd_value_from_time(350);
+        parser_->get_vcd_value_from_time(0);
     }
 }
 

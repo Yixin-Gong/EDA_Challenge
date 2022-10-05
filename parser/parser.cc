@@ -11,6 +11,8 @@
 #include <fstream>
 #include <sstream>
 #include <cstring>
+#include <cstdlib>
+#include <cstdio>
 
 VCDParser::VCDParser() {
     vcd_header_struct_.vcd_comment_str = "";
@@ -97,32 +99,31 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
 }
 
 void VCDParser::get_vcd_value_change_time() {
-    long line = 0;
     signal_map_.clear();
-    std::ifstream file;
-    file.open(vcd_filename_, std::ios_base::in);
-    if (!file.is_open()) {
+    FILE *fp;
+    fp = fopen64(vcd_filename_.c_str(), "r");
+    if (fp == nullptr) {
         std::cout << "File open failed!\n";
         return;
     }
-    std::string read_string;
-    while (getline(file, read_string)) {
-        line++;
-        if (read_string.c_str()[0] == '#') {
+    char buf[1024];
+    while (fgets(buf, sizeof(buf), fp) != nullptr) {
+        if (buf[0] == '#') {
             unsigned long long time_stamp = 0;
-            sscanf(read_string.c_str(), "#%lld", &time_stamp);
-            signal_map_.insert(std::pair<unsigned long long, unsigned long long>(time_stamp, file.tellg()));
+            time_stamp = strtoull(&buf[1], nullptr, 0);
+            signal_map_.insert(std::pair<unsigned long long, unsigned long long>(time_stamp, ftello64(fp)));
         }
     }
-
-//    std::map<unsigned long long, unsigned long long>::iterator it;
-//    std::map<unsigned long long, unsigned long long>::iterator itEnd;
-//    it = map.begin();
-//    itEnd = map.end();
-//    while (it != itEnd) {
-//        std::cout << it->first << ' ' << it->second << std::endl;
-//        it++;
-//    }
+    fclose(fp);
+    /*std::map<unsigned long long, unsigned long long>::iterator it;
+    std::map<unsigned long long, unsigned long long>::iterator itEnd;
+    it = signal_map_.begin();
+    itEnd = signal_map_.end();
+    while (it != itEnd) {
+        std::cout << it->first << ' ' << it->second << std::endl;
+        it++;
+    }
+*/
 }
 
 void VCDParser::get_vcd_value_from_time(unsigned long long time) {
@@ -132,25 +133,31 @@ void VCDParser::get_vcd_value_from_time(unsigned long long time) {
         std::cout << "we do not find the time_stamp" << std::endl;
     else std::cout << "Time Stamp: " << time << "  in byte: " << it->second << std::endl;
 
-    std::ifstream file;
-    file.open(vcd_filename_, std::ios_base::in);
-    if (!file.is_open()) {
+    FILE *fp;
+    fp = fopen64(vcd_filename_.c_str(), "r");
+    if (fp == nullptr) {
         std::cout << "File open failed!\n";
         return;
     }
-    file.seekg(it->second);
-    std::string read_string;
-    while (getline(file, read_string)) {
-        if (read_string.c_str()[0] == '#')
+    fseeko64(fp, it->second, SEEK_SET);
+    char buf[1024];
+    while (fgets(buf, sizeof(buf), fp) != nullptr) {
+        std::string bufs;
+        int i = 0;
+        while (buf[i] != '\0') {
+            bufs += buf[i];
+            i++;
+        }
+        if (buf[0] == '#')
             break;
-        if (read_string.c_str()[0] == 'b') {
-            std::string signal_alias = read_string.substr(read_string.find_last_of(' ') + 1, read_string.length());
-            std::string signal_value = read_string.substr(1, read_string.find_first_of(' '));
+        if (buf[0] == 'b') {
+            std::string signal_alias = bufs.substr(bufs.find_last_of(' ') + 1, bufs.length());
+            std::string signal_value = bufs.substr(1, bufs.find_first_of(' '));
             std::cout << "Signal " << signal_alias << " is " << signal_value << "\n";
         } else {
-            std::string signal_alias = (char *) (&read_string.c_str()[1]);
-            std::cout << "Signal " << signal_alias << " is " << read_string.c_str()[0] << "\n";
+            std::string signal_alias = (char *) (&bufs.c_str()[1]);
+            std::cout << "Signal " << signal_alias << " is " << bufs.c_str()[0] << "\n";
         }
-        std::cout << read_string << "\n";
+        std::cout << bufs << "\n";
     }
 }
