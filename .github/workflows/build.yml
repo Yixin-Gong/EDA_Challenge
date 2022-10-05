@@ -57,4 +57,5 @@ jobs:
           7z x testcase_small.7z && rm testcase_small.7z &7 cd ..
       - name: Running gtest
         run: |
-          ls && ./Google_Test
+          mkdir build && mv ./Google_Test build && cd build
+          sudo chmod +x Google_Test && ./Google_Test
