@@ -9,7 +9,7 @@ add_compile_options(-O2 -g)
 
 include_directories(system gtest/include gui . parser)
 file(GLOB_RECURSE SOURCES "main.cc" "system/*.cc" "gui/*.cc" "parser/*.cc")
-file(GLOB_RECURSE TEST_SOURCES "testbench/*.cc")
+file(GLOB_RECURSE TEST_SOURCES "test/*.cc")
 
 add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/../system/version.h"
         COMMAND ${CMAKE_COMMAND} -D SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}"
