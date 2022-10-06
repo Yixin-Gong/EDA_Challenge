@@ -9,7 +9,7 @@ add_compile_options(-O2 -g)
 
 include_directories(system gtest/include gui . parser)
 file(GLOB_RECURSE SOURCES "main.cc" "system/*.cc" "gui/*.cc" "parser/*.cc")
-file(GLOB_RECURSE TEST_SOURCES "testbench/*.cc")
+file(GLOB_RECURSE TEST_SOURCES "test/*.cc")
 
 add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/../system/version.h"
         COMMAND ${CMAKE_COMMAND} -D SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}"
@@ -20,12 +20,13 @@ add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/../system/ve
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 pkg_check_modules(GTKMM3 REQUIRED gtkmm-3.0)
+pkg_check_modules(GTKMM_PLPLOT REQUIRED gtkmm-plplot-2.0)
 
 add_compile_definitions(GTK_LIBRARY_VERSION="${GTK3_VERSION}" GTKMM_LIBRARY_VERSION="${GTKMM3_VERSION}")
 add_compile_definitions(CXX_COMPILER_VERSION="${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 
-include_directories(${GTK3_INCLUDE_DIRS} ${GTKMM3_INCLUDE_DIRS})
-link_directories(${GTK3_LIBRARY_DIRS} ${GTKMM3_LIBRARY_DIRS})
+include_directories(${GTK3_INCLUDE_DIRS} ${GTKMM3_INCLUDE_DIRS} ${GTKMM_PLPLOT_INCLUDE_DIRS})
+link_directories(${GTK3_LIBRARY_DIRS} ${GTKMM3_LIBRARY_DIRS} ${GTKMM_PLPLOT_LIBRARY_DIRS})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 add_executable(Google_Test ${SOURCES} ${TEST_SOURCES})
@@ -33,8 +34,8 @@ add_executable(Google_Test ${SOURCES} ${TEST_SOURCES})
 find_library(GTEST gtest ${CMAKE_SOURCE_DIR}/gtest)
 find_library(GTEST_MAIN gtest_main ${CMAKE_SOURCE_DIR}/gtest)
 
-target_link_libraries(Google_Test ${GTEST} ${GTEST_MAIN} ${GTK3_LIBRARIES} ${GTKMM3_LIBRARIES} m)
-target_link_libraries(${PROJECT_NAME} ${GTK3_LIBRARIES} ${GTKMM3_LIBRARIES} m)
+target_link_libraries(Google_Test ${GTEST} ${GTEST_MAIN} ${GTK3_LIBRARIES} ${GTKMM3_LIBRARIES} ${GTKMM_PLPLOT_LIBRARIES} m)
+target_link_libraries(${PROJECT_NAME} ${GTK3_LIBRARIES} ${GTKMM3_LIBRARIES} ${GTKMM_PLPLOT_LIBRARIES} m)
 add_dependencies(${PROJECT_NAME} version_h)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS "IS_NOT_RUNNING_GOOGLE_TEST")

@@ -13,6 +13,7 @@
 class SystemInfo {
  public:
   static void DisplayCompileInfo(const std::string &version);
+  static bool FileExists(const std::string &filename);
 };
 
 #endif //EDA_CHALLENGE_SYSTEM_SYSTEM_H_
