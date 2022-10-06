@@ -21,11 +21,11 @@ struct VCDHeaderStruct {
   std::string vcd_comment_str;
 };
 
-struct VCDSignalStruct{
-    std::string vcd_signal_type;
-    unsigned int vcd_signal_width;
-    std::string vcd_signal_label;
-    std::string vcd_signal_title;
+struct VCDSignalStruct {
+  std::string vcd_signal_type;
+  unsigned int vcd_signal_width;
+  std::string vcd_signal_label;
+  std::string vcd_signal_title;
 };
 
 class VCDParser {
@@ -37,13 +37,23 @@ class VCDParser {
   }
   void get_vcd_scope();
   void get_vcd_value_change_time();
-  void get_vcd_value_from_time(unsigned long long time);
+  void get_vcd_value_from_time(uint64_t time);
 
  private:
   std::string vcd_filename_{};
   std::map<unsigned long long, unsigned long long> signal_map_;
   struct VCDHeaderStruct vcd_header_struct_{};
   void parse_vcd_header_(const std::string &filename);
+  struct VCDTimeStampStruct {
+    uint64_t timestamp;
+    uint64_t location;
+  };
+  struct VCDTimeStampBufferStruct {
+    struct VCDTimeStampStruct *first_element;
+    struct VCDTimeStampBufferStruct *next_buffer;
+  };
+  struct VCDTimeStampBufferStruct time_stamp_first_buffer_{};
+  const uint32_t ktime_stamp_buffer_size_ = 1024;
 };
 
 #endif //EDA_CHALLENGE_PARSER_PARSER_H_

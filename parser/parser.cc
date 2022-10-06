@@ -132,9 +132,10 @@ void VCDParser::get_vcd_scope() {
             signal_info.erase(0, signal_info.find(' ') + 1);
             signal.vcd_signal_title = signal_info;
             vcd_signal.insert(std::pair<std::string, struct VCDSignalStruct>(signal.vcd_signal_label, signal));
-            vcd_signal_umap.insert(std::pair < std::string,
-                                   std::unordered_map < std::string,
-                                   struct VCDSignalStruct >> (vcd_module.back(), vcd_signal));
+            vcd_signal_umap.insert(std::pair<std::string,
+                                             std::unordered_map<std::string,
+                                                                struct VCDSignalStruct >>(vcd_module.back(),
+                                                                                          vcd_signal));
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'e') {
             std::string end_definitions = read_string.substr(1, read_string.find(' ') - 1);
             if (read_string.substr(1, read_string.find(' ') - 1) == "enddefinitions")
@@ -160,62 +161,80 @@ void VCDParser::get_vcd_scope() {
 }
 
 void VCDParser::get_vcd_value_change_time() {
-    signal_map_.clear();
-    FILE *fp;
-    fp = fopen64(vcd_filename_.c_str(), "r");
+    uint64_t buf_counter = 0;
+    static char reading_buffer[1024 * 1024] = {0};
+    auto *vcdtime_buf = new struct VCDTimeStampStruct[ktime_stamp_buffer_size_];
+    time_stamp_first_buffer_.first_element = vcdtime_buf;
+    time_stamp_first_buffer_.next_buffer = nullptr;
+    struct VCDTimeStampBufferStruct *current_buffer = &time_stamp_first_buffer_;
+
+    FILE *fp = fopen64(vcd_filename_.c_str(), "r");
     if (fp == nullptr) {
         std::cout << "File open failed!\n";
         return;
     }
-    char buf[1024];
-    while (fgets(buf, sizeof(buf), fp) != nullptr) {
-        if (buf[0] == '#') {
-            unsigned long long time_stamp = 0;
-            time_stamp = strtoull(&buf[1], nullptr, 0);
-            signal_map_.insert(std::pair<unsigned long long, unsigned long long>(time_stamp, ftello64(fp)));
+    while (fgets(reading_buffer, sizeof(reading_buffer), fp) != nullptr) {
+        if (reading_buffer[0] == '#') {
+            current_buffer->first_element[buf_counter].timestamp = strtoull(&reading_buffer[1], nullptr, 0);
+            current_buffer->first_element[buf_counter].location = ftello64(fp);
+            buf_counter++;
+            if (buf_counter == ktime_stamp_buffer_size_) {
+                buf_counter = 0;
+                auto *next_buffer = new struct VCDTimeStampBufferStruct;
+                vcdtime_buf = new struct VCDTimeStampStruct[ktime_stamp_buffer_size_];
+                current_buffer->next_buffer = next_buffer;
+                next_buffer->first_element = vcdtime_buf;
+                next_buffer->next_buffer = nullptr;
+                current_buffer = next_buffer;
+                std::cout << "current buffer was full!\n";
+            }
         }
     }
     fclose(fp);
-    /*std::map<unsigned long long, unsigned long long>::iterator it;
-    std::map<unsigned long long, unsigned long long>::iterator itEnd;
-    it = signal_map_.begin();
-    itEnd = signal_map_.end();
-    while (it != itEnd) {
-        std::cout << it->first << ' ' << it->second << std::endl;
-        it++;
-    }
-*/
 }
 
-void VCDParser::get_vcd_value_from_time(unsigned long long time) {
-    std::map<unsigned long long, unsigned long long>::iterator it;
-    it = signal_map_.find(time);
-    if (it == signal_map_.end())
-        std::cout << "we do not find the time_stamp" << std::endl;
-    else std::cout << "Time Stamp: " << time << "  in byte: " << it->second << std::endl;
+void VCDParser::get_vcd_value_from_time(uint64_t time) {
+    uint64_t time_location = 0;
+    struct VCDTimeStampBufferStruct *current_buffer = &time_stamp_first_buffer_;
+    while (true) {
+        for (uint64_t counter = 0; counter < ktime_stamp_buffer_size_; ++counter) {
+            if (current_buffer->first_element[counter].timestamp == time) {
+                time_location = current_buffer->first_element[counter].location;
+                std::cout << "Find time " << time << " in byte " << time_location << "\n";
+                break;
+            }
+        }
+        if (current_buffer->next_buffer == nullptr || time_location != 0)
+            break;
+        current_buffer = current_buffer->next_buffer;
+    }
 
-    FILE *fp;
-    fp = fopen64(vcd_filename_.c_str(), "r");
+    if (time_location == 0) {
+        std::cout << "Can't find time " << time << " in file.\n";
+        return;
+    }
+
+    static char reading_buffer[1024 * 1024] = {0};
+    FILE *fp = fopen64(vcd_filename_.c_str(), "r");
     if (fp == nullptr) {
         std::cout << "File open failed!\n";
         return;
     }
-    fseeko64(fp, it->second, SEEK_SET);
-    char buf[1024];
-    while (fgets(buf, sizeof(buf), fp) != nullptr) {
-        buf[strlen(buf) - 1] = '\0';
-        std::string bufs = buf;
-        if (buf[0] == '$')
+    fseeko64(fp, (long) time_location, SEEK_SET);
+    while (fgets(reading_buffer, sizeof(reading_buffer), fp) != nullptr) {
+        reading_buffer[strlen(reading_buffer) - 1] = '\0';
+        std::string bufs = reading_buffer;
+        if (reading_buffer[0] == '$')
             continue;
-        if (buf[0] == '#')
+        if (reading_buffer[0] == '#')
             break;
-        if (buf[0] == 'b') {
+        if (reading_buffer[0] == 'b') {
             std::string signal_alias = bufs.substr(bufs.find_last_of(' ') + 1, bufs.length());
             std::string signal_value = bufs.substr(1, bufs.find_first_of(' '));
             std::cout << "Signal " << signal_alias << " is " << signal_value << "\n";
         } else {
-            std::string signal_alias = std::string((char *) (&buf[1])).substr(0, bufs.length());
-            std::cout << "Signal " << signal_alias << " is " << buf[0] << "\n";
+            std::string signal_alias = std::string((char *) (&reading_buffer[1])).substr(0, bufs.length());
+            std::cout << "Signal " << signal_alias << " is " << reading_buffer[0] << "\n";
         }
 //        std::cout << bufs << "\n";
     }

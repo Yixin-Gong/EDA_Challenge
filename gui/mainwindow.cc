@@ -49,7 +49,7 @@ void MainWindow::parse_button_clicked() {
     startTime = clock();
     if (parser_ != nullptr) {
         parser_->get_vcd_value_change_time();
-        parser_->get_vcd_value_from_time(0);
+        parser_->get_vcd_value_from_time(748000);
         parser_->get_vcd_scope();
     }
     endTime = clock();
