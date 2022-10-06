@@ -49,7 +49,7 @@ void MainWindow::parse_button_clicked() {
     startTime = clock();
     if (parser_ != nullptr) {
         parser_->get_vcd_value_change_time();
-        parser_->get_vcd_value_from_time(748000);
+        parser_->get_vcd_value_from_time_range(748000, 0);
         parser_->get_vcd_scope();
     }
     endTime = clock();
@@ -70,6 +70,7 @@ void MainWindow::open_button_clicked() {
 
     int result = dialog.run();
     if (result == Gtk::RESPONSE_OK) {
+        delete parser_;
         vcd_file_name_ = dialog.get_filename();
         parse_file_header_();
     }
