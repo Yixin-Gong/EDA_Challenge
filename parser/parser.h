@@ -38,12 +38,15 @@ class VCDParser {
   void get_vcd_scope();
   void get_vcd_value_change_time();
   void get_vcd_value_from_time(unsigned long long time);
+  VCDSignalStruct *get_vcd_signal(const std::string& label);
 
  private:
   std::string vcd_filename_{};
   std::map<unsigned long long, unsigned long long> signal_map_;
   struct VCDHeaderStruct vcd_header_struct_{};
   void parse_vcd_header_(const std::string &filename);
+  std::unordered_map<std::string, struct VCDSignalStruct> vcd_signal;
+  std::map<std::string, std::unordered_map<std::string, struct VCDSignalStruct>> vcd_signal_map;
 };
 
 #endif //EDA_CHALLENGE_PARSER_PARSER_H_
