@@ -38,6 +38,7 @@ class VCDParser {
   }
   void get_vcd_scope();
   void get_vcd_value_change_time();
+  VCDSignalStruct *get_vcd_signal(const std::string& label);
   void get_vcd_value_from_time_range(uint64_t begin_time = 0, uint64_t end_time = 0);
 
  private:
@@ -53,6 +54,8 @@ class VCDParser {
   struct VCDHeaderStruct vcd_header_struct_{};
   struct VCDTimeStampBufferStruct time_stamp_first_buffer_{};
   const uint32_t ktime_stamp_buffer_size_ = 1024;
+  std::unordered_map<std::string, struct VCDSignalStruct> vcd_signal;
+  std::map<std::string, std::unordered_map<std::string, struct VCDSignalStruct>> vcd_signal_map;
   void parse_vcd_header_(const std::string &filename);
   void vcd_delete_time_stamp_buffer_();
 };

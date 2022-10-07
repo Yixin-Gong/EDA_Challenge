@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstring>
+#include <list>
 #include <cstdlib>
 #include <cstdio>
 
@@ -125,11 +126,10 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
 
 void VCDParser::get_vcd_scope() {
     long line = 0;
-    std::vector<std::string> vcd_module;
-    std::unordered_map<std::string, struct VCDSignalStruct> vcd_signal;
-    std::map<std::string, std::unordered_map<std::string, struct VCDSignalStruct>> vcd_signal_umap;
+    std::list<std::string> vcd_module;
     vcd_module.clear();
-    vcd_signal_umap.clear();
+    vcd_signal.clear();
+    vcd_signal_map.clear();
     std::ifstream file;
     file.open(vcd_filename_, std::ios_base::in);
     if (!file.is_open()) {
@@ -140,9 +140,12 @@ void VCDParser::get_vcd_scope() {
     while (getline(file, read_string)) {
         line++;
         if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
-
             unsigned long pos = read_string.rfind(' ');
             std::string scope_module = read_string.substr(14, pos - 14);
+            if(vcd_signal.empty()!=1)
+                vcd_signal_map.emplace(std::pair<std::string,
+                                        std::unordered_map<std::string, struct VCDSignalStruct>
+                                            >(vcd_module.back(),vcd_signal));
             vcd_module.push_back(scope_module);
             vcd_signal.clear();
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
@@ -157,32 +160,39 @@ void VCDParser::get_vcd_scope() {
             signal_info.erase(0, signal_info.find(' ') + 1);
             signal.vcd_signal_title = signal_info;
             vcd_signal.insert(std::pair<std::string, struct VCDSignalStruct>(signal.vcd_signal_label, signal));
-            vcd_signal_umap.insert(std::pair<std::string,
-                                             std::unordered_map<std::string,
-                                                                struct VCDSignalStruct >>(vcd_module.back(),
-                                                                                          vcd_signal));
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'e') {
-            std::string end_definitions = read_string.substr(1, read_string.find(' ') - 1);
-            if (read_string.substr(1, read_string.find(' ') - 1) == "enddefinitions")
+            if (read_string.substr(1, read_string.find(' ') - 1) == "enddefinitions") {
+                vcd_signal_map.emplace(std::pair<std::string, std::unordered_map<std::string,struct VCDSignalStruct>
+                                                                                    >(vcd_module.back(),vcd_signal));
                 break;
+            }
         }
     }
+
 //    for(auto &iter:vcd_module){
 //        std::cout << iter << std::endl;
 //    }
-//    for (auto & iter : vcd_signal_umap) {
-//        std::cout << iter.first << std::endl;
+//    for (auto & iter : vcd_signal_map) {
+//        std::cout <<"Key:"<< iter.first << std::endl;
 //        for(auto &it:iter.second){
-//            std::cout<<it.first<<std::endl;
-//            std::cout<<it.second.vcd_signal_type<<' '<<it.second.vcd_signal_width
-//            <<' '<<it.second.vcd_signal_title<<std::endl;
+//            std::cout<<it.first<<" Signal title: "<<it.second.vcd_signal_title<<std::endl;
 //        }
 //    }
-//    for(auto &iter:vcd_signal){
-//        std::cout << iter.first << std::endl;
-//        std::cout<<iter.second.vcd_signal_type<<' '<<iter.second.vcd_signal_width
-//            <<' '<<iter.second.vcd_signal_title<<std::endl;
-//    }
+}
+VCDSignalStruct *VCDParser::get_vcd_signal(const std::string& label) {
+    VCDSignalStruct *a;
+    std::unordered_map<std::string,struct VCDSignalStruct>::iterator it;
+        for(auto &iter:vcd_signal_map){
+            if(iter.second.find(label)!=0){
+                it=iter.second.find(label);
+                a = &it->second;
+                return a;
+            }
+    }
+        if(a==nullptr) {
+            std::cout << "Search failed" << "\n";
+            return nullptr;
+        }
 }
 
 void VCDParser::get_vcd_value_change_time() {
