@@ -125,7 +125,6 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
 }
 
 void VCDParser::get_vcd_scope() {
-    long line = 0;
     std::list<std::string> vcd_module;
     vcd_module.clear();
     vcd_signal.clear();
@@ -138,14 +137,12 @@ void VCDParser::get_vcd_scope() {
     }
     std::string read_string;
     while (getline(file, read_string)) {
-        line++;
         if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
             unsigned long pos = read_string.rfind(' ');
             std::string scope_module = read_string.substr(14, pos - 14);
-            if(vcd_signal.empty()!=1)
-                vcd_signal_map.emplace(std::pair<std::string,
-                                        std::unordered_map<std::string, struct VCDSignalStruct>
-                                            >(vcd_module.back(),vcd_signal));
+            if (vcd_signal.empty() != 1)
+                vcd_signal_map.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
+                                           (vcd_module.back(), vcd_signal));
             vcd_module.push_back(scope_module);
             vcd_signal.clear();
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
@@ -162,8 +159,8 @@ void VCDParser::get_vcd_scope() {
             vcd_signal.insert(std::pair<std::string, struct VCDSignalStruct>(signal.vcd_signal_label, signal));
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'e') {
             if (read_string.substr(1, read_string.find(' ') - 1) == "enddefinitions") {
-                vcd_signal_map.emplace(std::pair<std::string, std::unordered_map<std::string,struct VCDSignalStruct>
-                                                                                    >(vcd_module.back(),vcd_signal));
+                vcd_signal_map.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
+                                           (vcd_module.back(), vcd_signal));
                 break;
             }
         }
@@ -179,20 +176,13 @@ void VCDParser::get_vcd_scope() {
 //        }
 //    }
 }
-VCDSignalStruct *VCDParser::get_vcd_signal(const std::string& label) {
-    VCDSignalStruct *a;
-    std::unordered_map<std::string,struct VCDSignalStruct>::iterator it;
-        for(auto &iter:vcd_signal_map){
-            if(iter.second.find(label)!=0){
-                it=iter.second.find(label);
-                a = &it->second;
-                return a;
-            }
-    }
-        if(a==nullptr) {
-            std::cout << "Search failed" << "\n";
-            return nullptr;
-        }
+
+struct VCDSignalStruct *VCDParser::get_vcd_signal(const std::string &label) {
+    for (auto &iter : vcd_signal_map)
+        if (iter.second.find(label) != nullptr)
+            return &(iter.second.find(label)->second);
+    std::cout << "Cannot find alias named" << label << "\n";
+    return nullptr;
 }
 
 void VCDParser::get_vcd_value_change_time() {

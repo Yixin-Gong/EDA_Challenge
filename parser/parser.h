@@ -38,7 +38,7 @@ class VCDParser {
   }
   void get_vcd_scope();
   void get_vcd_value_change_time();
-  VCDSignalStruct *get_vcd_signal(const std::string& label);
+  struct VCDSignalStruct *get_vcd_signal(const std::string &label);
   void get_vcd_value_from_time_range(uint64_t begin_time = 0, uint64_t end_time = 0);
 
  private:
