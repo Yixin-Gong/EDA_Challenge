@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstring>
+#include <list>
 #include <cstdlib>
 #include <cstdio>
 #include <unordered_map>
@@ -19,30 +20,66 @@ VCDParser::VCDParser() {
     vcd_header_struct_.vcd_comment_str = "";
     vcd_header_struct_.vcd_time_unit = "";
     vcd_header_struct_.vcd_time_scale = 0;
+    time_stamp_first_buffer_.first_element = nullptr;
+    time_stamp_first_buffer_.next_buffer = nullptr;
     memset(&vcd_header_struct_.vcd_create_time, 0x00, sizeof(struct tm));
 }
 
 VCDParser::VCDParser(const std::string &filename) {
     vcd_filename_ = filename;
     parse_vcd_header_(filename);
+    time_stamp_first_buffer_.first_element = nullptr;
+    time_stamp_first_buffer_.next_buffer = nullptr;
+}
+
+VCDParser::~VCDParser() {
+    vcd_delete_time_stamp_buffer_();
+}
+
+void VCDParser::vcd_delete_time_stamp_buffer_() {
+    if (time_stamp_first_buffer_.first_element != nullptr) {
+        while (true) {
+            struct VCDTimeStampBufferStruct *current_buffer = &time_stamp_first_buffer_;
+            struct VCDTimeStampBufferStruct *last_buffer{};
+            if (time_stamp_first_buffer_.next_buffer == nullptr) {
+                delete time_stamp_first_buffer_.first_element;
+                return;
+            }
+            while (true) {
+                if (current_buffer->next_buffer == nullptr)
+                    break;
+                last_buffer = current_buffer;
+                current_buffer = current_buffer->next_buffer;
+            }
+            delete current_buffer->first_element;
+            delete current_buffer;
+            last_buffer->next_buffer = nullptr;
+            if (last_buffer == &time_stamp_first_buffer_)
+                break;
+        }
+        delete time_stamp_first_buffer_.first_element;
+    }
 }
 
 void VCDParser::parse_vcd_header_(const std::string &filename) {
     std::ifstream file;
     std::string read_string;
     unsigned int parse_status = 0;
-
-    std::cout << "Open file: " << filename << "\n";
+    static char week[32], month[32];
+    static const char kab_month_name[12][4] = {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    std::cout << "\nOpen file: " << filename << "\n";
     file.open(filename, std::ios_base::in);
     if (!file.is_open()) {
-        std::cout << "Cannot open file " << filename << "\n";
+        std::cout << "\nCannot open file " << filename << "\n";
         return;
     }
 
     while (getline(file, read_string)) {
         switch (parse_status) {
             default:
-            case 0: {
+            case 0:
                 if (read_string.find("$date") != std::string::npos)
                     parse_status = 1;
                 else if (read_string.find("$timescale") != std::string::npos)
@@ -54,14 +91,7 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
                 } else if (read_string.find("$end") != std::string::npos)
                     parse_status = 0;
                 break;
-            }
-            case 1: {
-                char week[32], month[32];
-                static const char ab_month_name[12][4] =
-                    {
-                        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-                    };
+            case 1:
                 sscanf(read_string.c_str(),
                        "\t%s %s %d %d:%d:%d %d", week, month,
                        &vcd_header_struct_.vcd_create_time.tm_mday,
@@ -70,15 +100,11 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
                        &vcd_header_struct_.vcd_create_time.tm_sec,
                        &vcd_header_struct_.vcd_create_time.tm_year);
                 vcd_header_struct_.vcd_create_time.tm_year = vcd_header_struct_.vcd_create_time.tm_year - 1900;
-
-                for (int i = 0; i < 12; ++i) {
-                    if (std::string(ab_month_name[i]) == std::string(month))
+                for (int i = 0; i < 12; ++i)
+                    if (std::string(kab_month_name[i]) == std::string(month))
                         vcd_header_struct_.vcd_create_time.tm_mon = i;
-                }
-
                 parse_status = 0;
                 break;
-            }
             case 2: {
                 std::istringstream read_stream(read_string);
                 read_stream >> this->vcd_header_struct_.vcd_time_scale >> this->vcd_header_struct_.vcd_time_unit;
@@ -100,12 +126,10 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
 }
 
 void VCDParser::get_vcd_scope() {
-    long line = 0;
-    std::vector<std::string> vcd_module;
-    std::unordered_map<std::string, struct VCDSignalStruct> vcd_signal;
-    std::map<std::string, std::unordered_map<std::string, struct VCDSignalStruct>> vcd_signal_umap;
+    std::list<std::string> vcd_module;
     vcd_module.clear();
-    vcd_signal_umap.clear();
+    vcd_signal.clear();
+    vcd_signal_map.clear();
     std::ifstream file;
     file.open(vcd_filename_, std::ios_base::in);
     if (!file.is_open()) {
@@ -114,11 +138,12 @@ void VCDParser::get_vcd_scope() {
     }
     std::string read_string;
     while (getline(file, read_string)) {
-        line++;
         if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
-
             unsigned long pos = read_string.rfind(' ');
             std::string scope_module = read_string.substr(14, pos - 14);
+            if (vcd_signal.empty() != 1)
+                vcd_signal_map.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
+                                           (vcd_module.back(), vcd_signal));
             vcd_module.push_back(scope_module);
             vcd_signal.clear();
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
@@ -133,91 +158,113 @@ void VCDParser::get_vcd_scope() {
             signal_info.erase(0, signal_info.find(' ') + 1);
             signal.vcd_signal_title = signal_info;
             vcd_signal.insert(std::pair<std::string, struct VCDSignalStruct>(signal.vcd_signal_label, signal));
-            vcd_signal_umap.insert(std::pair<std::string,
-                                             std::unordered_map<std::string,
-                                                                struct VCDSignalStruct >>(vcd_module.back(),
-                                                                                          vcd_signal));
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'e') {
-            std::string end_definitions = read_string.substr(1, read_string.find(' ') - 1);
-            if (read_string.substr(1, read_string.find(' ') - 1) == "enddefinitions")
+            if (read_string.substr(1, read_string.find(' ') - 1) == "enddefinitions") {
+                vcd_signal_map.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
+                                           (vcd_module.back(), vcd_signal));
                 break;
+            }
         }
     }
+
 //    for(auto &iter:vcd_module){
 //        std::cout << iter << std::endl;
 //    }
-//    for (auto & iter : vcd_signal_umap) {
-//        std::cout << iter.first << std::endl;
+//    for (auto & iter : vcd_signal_map) {
+//        std::cout <<"Key:"<< iter.first << std::endl;
 //        for(auto &it:iter.second){
-//            std::cout<<it.first<<std::endl;
-//            std::cout<<it.second.vcd_signal_type<<' '<<it.second.vcd_signal_width
-//            <<' '<<it.second.vcd_signal_title<<std::endl;
+//            std::cout<<it.first<<" Signal title: "<<it.second.vcd_signal_title<<std::endl;
 //        }
 //    }
-//    for(auto &iter:vcd_signal){
-//        std::cout << iter.first << std::endl;
-//        std::cout<<iter.second.vcd_signal_type<<' '<<iter.second.vcd_signal_width
-//            <<' '<<iter.second.vcd_signal_title<<std::endl;
-//    }
+}
+
+struct VCDSignalStruct *VCDParser::get_vcd_signal(const std::string &label) {
+    for (auto &iter : vcd_signal_map)
+        if (iter.second.find(label) != nullptr)
+            return &(iter.second.find(label)->second);
+    std::cout << "Cannot find alias named" << label << "\n";
+    return nullptr;
 }
 
 void VCDParser::get_vcd_value_change_time() {
-    signal_map_.clear();
-    FILE *fp;
-    fp = fopen64(vcd_filename_.c_str(), "r");
+    uint64_t buf_counter = 0;
+    static char reading_buffer[1024 * 1024] = {0};
+    vcd_delete_time_stamp_buffer_();
+    auto *vcdtime_buf = new struct VCDTimeStampStruct[ktime_stamp_buffer_size_];
+    time_stamp_first_buffer_.first_element = vcdtime_buf;
+    time_stamp_first_buffer_.next_buffer = nullptr;
+    struct VCDTimeStampBufferStruct *current_buffer = &time_stamp_first_buffer_;
+    FILE *fp = fopen64(vcd_filename_.c_str(), "r");
     if (fp == nullptr) {
         std::cout << "File open failed!\n";
         return;
     }
-    char buf[1024];
-    while (fgets(buf, sizeof(buf), fp) != nullptr) {
-        if (buf[0] == '#') {
-            unsigned long long time_stamp = 0;
-            time_stamp = strtoull(&buf[1], nullptr, 0);
-            signal_map_.insert(std::pair<unsigned long long, unsigned long long>(time_stamp, ftello64(fp)));
+    while (fgets(reading_buffer, sizeof(reading_buffer), fp) != nullptr) {
+        if (reading_buffer[0] == '#') {
+            current_buffer->first_element[buf_counter].timestamp = strtoull(&reading_buffer[1], nullptr, 0);
+            current_buffer->first_element[buf_counter].location = ftello64(fp);
+            buf_counter++;
+            if (buf_counter == ktime_stamp_buffer_size_) {
+                buf_counter = 0;
+                auto *next_buffer = new struct VCDTimeStampBufferStruct;
+                vcdtime_buf = new struct VCDTimeStampStruct[ktime_stamp_buffer_size_];
+                current_buffer->next_buffer = next_buffer;
+                next_buffer->first_element = vcdtime_buf;
+                next_buffer->next_buffer = nullptr;
+                current_buffer = next_buffer;
+                std::cout << "current buffer was full!\n";
+            }
         }
     }
-    fclose(fp);
-    /*std::map<unsigned long long, unsigned long long>::iterator it;
-    std::map<unsigned long long, unsigned long long>::iterator itEnd;
-    it = signal_map_.begin();
-    itEnd = signal_map_.end();
-    while (it != itEnd) {
-        std::cout << it->first << ' ' << it->second << std::endl;
-        it++;
+    for (uint64_t counter = buf_counter; counter < ktime_stamp_buffer_size_; ++counter) {
+        current_buffer->first_element[buf_counter].timestamp = 0;
+        current_buffer->first_element[buf_counter].location = 0;
     }
-*/
+    fclose(fp);
 }
 
-void VCDParser::get_vcd_value_from_time(uint64_t time) {
-    std::map<uint64_t, uint64_t>::iterator it;
-    it = signal_map_.find(time);
-    if (it == signal_map_.end())
-        std::cout << "we do not find the time_stamp" << std::endl;
-    else std::cout << "Time Stamp: " << time << "  in byte: " << it->second << std::endl;
+void VCDParser::get_vcd_value_from_time_range(uint64_t begin_time, uint64_t end_time) {
+    uint64_t time_location = 0;
+    struct VCDTimeStampBufferStruct *current_buffer = &time_stamp_first_buffer_;
+    while (true) {
+        for (uint64_t counter = 0; counter < ktime_stamp_buffer_size_; ++counter) {
+            if (current_buffer->first_element[counter].timestamp == begin_time) {
+                time_location = current_buffer->first_element[counter].location;
+                std::cout << "Find time " << begin_time << " in byte " << time_location << "\n";
+                break;
+            }
+        }
+        if (current_buffer->next_buffer == nullptr || time_location != 0)
+            break;
+        current_buffer = current_buffer->next_buffer;
+    }
 
-    FILE *fp;
-    fp = fopen64(vcd_filename_.c_str(), "r");
+    if (time_location == 0) {
+        std::cout << "Can't find time " << begin_time << " in file.\n";
+        return;
+    }
+
+    static char reading_buffer[1024 * 1024] = {0};
+    FILE *fp = fopen64(vcd_filename_.c_str(), "r");
     if (fp == nullptr) {
         std::cout << "File open failed!\n";
         return;
     }
-    fseeko64(fp, it->second, SEEK_SET);
-    char buf[1024];
-    while (fgets(buf, sizeof(buf), fp) != nullptr) {
-        buf[strlen(buf) - 1] = '\0';
-        std::string bufs = buf;
-        if (buf[0] == '$')
+    fseeko64(fp, (long) time_location, SEEK_SET);
+    while (fgets(reading_buffer, sizeof(reading_buffer), fp) != nullptr) {
+        reading_buffer[strlen(reading_buffer) - 1] = '\0';
+        std::string bufs = reading_buffer;
+        if (reading_buffer[0] == '$')
             continue;
-        if (buf[0] == '#')
+        if (reading_buffer[0] == '#')
             break;
-        if (buf[0] == 'b') {
+        if (reading_buffer[0] == 'b') {
             std::string signal_alias = bufs.substr(bufs.find_last_of(' ') + 1, bufs.length());
             std::string signal_value = bufs.substr(1, bufs.find_first_of(' '));
             std::cout << "Signal " << signal_alias << " is " << signal_value << "\n";
         } else {
-            std::string signal_alias = std::string((char *) (&buf[1])).substr(0, bufs.length());
-            std::cout << "Signal " << signal_alias << " is " << buf[0] << "\n";
+            std::string signal_alias = std::string((char *) (&reading_buffer[1])).substr(0, bufs.length());
+            std::cout << "Signal " << signal_alias << " is " << reading_buffer[0] << "\n";
         }
     }
 }
