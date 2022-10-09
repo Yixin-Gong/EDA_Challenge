@@ -122,14 +122,14 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
     std::cout << "File create time: " << tmp_buf << "\n";
     std::cout << "File time scale: " << this->vcd_header_struct_.vcd_time_scale << vcd_header_struct_.vcd_time_unit
               << "\n";
-    std::cout << "File hash value: " << this->vcd_header_struct_.vcd_comment_str << "\n";
+    std::cout << "File hash value: " << this->vcd_header_struct_.vcd_comment_str << "\n\n";
 }
 
 void VCDParser::get_vcd_scope() {
     std::list<std::string> vcd_module;
     vcd_module.clear();
-    vcd_signal.clear();
-    vcd_signal_map.clear();
+    vcd_signal_info_table_.clear();
+    vcd_signal_info_tree_.clear();
     std::ifstream file;
     file.open(vcd_filename_, std::ios_base::in);
     if (!file.is_open()) {
@@ -141,11 +141,12 @@ void VCDParser::get_vcd_scope() {
         if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
             unsigned long pos = read_string.rfind(' ');
             std::string scope_module = read_string.substr(14, pos - 14);
-            if (vcd_signal.empty() != 1)
-                vcd_signal_map.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
-                                           (vcd_module.back(), vcd_signal));
+            if (vcd_signal_info_table_.empty() != 1)
+                vcd_signal_info_tree_.emplace(std::pair<std::string,
+                                                        std::unordered_map<std::string, struct VCDSignalStruct>>
+                                                  (vcd_module.back(), vcd_signal_info_table_));
             vcd_module.push_back(scope_module);
-            vcd_signal.clear();
+            vcd_signal_info_table_.clear();
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
             struct VCDSignalStruct signal;
             unsigned long pos = read_string.rfind(' ');
@@ -157,11 +158,13 @@ void VCDParser::get_vcd_scope() {
             signal.vcd_signal_label = signal_info.substr(0, signal_info.find(' '));
             signal_info.erase(0, signal_info.find(' ') + 1);
             signal.vcd_signal_title = signal_info;
-            vcd_signal.insert(std::pair<std::string, struct VCDSignalStruct>(signal.vcd_signal_label, signal));
+            vcd_signal_info_table_.insert(std::pair<std::string, struct VCDSignalStruct>(signal.vcd_signal_label,
+                                                                                         signal));
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'e') {
             if (read_string.substr(1, read_string.find(' ') - 1) == "enddefinitions") {
-                vcd_signal_map.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
-                                           (vcd_module.back(), vcd_signal));
+                vcd_signal_info_tree_.emplace(std::pair<std::string,
+                                                        std::unordered_map<std::string, struct VCDSignalStruct>>
+                                                  (vcd_module.back(), vcd_signal_info_table_));
                 break;
             }
         }
@@ -170,7 +173,7 @@ void VCDParser::get_vcd_scope() {
 //    for(auto &iter:vcd_module){
 //        std::cout << iter << std::endl;
 //    }
-//    for (auto & iter : vcd_signal_map) {
+//    for (auto & iter : vcd_signal_info_tree_) {
 //        std::cout <<"Key:"<< iter.first << std::endl;
 //        for(auto &it:iter.second){
 //            std::cout<<it.first<<" Signal title: "<<it.second.vcd_signal_title<<std::endl;
@@ -179,7 +182,7 @@ void VCDParser::get_vcd_scope() {
 }
 
 struct VCDSignalStruct *VCDParser::get_vcd_signal(const std::string &label) {
-    for (auto &iter : vcd_signal_map)
+    for (auto &iter : vcd_signal_info_tree_)
         if (iter.second.find(label) != nullptr)
             return &(iter.second.find(label)->second);
     std::cout << "Cannot find alias named" << label << "\n";
@@ -240,7 +243,7 @@ void VCDParser::get_vcd_value_from_time_range(uint64_t begin_time, uint64_t end_
     }
 
     if (time_location == 0) {
-        std::cout << "Can't find time " << begin_time << " in file.\n";
+        std::cout << "Can't find time " << begin_time << " in file.\n\n";
         return;
     }
 
@@ -267,9 +270,10 @@ void VCDParser::get_vcd_value_from_time_range(uint64_t begin_time, uint64_t end_
             std::cout << "Signal " << signal_alias << " is " << reading_buffer[0] << "\n";
         }
     }
+    std::cout << "\n";
 }
 
-void VCDParser::value_change_counter_(uint64_t time) {
+void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time) {
     std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator iter;
     static char buf[1024];
     FILE *fp = fopen64(vcd_filename_.c_str(), "r");
@@ -278,7 +282,7 @@ void VCDParser::value_change_counter_(uint64_t time) {
         return;
     }
 
-    fseeko64(fp, (long) signal_map_.find(time)->second, SEEK_SET);
+    fseeko64(fp, (long) time_stamp_first_buffer_.first_element[0].location, SEEK_SET);
     while (fgets(buf, sizeof(buf), fp) != nullptr) {
         buf[strlen(buf) - 1] = '\0';
         std::string bufs = buf;
@@ -293,7 +297,7 @@ void VCDParser::value_change_counter_(uint64_t time) {
         VCDSignalStatisticStruct cnt{0, 0, 0, 0, 0, 0};
         std::string signal_alias = std::string((char *) (&buf[1])).substr(0, bufs.length());
         cnt.last_level_status = buf[0];
-        counters.insert(std::pair<std::string, struct VCDSignalStatisticStruct>(signal_alias, cnt));
+        vcd_signal_flip_table_.insert(std::pair<std::string, struct VCDSignalStatisticStruct>(signal_alias, cnt));
     }
 
     static uint64_t current_timestamp = 0;
@@ -312,7 +316,7 @@ void VCDParser::value_change_counter_(uint64_t time) {
             continue;
         } else {
             std::string signal_alias = std::string((char *) (&buf[1])).substr(0, strlen(buf));
-            iter = counters.find(signal_alias);
+            iter = vcd_signal_flip_table_.find(signal_alias);
             iter->second.total_invert_counter++;
             uint64_t time_difference = current_timestamp - iter->second.last_timestamp;
             switch (iter->second.last_level_status) {
@@ -340,7 +344,7 @@ void VCDParser::value_change_counter_(uint64_t time) {
     }
     fclose(fp);
 
-    for (auto &it : counters) {
+    for (auto &it : vcd_signal_flip_table_) {
         uint64_t time_difference = current_timestamp - it.second.last_timestamp;
         switch (it.second.last_level_status) {
             case 'z':
@@ -353,8 +357,9 @@ void VCDParser::value_change_counter_(uint64_t time) {
         }
     }
 
-    for (auto &i : counters)
+    for (auto &i : vcd_signal_flip_table_)
         std::cout << i.first << " " << i.second.total_invert_counter << " " << i.second.signal1_time << " "
                   << i.second.signal0_time << " " << i.second.signalx_time << "\n";
-    counters.clear();
+    std::cout << "\n";
+    vcd_signal_flip_table_.clear();
 }
