@@ -51,6 +51,7 @@ void MainWindow::parse_button_clicked() {
         parser_->get_vcd_value_change_time();
         parser_->get_vcd_value_from_time_range(748000, 0);
         parser_->get_vcd_scope();
+        parser_->value_change_counter_(0);
         std::cout << "Signal ! is " << parser_->get_vcd_signal("!")->vcd_signal_title << "\n";
     }
     endTime = clock();

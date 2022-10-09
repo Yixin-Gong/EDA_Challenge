@@ -14,6 +14,7 @@
 #include <list>
 #include <cstdlib>
 #include <cstdio>
+#include <unordered_map>
 
 VCDParser::VCDParser() {
     vcd_header_struct_.vcd_comment_str = "";
@@ -266,4 +267,94 @@ void VCDParser::get_vcd_value_from_time_range(uint64_t begin_time, uint64_t end_
             std::cout << "Signal " << signal_alias << " is " << reading_buffer[0] << "\n";
         }
     }
+}
+
+void VCDParser::value_change_counter_(uint64_t time) {
+    std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator iter;
+    static char buf[1024];
+    FILE *fp = fopen64(vcd_filename_.c_str(), "r");
+    if (fp == nullptr) {
+        std::cout << "File open failed!\n";
+        return;
+    }
+
+    fseeko64(fp, (long) signal_map_.find(time)->second, SEEK_SET);
+    while (fgets(buf, sizeof(buf), fp) != nullptr) {
+        buf[strlen(buf) - 1] = '\0';
+        std::string bufs = buf;
+        if (buf[0] == '#')
+            continue;
+        if (bufs == "$dumpvars")
+            continue;
+        if (bufs == "$end")
+            break;
+        if (buf[0] == 'b')
+            continue;
+        VCDSignalStatisticStruct cnt{0, 0, 0, 0, 0, 0};
+        std::string signal_alias = std::string((char *) (&buf[1])).substr(0, bufs.length());
+        cnt.last_level_status = buf[0];
+        counters.insert(std::pair<std::string, struct VCDSignalStatisticStruct>(signal_alias, cnt));
+    }
+
+    static uint64_t current_timestamp = 0;
+    std::unordered_map<std::string, uint16_t> burr_hash_table;
+    while (fgets(buf, sizeof(buf), fp) != nullptr) {
+        buf[strlen(buf) - 1] = '\0';
+        if (buf[0] == '#') {
+            for (auto &it : burr_hash_table)
+                std::cout << "Warning: Signal " << it.first << " have burred " << it.second << " time(s) in time "
+                          << current_timestamp << "\n";
+            burr_hash_table.clear();
+            current_timestamp = strtoll(&buf[1], nullptr, 0);
+            continue;
+        }
+        if (buf[0] == 'b') {
+            continue;
+        } else {
+            std::string signal_alias = std::string((char *) (&buf[1])).substr(0, strlen(buf));
+            iter = counters.find(signal_alias);
+            iter->second.total_invert_counter++;
+            uint64_t time_difference = current_timestamp - iter->second.last_timestamp;
+            switch (iter->second.last_level_status) {
+                case 'z':
+                case '1':iter->second.signal1_time += time_difference;
+                    break;
+                case '0':iter->second.signal0_time += time_difference;
+                    break;
+                case 'x':iter->second.signalx_time += time_difference;
+                    break;
+            }
+            if (buf[0] == 'x' || time_difference == 0 || iter->second.last_level_status == 'x')
+                iter->second.total_invert_counter--;
+
+            if (time_difference == 0) {
+                if (burr_hash_table.find(signal_alias) == burr_hash_table.end())
+                    burr_hash_table.insert(std::pair<std::string, uint16_t>(signal_alias, 0));
+                burr_hash_table.find(signal_alias)->second++;
+                if (buf[0] == 'x' || iter->second.last_level_status == 'x')
+                    burr_hash_table.find(signal_alias)->second--;
+            }
+            iter->second.last_level_status = buf[0];
+            iter->second.last_timestamp = current_timestamp;
+        }
+    }
+    fclose(fp);
+
+    for (auto &it : counters) {
+        uint64_t time_difference = current_timestamp - it.second.last_timestamp;
+        switch (it.second.last_level_status) {
+            case 'z':
+            case '1':it.second.signal1_time += time_difference;
+                break;
+            case '0':it.second.signal0_time += time_difference;
+                break;
+            case 'x':it.second.signalx_time += time_difference;
+                break;
+        }
+    }
+
+    for (auto &i : counters)
+        std::cout << i.first << " " << i.second.total_invert_counter << " " << i.second.signal1_time << " "
+                  << i.second.signal0_time << " " << i.second.signalx_time << "\n";
+    counters.clear();
 }
