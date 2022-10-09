@@ -51,6 +51,7 @@ void MainWindow::parse_button_clicked() {
         parser_->get_vcd_value_change_time();
         parser_->get_vcd_value_from_time(0);
         parser_->get_vcd_scope();
+        parser_->value_change_counter_(0);
     }
     endTime = clock();
     std::cout << "Running time is:" << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s\n";
