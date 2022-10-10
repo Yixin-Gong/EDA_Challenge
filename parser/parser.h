@@ -54,8 +54,8 @@ class VCDParser {
   struct VCDHeaderStruct vcd_header_struct_{};
   struct VCDTimeStampBufferStruct time_stamp_first_buffer_{};
   const uint32_t ktime_stamp_buffer_size_ = 1024;
-  std::unordered_map<std::string, struct VCDSignalStruct> vcd_signal;
-  std::map<std::string, std::unordered_map<std::string, struct VCDSignalStruct>> vcd_signal_map;
+  std::unordered_map<std::string, struct VCDSignalStruct> vcd_signal_;
+  std::map<std::string, std::unordered_map<std::string, struct VCDSignalStruct>> vcd_signal_map_;
   void parse_vcd_header_(const std::string &filename);
   void vcd_delete_time_stamp_buffer_();
 };
