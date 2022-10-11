@@ -137,15 +137,7 @@ void VCDParser::get_vcd_scope() {
     }
     std::string read_string;
     while (getline(file, read_string)) {
-        if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
-            unsigned long pos = read_string.rfind(' ');
-            std::string scope_module = read_string.substr(14, pos - 14);
-            if (vcd_signal_.empty() != 1)
-                vcd_signal_map_.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
-                                            (vcd_module.back(), vcd_signal_));
-            vcd_module.push_back(scope_module);
-            vcd_signal_.clear();
-        } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
+        if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
             struct VCDSignalStruct signal;
             int space_pos = 0;
             std::string width;
@@ -171,8 +163,24 @@ void VCDParser::get_vcd_scope() {
                 }
             }
             vcd_signal_.insert(std::pair<std::string, struct VCDSignalStruct>(signal.vcd_signal_label, signal));
+        } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
+            std::string scope_module;
+            int space_pos = 0;
+            for (int pos = 0; read_string[pos] != 0 && space_pos != 3; pos++) {
+                if (read_string[pos] == ' ') {
+                    space_pos++;
+                    continue;
+                }
+                if (space_pos == 2)
+                    scope_module += read_string[pos];
+            }
+            if (vcd_signal_.empty() != 1)
+                vcd_signal_map_.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
+                                            (vcd_module.back(), vcd_signal_));
+            vcd_module.push_back(scope_module);
+            vcd_signal_.clear();
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'e') {
-            if (read_string.substr(1, read_string.find(' ') - 1) == "enddefinitions") {
+            if (read_string == "$enddefinitions $end") {
                 vcd_signal_map_.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
                                             (vcd_module.back(), vcd_signal_));
                 break;
@@ -180,7 +188,7 @@ void VCDParser::get_vcd_scope() {
         }
     }
 
-//    for(auto &iter:vcd_module){
+//    for (auto &iter : vcd_module) {
 //        std::cout << iter << std::endl;
 //    }
 //    for (auto &iter : vcd_signal_map_) {
