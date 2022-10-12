@@ -281,7 +281,8 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
         std::cout << "File open failed!\n";
         return;
     }
-    std::unordered_map<std::string, uint16_t> burr_hash_table;
+    struct tmp_burr_struct { uint16_t times; int8_t status_before_last; };
+    std::unordered_map<std::string, tmp_burr_struct> burr_hash_table;
     fseeko64(fp, (long) time_stamp_first_buffer_.first_element[0].location, SEEK_SET);
     while (fgets(buf, sizeof(buf), fp) != nullptr) {
         VCDSignalStatisticStruct cnt{0, 0, 0, 0, 0, 0};
@@ -315,9 +316,9 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
         std::string bufs = buf;
         if (buf[0] == '#') {
             for (auto &it : burr_hash_table)
-                if (it.second != 0)
-                    std::cout << "Warning: Signal " << it.first << " have burred " << it.second << " time(s) in time "
-                              << current_timestamp << "\n";
+                if (it.second.times != 0)
+                    std::cout << "Warning: Signal " << it.first << " have burred " << it.second.times
+                              << " time(s) in time " << current_timestamp << "\n";
             burr_hash_table.clear();
             current_timestamp = strtoll(&buf[1], nullptr, 0);
             continue;
@@ -331,21 +332,32 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
                 uint64_t time_difference = current_timestamp - iter->second.last_timestamp;
                 if (buf[signal_length - count] != iter->second.last_level_status) {
                     iter->second.total_invert_counter++;
-                    switch (iter->second.last_level_status) {
-                        case 'z':
-                        case '1':iter->second.signal1_time += time_difference;
-                            break;
-                        case '0':iter->second.signal0_time += time_difference;
-                            break;
-                        case 'x':iter->second.signalx_time += time_difference;
-                            break;
-                    }
                     if (buf[signal_length - count] == 'x' || time_difference == 0
                         || iter->second.last_level_status == 'x')
                         iter->second.total_invert_counter--;
-                    iter->second.last_level_status = buf[signal_length - count];
-                    iter->second.last_timestamp = current_timestamp;
+
+                    if (time_difference == 0) {
+                        if (burr_hash_table.find(temp_alias) == burr_hash_table.end())
+                            burr_hash_table.insert(std::pair<std::string, tmp_burr_struct>(temp_alias, {0, 0}));
+                        auto *tmp_element = &(burr_hash_table.find(temp_alias)->second);
+                        tmp_element->times++;
+                        if (buf[signal_length - count] == 'x'
+                            || tmp_element->status_before_last == buf[signal_length - count])
+                            tmp_element->times--;
+                        tmp_element->status_before_last = iter->second.last_level_status;
+                    }
                 }
+                switch (iter->second.last_level_status) {
+                    case 'z':
+                    case '1':iter->second.signal1_time += time_difference;
+                        break;
+                    case '0':iter->second.signal0_time += time_difference;
+                        break;
+                    case 'x':iter->second.signalx_time += time_difference;
+                        break;
+                }
+                iter->second.last_timestamp = current_timestamp;
+                iter->second.last_level_status = buf[signal_length - count];
             }
         } else {
             std::string signal_alias = std::string((char *) (&buf[1])).substr(0, strlen(buf));
@@ -365,10 +377,12 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
                 iter->second.total_invert_counter--;
             if (time_difference == 0) {
                 if (burr_hash_table.find(signal_alias) == burr_hash_table.end())
-                    burr_hash_table.insert(std::pair<std::string, uint16_t>(signal_alias, 0));
-                burr_hash_table.find(signal_alias)->second++;
-                if (buf[0] == 'x')
-                    burr_hash_table.find(signal_alias)->second--;
+                    burr_hash_table.insert(std::pair<std::string, tmp_burr_struct>(signal_alias, {0, 0}));
+                auto *tmp_element = &(burr_hash_table.find(signal_alias)->second);
+                tmp_element->times++;
+                if (buf[0] == 'x' || tmp_element->status_before_last == buf[0])
+                    tmp_element->times--;
+                tmp_element->status_before_last = iter->second.last_level_status;
             }
             iter->second.last_level_status = buf[0];
             iter->second.last_timestamp = current_timestamp;
@@ -391,7 +405,8 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
 
     for (auto &i : vcd_signal_flip_table_)
         std::cout << i.first << " " << i.second.total_invert_counter << " " << i.second.signal1_time << " "
-                  << i.second.signal0_time << " " << i.second.signalx_time << "\n";
-    std::cout << "\n";
+                  << i.second.signal0_time << " " << i.second.signalx_time << " sp: " <<
+                  ((double) i.second.signal1_time
+                      / (double) (i.second.signal1_time + i.second.signal0_time + i.second.signalx_time)) << "\n";
     vcd_signal_flip_table_.clear();
 }
