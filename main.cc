@@ -10,6 +10,7 @@
 #include <iostream>
 #include "mainwindow.h"
 #include "parser.h"
+#include "cli_parser.h"
 #include "tclap/CmdLine.h"
 #else
 #include "gtest/gtest.h"
@@ -59,42 +60,24 @@ int main(int argc, char **argv) {
         cmd.parse(argc, argv);
 
         /* Get the value parsed by each arg */
-        std::string filepath = filename_arg.getValue();
-        std::string begin_time = begin_time_arg.getValue();
-        std::string end_time = end_time_arg.getValue();
-        std::string scope = scope_arg.getValue();
-        std::string output = output_arg.getValue();
-        bool using_gui_flag = using_gui_switch.getValue();
+        CLIParser cli_parser(filename_arg.getValue(),
+                             begin_time_arg.getValue(),
+                             end_time_arg.getValue(),
+                             scope_arg.getValue(),
+                             output_arg.getValue(),
+                             using_gui_switch.getValue());
 
-        if (using_gui_flag) {
-            std::cout << "Starting software with GUI ...\n";
+        if (cli_parser.using_gui()) {
             argc = 1;
             auto app = Gtk::Application::create(argc, argv, "eda.challenge");
             MainWindow *main_window;
-            if (filepath.empty() || (filepath.find(".vcd") == std::string::npos)) {
-                if ((!filepath.empty()) && (filepath.find(".vcd") == std::string::npos))
-                    std::cout << "Please input the VCD file with the .vcd extension\n";
+            if (cli_parser.valid_file())
+                main_window = new MainWindow(app, software_version, cli_parser.get_filename());
+            else
                 main_window = new MainWindow(app, software_version);
-            } else {
-                if (SystemInfo::FileExists(filepath))
-                    main_window = new MainWindow(app, software_version, filepath);
-                else {
-                    std::cout << "File " << filepath << " doesn't exists!\n";;
-                    main_window = new MainWindow(app, software_version);
-                }
-            }
             return app->run(*main_window);
         } else {
-            if (filepath.empty()) {
-                std::cout << "Please input VCD file path with -f <file path>\n";
-                return 1;
-            } else if (filepath.find(".vcd") == std::string::npos) {
-                std::cout << "Please input the VCD file with the .vcd extension\n";
-                return 2;
-            }
-            std::cout << "No gui with file: " << filepath << "\n";
-            std::cout << "Output file path: " << output << "\n";
-            VCDParser parser(filepath);
+            VCDParser parser(cli_parser.get_filename());
         }
     } catch (TCLAP::ArgException &e) {
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
