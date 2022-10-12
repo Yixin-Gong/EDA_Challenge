@@ -7,7 +7,7 @@
  ******************************************************************************/
 
 #include "gtest/gtest.h"
-#include "parser.h"
+#include "vcd_parser.h"
 
 TEST(TestParser, ParseHeader) {
     auto *parser = new VCDParser("../testcase/case0/test.vcd");

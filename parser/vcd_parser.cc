@@ -6,7 +6,7 @@
   \date     25. September 2022
  ******************************************************************************/
 
-#include "parser.h"
+#include "vcd_parser.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -128,8 +128,8 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
 void VCDParser::get_vcd_scope() {
     std::list<std::string> vcd_module;
     vcd_module.clear();
-    vcd_signal_.clear();
-    vcd_signal_map_.clear();
+    vcd_signal_alias_table_.clear();
+    vcd_scope_tree_.clear();
     std::ifstream file;
     file.open(vcd_filename_, std::ios_base::in);
     if (!file.is_open()) {
@@ -163,7 +163,8 @@ void VCDParser::get_vcd_scope() {
                     default:break;
                 }
             }
-            vcd_signal_.insert(std::pair<std::string, struct VCDSignalStruct>(signal.vcd_signal_label, signal));
+            vcd_signal_alias_table_.insert(std::pair<std::string, struct VCDSignalStruct>(signal.vcd_signal_label,
+                                                                                          signal));
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
             std::string scope_module;
             int space_pos = 0;
@@ -175,15 +176,15 @@ void VCDParser::get_vcd_scope() {
                 if (space_pos == 2)
                     scope_module += read_string[pos];
             }
-            if (vcd_signal_.empty() != 1)
-                vcd_signal_map_.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
-                                            (vcd_module.back(), vcd_signal_));
+            if (vcd_signal_alias_table_.empty() != 1)
+                vcd_scope_tree_.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
+                                            (vcd_module.back(), vcd_signal_alias_table_));
             vcd_module.push_back(scope_module);
-            vcd_signal_.clear();
+            vcd_signal_alias_table_.clear();
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'e') {
             if (read_string == "$enddefinitions $end") {
-                vcd_signal_map_.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
-                                            (vcd_module.back(), vcd_signal_));
+                vcd_scope_tree_.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
+                                            (vcd_module.back(), vcd_signal_alias_table_));
                 break;
             }
         }
@@ -191,7 +192,7 @@ void VCDParser::get_vcd_scope() {
 }
 
 struct VCDSignalStruct *VCDParser::get_vcd_signal(const std::string &label) {
-    for (auto &iter : vcd_signal_map_)
+    for (auto &iter : vcd_scope_tree_)
         if (iter.second.find(label) != nullptr)
             return &(iter.second.find(label)->second);
     std::cout << "Cannot find alias named" << label << "\n";

@@ -6,8 +6,8 @@
   \date     25. September 2022
  ******************************************************************************/
 
-#ifndef EDA_CHALLENGE_PARSER_PARSER_H_
-#define EDA_CHALLENGE_PARSER_PARSER_H_
+#ifndef EDA_CHALLENGE_PARSER_VCD_PARSER_H_
+#define EDA_CHALLENGE_PARSER_VCD_PARSER_H_
 
 #include <string>
 #include <vector>
@@ -36,11 +36,11 @@ class VCDParser {
   struct VCDHeaderStruct *get_vcd_header() {
       return &vcd_header_struct_;
   }
+  struct VCDSignalStruct *get_vcd_signal(const std::string &label);
   void get_vcd_scope();
   void get_vcd_value_change_time();
   void get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time);
-  struct VCDSignalStruct *get_vcd_signal(const std::string &label);
-  void get_vcd_value_from_time_range(uint64_t begin_time = 0, uint64_t end_time = 0);
+  void get_vcd_value_from_time_range(uint64_t begin_time, uint64_t end_time);
 
  private:
   struct VCDTimeStampStruct {
@@ -63,11 +63,11 @@ class VCDParser {
   struct VCDHeaderStruct vcd_header_struct_{};
   struct VCDTimeStampBufferStruct time_stamp_first_buffer_{};
   const uint32_t ktime_stamp_buffer_size_ = 1024;
-  std::map<std::string, std::unordered_map<std::string, struct VCDSignalStruct>> vcd_signal_map_;
+  std::map<std::string, std::unordered_map<std::string, struct VCDSignalStruct>> vcd_scope_tree_;
   std::unordered_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
-  std::unordered_map<std::string, struct VCDSignalStruct> vcd_signal_;
+  std::unordered_map<std::string, struct VCDSignalStruct> vcd_signal_alias_table_;
   void parse_vcd_header_(const std::string &filename);
   void vcd_delete_time_stamp_buffer_();
 };
 
-#endif //EDA_CHALLENGE_PARSER_PARSER_H_
+#endif //EDA_CHALLENGE_PARSER_VCD_PARSER_H_

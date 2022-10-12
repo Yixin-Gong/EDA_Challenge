@@ -12,7 +12,7 @@
 #include <gtkmm.h>
 #include <gtkmm-plplot.h>
 #include <iostream>
-#include "parser.h"
+#include "vcd_parser.h"
 #include "aboutwindow.h"
 
 class MainWindow : public Gtk::ApplicationWindow {
