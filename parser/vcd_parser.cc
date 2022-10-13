@@ -209,8 +209,29 @@ void VCDParser::get_vcd_value_change_time() {
     fclose(fp);
 }
 
-bool VCDParser::get_vcd_value_from_time_range(uint64_t *begin, uint64_t *end) {
+VCDParser::VCDTimeStampStruct *VCDParser::get_time_stamp_from_pos(uint32_t pos) {
+    struct VCDTimeStampBufferStruct *tmp_buffer = &time_stamp_first_buffer_;
+    for (int counter = 0; counter < pos / ktime_stamp_buffer_size_; ++counter) {
+        if (tmp_buffer->next_buffer == nullptr) return nullptr;
+        tmp_buffer = tmp_buffer->next_buffer;
+    }
+    return &(tmp_buffer->first_element[pos % ktime_stamp_buffer_size_]);
+}
 
+bool VCDParser::get_position_using_timestamp(uint64_t *begin) {
+    uint32_t begin_pos_est = *begin
+        / (time_stamp_first_buffer_.first_element[1].timestamp - time_stamp_first_buffer_.first_element[0].timestamp);
+    for (uint32_t last_begin_pos_est = 0;
+         !(last_begin_pos_est == begin_pos_est || get_time_stamp_from_pos(begin_pos_est)->timestamp == *begin);) {
+        last_begin_pos_est = begin_pos_est;
+        if (get_time_stamp_from_pos(begin_pos_est) == nullptr)
+            return false;
+        begin_pos_est =
+            begin_pos_est - ((int64_t) get_time_stamp_from_pos(begin_pos_est)->timestamp - (int64_t) *begin) /
+                (int64_t) (get_time_stamp_from_pos(begin_pos_est)->timestamp
+                    - get_time_stamp_from_pos(begin_pos_est - 1)->timestamp);
+    }
+    *begin = get_time_stamp_from_pos(begin_pos_est)->location;
     return true;
 }
 
