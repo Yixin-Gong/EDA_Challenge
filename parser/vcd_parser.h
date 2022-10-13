@@ -30,9 +30,13 @@ struct VCDSignalStruct {
 
 class VCDParser {
  public:
-  VCDParser();
-  explicit VCDParser(const std::string &filename);
-  ~VCDParser();
+  explicit VCDParser(const std::string &filename) {
+      vcd_filename_ = filename;
+      parse_vcd_header_();
+  }
+  ~VCDParser() {
+      vcd_delete_time_stamp_buffer_();
+  }
   struct VCDHeaderStruct *get_vcd_header() {
       return &vcd_header_struct_;
   }
@@ -40,7 +44,7 @@ class VCDParser {
   void get_vcd_scope();
   void get_vcd_value_change_time();
   void get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time);
-  void get_vcd_value_from_time_range(uint64_t begin_time, uint64_t end_time);
+  bool get_vcd_value_from_time_range(uint64_t *begin, uint64_t *end);
 
  private:
   struct VCDTimeStampStruct { uint64_t timestamp;uint64_t location; };
@@ -48,6 +52,7 @@ class VCDParser {
   struct VCDTimeStampBufferStruct {
     struct VCDTimeStampStruct *first_element;
     struct VCDTimeStampBufferStruct *next_buffer;
+    struct VCDTimeStampBufferStruct *previous_buffer;
   };
   struct VCDSignalStatisticStruct {
     uint64_t total_invert_counter;
@@ -65,7 +70,7 @@ class VCDParser {
   std::map<std::string, std::unordered_map<std::string, struct VCDSignalStruct>> vcd_scope_tree_;
   std::unordered_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
   std::unordered_map<std::string, struct VCDSignalStruct> vcd_signal_alias_table_;
-  void parse_vcd_header_(const std::string &filename);
+  void parse_vcd_header_();
   void vcd_delete_time_stamp_buffer_();
   static uint64_t vcd_statistic_time_(uint64_t current_timestamp,
                                       std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator iter);

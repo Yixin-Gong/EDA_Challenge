@@ -48,11 +48,15 @@ void MainWindow::parse_button_clicked() {
     clock_t startTime, endTime;
     startTime = clock();
     if (parser_ != nullptr) {
+        uint64_t begin_pos = 740000, end_pos = 750000;
         parser_->get_vcd_value_change_time();
-        parser_->get_vcd_value_from_time_range(748000, 0);
-        parser_->get_vcd_scope();
-        parser_->get_vcd_signal_flip_info(0, 0);
-        std::cout << "Signal ! is " << parser_->get_vcd_signal("!")->vcd_signal_title << "\n";
+        if (parser_->get_vcd_value_from_time_range(&begin_pos, &end_pos))
+            std::cout << begin_pos << " " << end_pos << "\n";
+        else
+            std::cout << "Failed to find timestamp\n";
+//        parser_->get_vcd_scope();
+//        parser_->get_vcd_signal_flip_info(0, 0);
+//        std::cout << "Signal ! is " << parser_->get_vcd_signal("!")->vcd_signal_title << "\n";
     }
     endTime = clock();
     std::cout << "\nRunning time is:" << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s\n";

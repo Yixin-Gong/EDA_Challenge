@@ -16,52 +16,23 @@
 #include <cstdio>
 #include <unordered_map>
 
-VCDParser::VCDParser() {
-    vcd_header_struct_.vcd_comment_str = "";
-    vcd_header_struct_.vcd_time_unit = "";
-    vcd_header_struct_.vcd_time_scale = 0;
-    time_stamp_first_buffer_.first_element = nullptr;
-    time_stamp_first_buffer_.next_buffer = nullptr;
-    memset(&vcd_header_struct_.vcd_create_time, 0x00, sizeof(struct tm));
-}
-
-VCDParser::VCDParser(const std::string &filename) {
-    vcd_filename_ = filename;
-    parse_vcd_header_(filename);
-    time_stamp_first_buffer_.first_element = nullptr;
-    time_stamp_first_buffer_.next_buffer = nullptr;
-}
-
-VCDParser::~VCDParser() {
-    vcd_delete_time_stamp_buffer_();
-}
-
 void VCDParser::vcd_delete_time_stamp_buffer_() {
     if (time_stamp_first_buffer_.first_element != nullptr) {
-        while (true) {
-            struct VCDTimeStampBufferStruct *current_buffer = &time_stamp_first_buffer_;
-            struct VCDTimeStampBufferStruct *last_buffer{};
-            if (time_stamp_first_buffer_.next_buffer == nullptr) {
-                delete time_stamp_first_buffer_.first_element;
-                return;
-            }
+        if (time_stamp_first_buffer_.next_buffer != nullptr) {
+            struct VCDTimeStampBufferStruct *last_buffer = time_stamp_first_buffer_.previous_buffer;
             while (true) {
-                if (current_buffer->next_buffer == nullptr)
+                last_buffer = last_buffer->previous_buffer;
+                delete last_buffer->next_buffer->first_element;
+                delete last_buffer->next_buffer;
+                if (last_buffer == &time_stamp_first_buffer_)
                     break;
-                last_buffer = current_buffer;
-                current_buffer = current_buffer->next_buffer;
             }
-            delete current_buffer->first_element;
-            delete current_buffer;
-            last_buffer->next_buffer = nullptr;
-            if (last_buffer == &time_stamp_first_buffer_)
-                break;
         }
         delete time_stamp_first_buffer_.first_element;
     }
 }
 
-void VCDParser::parse_vcd_header_(const std::string &filename) {
+void VCDParser::parse_vcd_header_() {
     std::ifstream file;
     std::string read_string;
     unsigned int parse_status = 0;
@@ -69,10 +40,10 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
     static const char kab_month_name[12][4] = {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-    std::cout << "\nOpen file: " << filename << "\n";
-    file.open(filename, std::ios_base::in);
+    std::cout << "\nOpen file: " << vcd_filename_ << "\n";
+    file.open(vcd_filename_, std::ios_base::in);
     if (!file.is_open()) {
-        std::cout << "\nCannot open file " << filename << "\n";
+        std::cout << "\nCannot open file " << vcd_filename_ << "\n";
         return;
     }
 
@@ -206,6 +177,7 @@ void VCDParser::get_vcd_value_change_time() {
     auto *vcdtime_buf = new struct VCDTimeStampStruct[ktime_stamp_buffer_size_];
     time_stamp_first_buffer_.first_element = vcdtime_buf;
     time_stamp_first_buffer_.next_buffer = nullptr;
+    time_stamp_first_buffer_.previous_buffer = nullptr;
     struct VCDTimeStampBufferStruct *current_buffer = &time_stamp_first_buffer_;
     FILE *fp = fopen64(vcd_filename_.c_str(), "r");
     if (fp == nullptr) {
@@ -222,10 +194,10 @@ void VCDParser::get_vcd_value_change_time() {
                 auto *next_buffer = new struct VCDTimeStampBufferStruct;
                 vcdtime_buf = new struct VCDTimeStampStruct[ktime_stamp_buffer_size_];
                 current_buffer->next_buffer = next_buffer;
+                next_buffer->previous_buffer = current_buffer;
                 next_buffer->first_element = vcdtime_buf;
                 next_buffer->next_buffer = nullptr;
                 current_buffer = next_buffer;
-                std::cout << "current buffer was full!\n";
             }
         }
     }
@@ -233,54 +205,13 @@ void VCDParser::get_vcd_value_change_time() {
         current_buffer->first_element[buf_counter].timestamp = 0;
         current_buffer->first_element[buf_counter].location = 0;
     }
+    time_stamp_first_buffer_.previous_buffer = current_buffer;
     fclose(fp);
 }
 
-void VCDParser::get_vcd_value_from_time_range(uint64_t begin_time, uint64_t end_time) {
-    uint64_t time_location = 0;
-    struct VCDTimeStampBufferStruct *current_buffer = &time_stamp_first_buffer_;
-    while (true) {
-        for (uint64_t counter = 0; counter < ktime_stamp_buffer_size_; ++counter) {
-            if (current_buffer->first_element[counter].timestamp == begin_time) {
-                time_location = current_buffer->first_element[counter].location;
-                std::cout << "Find time " << begin_time << " in byte " << time_location << "\n";
-                break;
-            }
-        }
-        if (current_buffer->next_buffer == nullptr || time_location != 0)
-            break;
-        current_buffer = current_buffer->next_buffer;
-    }
+bool VCDParser::get_vcd_value_from_time_range(uint64_t *begin, uint64_t *end) {
 
-    if (time_location == 0) {
-        std::cout << "Can't find time " << begin_time << " in file.\n\n";
-        return;
-    }
-
-    static char reading_buffer[1024 * 1024] = {0};
-    FILE *fp = fopen64(vcd_filename_.c_str(), "r");
-    if (fp == nullptr) {
-        std::cout << "File open failed!\n";
-        return;
-    }
-    fseeko64(fp, (long) time_location, SEEK_SET);
-    while (fgets(reading_buffer, sizeof(reading_buffer), fp) != nullptr) {
-        reading_buffer[strlen(reading_buffer) - 1] = '\0';
-        std::string bufs = reading_buffer;
-        if (reading_buffer[0] == '$')
-            continue;
-        if (reading_buffer[0] == '#')
-            break;
-        if (reading_buffer[0] == 'b') {
-            std::string signal_alias = bufs.substr(bufs.find_last_of(' ') + 1, bufs.length());
-            std::string signal_value = bufs.substr(1, bufs.find_first_of(' '));
-            std::cout << "Signal " << signal_alias << " is " << signal_value << "\n";
-        } else {
-            std::string signal_alias = std::string((char *) (&reading_buffer[1])).substr(0, bufs.length());
-            std::cout << "Signal " << signal_alias << " is " << reading_buffer[0] << "\n";
-        }
-    }
-    std::cout << "\n";
+    return true;
 }
 
 void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time) {
