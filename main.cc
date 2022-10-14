@@ -8,7 +8,7 @@
 
 #if (defined(IS_NOT_RUNNING_GOOGLE_TEST) || defined(IS_NOT_RUNNING_GUI))
 #include <iostream>
-#include <csignal>
+#include <unistd.h>
 #ifndef IS_NOT_RUNNING_GUI
 #include "mainwindow.h"
 #endif

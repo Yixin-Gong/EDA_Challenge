@@ -7,16 +7,16 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_compile_options(-O2 -g)
 
-add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/../system/version.h"
-        COMMAND ${CMAKE_COMMAND} -D SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}"
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/gitversion.cmake
-        COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/gui && glib-compile-resources gresource.xml --target=resources.cc --generate-source
-        COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/system/system.cc)
-
 if (NOT COMPILE_ON_SERVER)
     include_directories(system gtest/include gui . parser)
     file(GLOB_RECURSE SOURCES "main.cc" "system/*.cc" "gui/*.cc" "parser/*.cc")
     file(GLOB_RECURSE TEST_SOURCES "test/*.cc")
+
+    add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/../system/version.h"
+            COMMAND ${CMAKE_COMMAND} -D SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}"
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/gitversion.cmake
+            COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/gui && glib-compile-resources gresource.xml --target=resources.cc --generate-source
+            COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/system/system.cc)
 
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
@@ -47,6 +47,11 @@ else ()
 
     add_compile_definitions(GTK_LIBRARY_VERSION="No gtk library" GTKMM_LIBRARY_VERSION="No gtkmm library")
     add_compile_definitions(CXX_COMPILER_VERSION="${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+
+    add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/../system/version.h"
+            COMMAND ${CMAKE_COMMAND} -D SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}"
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/gitversion.cmake
+            COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/system/system.cc)
 
     add_executable(${PROJECT_NAME} ${SOURCES})
     target_link_libraries(${PROJECT_NAME} m)
