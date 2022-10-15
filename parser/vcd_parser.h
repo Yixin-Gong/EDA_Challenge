@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <list>
 #include <unordered_map>
 
 struct VCDHeaderStruct {
@@ -44,6 +45,7 @@ class VCDParser {
   void get_vcd_scope();
   void get_vcd_value_change_time();
   void get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time);
+  void printf_source_csv(const std::string &filepath);
   bool get_position_using_timestamp(uint64_t *begin);
 
  private:
@@ -67,7 +69,8 @@ class VCDParser {
   struct VCDHeaderStruct vcd_header_struct_{};
   struct VCDTimeStampBufferStruct time_stamp_first_buffer_{};
   const uint32_t ktime_stamp_buffer_size_ = 1024;
-  std::map<std::string, std::unordered_map<std::string, struct VCDSignalStruct>> vcd_scope_tree_;
+
+  std::list<std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
   std::unordered_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
   std::unordered_map<std::string, struct VCDSignalStruct> vcd_signal_alias_table_;
 
