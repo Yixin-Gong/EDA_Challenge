@@ -52,6 +52,7 @@ void MainWindow::parse_button_clicked() {
         parser_->get_vcd_value_from_time_range(748000, 0);
         parser_->get_vcd_scope();
         parser_->get_vcd_signal_flip_info(0, 0);
+        parser_->printf_source_csv("./out.csv");
         std::cout << "Signal ! is " << parser_->get_vcd_signal("!")->vcd_signal_title << "\n";
     }
     endTime = clock();

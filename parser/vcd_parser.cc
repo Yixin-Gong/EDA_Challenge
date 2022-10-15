@@ -126,10 +126,8 @@ void VCDParser::parse_vcd_header_(const std::string &filename) {
 }
 
 void VCDParser::get_vcd_scope() {
-    std::list<std::string> vcd_module;
-    vcd_module.clear();
     vcd_signal_alias_table_.clear();
-    vcd_scope_tree_.clear();
+    vcd_signal_list_.clear();
     std::ifstream file;
     file.open(vcd_filename_, std::ios_base::in);
     if (!file.is_open()) {
@@ -176,23 +174,40 @@ void VCDParser::get_vcd_scope() {
                 if (space_pos == 2)
                     scope_module += read_string[pos];
             }
-            if (vcd_signal_alias_table_.empty() != 1)
-                vcd_scope_tree_.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
-                                            (vcd_module.back(), vcd_signal_alias_table_));
-            vcd_module.push_back(scope_module);
+            if (vcd_signal_alias_table_.empty() != 1) {
+                vcd_signal_list_.back().second = vcd_signal_alias_table_;
+                vcd_signal_list_.emplace_back(scope_module, 0);
+            } else {
+                vcd_signal_list_.emplace_back(scope_module, 0);
+            }
             vcd_signal_alias_table_.clear();
+        } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'u') {
+            if (vcd_signal_alias_table_.empty() != 1) {
+                vcd_signal_list_.back().second = vcd_signal_alias_table_;
+                vcd_signal_alias_table_.clear();
+            }
+            vcd_signal_list_.emplace_back("upscope", 0);
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'e') {
             if (read_string == "$enddefinitions $end") {
-                vcd_scope_tree_.emplace(std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>
-                                            (vcd_module.back(), vcd_signal_alias_table_));
+                vcd_signal_list_.back().second = vcd_signal_alias_table_;
                 break;
             }
         }
     }
+
+//    for (auto &iter : vcd_module_) {
+//        std::cout << iter << std::endl;
+//    }
+//    for (auto &iter : vcd_signal_list_) {
+//        std::cout << "Key:" << iter.first << std::endl;
+//        for (auto &it : iter.second) {
+//            std::cout << it.first << " Signal title: " << it.second.vcd_signal_title << std::endl;
+//        }
+//    }
 }
 
 struct VCDSignalStruct *VCDParser::get_vcd_signal(const std::string &label) {
-    for (auto &iter : vcd_scope_tree_)
+    for (auto &iter : vcd_signal_list_)
         if (iter.second.find(label) != nullptr)
             return &(iter.second.find(label)->second);
     std::cout << "Cannot find alias named" << label << "\n";
@@ -419,4 +434,36 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
                   ((double) i.second.signal1_time
                       / (double) (i.second.signal1_time + i.second.signal0_time + i.second.signalx_time)) << "\n";
     vcd_signal_flip_table_.clear();
+}
+
+void VCDParser::printf_source_csv(const std::string &filepath) {
+    std::ofstream file;
+    file.open(filepath, std::ios::out | std::ios::trunc);
+    std::list<std::string> all_module;
+    for (auto &iter : vcd_signal_list_) {
+        if (iter.first == "upscope") {
+            all_module.pop_back();
+            continue;
+        }
+        std::string All_module;
+        All_module.clear();
+        for (auto &module : all_module) {
+            All_module += module + "/";
+        }
+        all_module.emplace_back(iter.first);
+        if (iter.second.empty() != 1) {
+            for (auto &it : iter.second) {
+                if (it.second.vcd_signal_width == 1) {
+                    file << All_module << iter.first << "." << it.second.vcd_signal_title << std::endl;
+                } else {
+                    for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++)
+                        file << All_module << iter.first << "." << it.second.vcd_signal_title << "[" << wid_pos
+                             << "] "
+                             << std::endl;
+                }
+            }
+        }
+
+    }
+    file.close();
 }
