@@ -39,4 +39,5 @@ jobs:
           path: ./
       - name: Run Testcase
         run: |
+          chmod +x EDA_Challenge
           ./EDA_Challenge -f /home/public/UT/case0/test.vcd
