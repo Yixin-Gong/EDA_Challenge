@@ -6,9 +6,12 @@
   \date     20. September 2022
  ******************************************************************************/
 
-#ifdef IS_NOT_RUNNING_GOOGLE_TEST
+#if (defined(IS_NOT_RUNNING_GOOGLE_TEST) || defined(IS_NOT_RUNNING_GUI))
 #include <iostream>
+#include <unistd.h>
+#ifndef IS_NOT_RUNNING_GUI
 #include "mainwindow.h"
+#endif
 #include "vcd_parser.h"
 #include "cli_parser.h"
 #include "tclap/CmdLine.h"
@@ -23,7 +26,7 @@
     \return     Program execution results
 */
 int main(int argc, char **argv) {
-#ifdef IS_NOT_RUNNING_GOOGLE_TEST
+#if (defined(IS_NOT_RUNNING_GOOGLE_TEST) || defined(IS_NOT_RUNNING_GUI))
     const std::string software_version = "1.0.1";
     char buffer[512];
     std::string software_path = "./";
@@ -68,6 +71,7 @@ int main(int argc, char **argv) {
                              using_gui_switch.getValue());
 
         if (cli_parser.using_gui()) {
+#ifndef IS_NOT_RUNNING_GUI
             argc = 1;
             auto app = Gtk::Application::create(argc, argv, "eda.challenge");
             MainWindow *main_window;
@@ -76,8 +80,24 @@ int main(int argc, char **argv) {
             else
                 main_window = new MainWindow(app, software_version);
             return app->run(*main_window);
+#else
+            std::cout << "You cannot use gui in this version.\n";
+#endif
         } else {
+            clock_t startTime, endTime;
+            startTime = clock();
+            uint64_t timestamp = 200;
             VCDParser parser(cli_parser.get_filename());
+            parser.get_vcd_value_change_time();
+            if (parser.get_position_using_timestamp(&timestamp))
+                std::cout << "TimeStamp 200 is at byte " << timestamp << "\n\n";
+            else
+                std::cout << "Failed to find timestamp\n\n";
+            parser.get_vcd_scope();
+            parser.get_vcd_signal_flip_info(0, 0);
+            std::cout << "Signal ! is " << parser.get_vcd_signal("!")->vcd_signal_title << "\n";
+            endTime = clock();
+            std::cout << "\nRunning time is:" << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s\n";
         }
     } catch (TCLAP::ArgException &e) {
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;

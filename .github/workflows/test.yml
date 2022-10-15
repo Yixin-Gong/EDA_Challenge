@@ -1,0 +1,42 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '40 15 * * *'      # compile at 23:50 each day
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: [ self-hosted, linux, x64 ]
+    steps:
+      - name: Download Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - name: Build Software
+        run: |
+          mkdir build && cd build && cmake .. -DCOMPILE_ON_SERVER=y && cmake --build . --target version_h
+          cmake .. -DCOMPILE_ON_SERVER=y && cmake --build . --target EDA_Challenge
+      - name: Run Software
+        run: |
+          cd build && ./EDA_Challenge -v && ./EDA_Challenge -h
+      - name: Upload Binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: EDA_Challenge-bin
+          path: build/EDA_Challenge
+  test:
+    needs: build
+    runs-on: [ self-hosted, linux, x64 ]
+    steps:
+      - name: Download Binary
+        uses: actions/download-artifact@v2
+        with:
+          name: EDA_Challenge-bin
+          path: ./
+      - name: Run Testcase
+        run: |
+          ./EDA_Challenge -f /home/public/UT/case0/test.vcd
