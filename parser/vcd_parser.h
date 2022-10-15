@@ -44,7 +44,7 @@ class VCDParser {
 
  private:
   struct VCDTimeStampStruct { uint64_t timestamp;uint64_t location; };
-  struct BurrCountStruct { uint16_t times; int8_t status_before_last; };
+  struct BurrCountStruct { uint16_t times; int8_t status_equal; };
   struct VCDTimeStampBufferStruct {
     struct VCDTimeStampStruct *first_element;
     struct VCDTimeStampBufferStruct *next_buffer;
