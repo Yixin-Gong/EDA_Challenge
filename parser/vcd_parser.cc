@@ -360,6 +360,41 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
     file.close();
 }
 
+void VCDParser::printf_source_csv(const std::string &filepath, const std::string &label) {
+    std::ofstream file;
+    file.open(filepath, std::ios::out | std::ios::trunc);
+    std::list<std::string> all_module;
+    for (auto &iter : vcd_signal_list_) {
+        if (iter.first == "upscope") {
+            all_module.pop_back();
+            continue;
+        }
+        if (iter.first != label) {
+            all_module.emplace_back(iter.first);
+            continue;
+        } else {
+            std::string All_module;
+            All_module.clear();
+            for (auto &module : all_module) {
+                All_module += module + "/";
+            }
+            all_module.emplace_back(iter.first);
+            if (iter.second.empty() != 1) {
+                for (auto &it : iter.second) {
+                    if (it.second.vcd_signal_width == 1) {
+                        file << All_module << iter.first << "." << it.second.vcd_signal_title << std::endl;
+                    } else {
+                        for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++)
+                            file << All_module << iter.first << "." << it.second.vcd_signal_title << "[" << wid_pos
+                                 << "] "
+                                 << std::endl;
+                    }
+                }
+            }
+        }
+    }
+    file.close();
+}
 uint64_t VCDParser::vcd_statistic_time_(uint64_t current_timestamp,
                                         std::unordered_map<std::string,
                                                            struct VCDSignalStatisticStruct>::iterator iter) {
