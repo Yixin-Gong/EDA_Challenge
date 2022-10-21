@@ -251,6 +251,7 @@ bool VCDParser::get_position_using_timestamp(uint64_t *begin) {
 }
 
 void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time) {
+    vcd_signal_flip_table_.clear();
     std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator iter;
     static char buf[1024];
     FILE *fp = fopen64(vcd_filename_.c_str(), "r");
@@ -326,7 +327,6 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
                   << i.second.signal0_time << " " << i.second.signalx_time << " sp: " <<
                   ((double) i.second.signal1_time
                       / (double) (i.second.signal1_time + i.second.signal0_time + i.second.signalx_time)) << "\n";
-    vcd_signal_flip_table_.clear();
 }
 
 void VCDParser::printf_source_csv(const std::string &filepath) {
@@ -346,8 +346,24 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
         all_module.emplace_back(iter.first);
         if (iter.second.empty() != 1) {
             for (auto &it : iter.second) {
+                struct VCDSignalStatisticStruct signal{};
+                if (vcd_signal_flip_table_.find(it.first) == vcd_signal_flip_table_.end())
+                    std::cout << "Cannot find signal " << it.first << "\n";
+                else
+                    signal = vcd_signal_flip_table_.find(it.first)->second;
+
                 if (it.second.vcd_signal_width == 1) {
-                    file << All_module << iter.first << "." << it.second.vcd_signal_title << std::endl;
+                    file << All_module << iter.first << "." << it.second.vcd_signal_title
+                         << "   tc= " << signal.total_invert_counter
+                         << "   t1= " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
+                         << vcd_header_struct_.vcd_time_unit
+                         << "   t0= " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
+                         << vcd_header_struct_.vcd_time_unit
+                         << "   tx= " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
+                         << vcd_header_struct_.vcd_time_unit
+                         << "   sp= " << ((double) signal.signal1_time
+                        / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time))
+                         << std::endl;
                 } else {
                     for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++)
                         file << All_module << iter.first << "." << it.second.vcd_signal_title << "[" << wid_pos
@@ -381,8 +397,24 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
             all_module.emplace_back(iter.first);
             if (iter.second.empty() != 1) {
                 for (auto &it : iter.second) {
+                    struct VCDSignalStatisticStruct signal{};
+                    if (vcd_signal_flip_table_.find(it.first) == vcd_signal_flip_table_.end())
+                        std::cout << "Cannot find signal " << it.first << "\n";
+                    else
+                        signal = vcd_signal_flip_table_.find(it.first)->second;
+
                     if (it.second.vcd_signal_width == 1) {
-                        file << All_module << iter.first << "." << it.second.vcd_signal_title << std::endl;
+                        file << All_module << iter.first << "." << it.second.vcd_signal_title
+                             << "   tc= " << signal.total_invert_counter
+                             << "   t1= " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
+                             << vcd_header_struct_.vcd_time_unit
+                             << "   t0= " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
+                             << vcd_header_struct_.vcd_time_unit
+                             << "   tx= " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
+                             << vcd_header_struct_.vcd_time_unit
+                             << "   sp= " << ((double) signal.signal1_time
+                            / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time))
+                             << std::endl;
                     } else {
                         for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++)
                             file << All_module << iter.first << "." << it.second.vcd_signal_title << "[" << wid_pos
