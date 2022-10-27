@@ -41,10 +41,8 @@ class VCDParser {
   void get_vcd_value_change_time();
   void get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time);
   void get_vcd_value_from_time_range(uint64_t begin_time, uint64_t end_time);
-
  private:
   struct VCDTimeStampStruct { uint64_t timestamp;uint64_t location; };
-  struct BurrCountStruct { uint16_t times; int8_t status_equal; };
   struct VCDTimeStampBufferStruct {
     struct VCDTimeStampStruct *first_element;
     struct VCDTimeStampBufferStruct *next_buffer;
@@ -56,6 +54,7 @@ class VCDParser {
     uint64_t signalx_time;
     uint64_t last_timestamp;
     int8_t last_level_status;
+    int8_t final_level_status;
   };
 
   std::string vcd_filename_{};
@@ -71,7 +70,7 @@ class VCDParser {
                                       std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator iter);
   static void vcd_statistic_burr_(const char *buf, uint64_t time_difference, const std::string &signal_alias,
                                   std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator iter,
-                                  std::unordered_map<std::string, BurrCountStruct> *burr_hash_table,
+                                  std::unordered_map<std::string, int8_t> *burr_hash_table,
                                   uint32_t buf_index);
 };
 
