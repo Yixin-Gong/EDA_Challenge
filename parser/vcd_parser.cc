@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <unordered_map>
+#include <iomanip>
 
 void VCDParser::vcd_delete_time_stamp_buffer_() {
     if (time_stamp_first_buffer_.first_element != nullptr) {
@@ -340,35 +341,46 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
         }
         std::string All_module;
         All_module.clear();
-        for (auto &module : all_module) {
+        for (auto &module : all_module)
             All_module += module + "/";
-        }
         all_module.emplace_back(iter.first);
         if (iter.second.empty() != 1) {
             for (auto &it : iter.second) {
                 struct VCDSignalStatisticStruct signal{};
-                if (vcd_signal_flip_table_.find(it.first) == vcd_signal_flip_table_.end())
-                    std::cout << "Cannot find signal " << it.first << "\n";
-                else
-                    signal = vcd_signal_flip_table_.find(it.first)->second;
-
                 if (it.second.vcd_signal_width == 1) {
+                    if (vcd_signal_flip_table_.find(it.first) == vcd_signal_flip_table_.end())
+                        std::cout << "Cannot find signal " << it.first << "\n";
+                    else
+                        signal = vcd_signal_flip_table_.find(it.first)->second;
                     file << All_module << iter.first << "." << it.second.vcd_signal_title
-                         << "   tc= " << signal.total_invert_counter
-                         << "   t1= " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
+                         << "    tc = " << signal.total_invert_counter
+                         << "    t1 = " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
                          << vcd_header_struct_.vcd_time_unit
-                         << "   t0= " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
+                         << "    t0 = " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
                          << vcd_header_struct_.vcd_time_unit
-                         << "   tx= " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
+                         << "    tx = " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
                          << vcd_header_struct_.vcd_time_unit
-                         << "   sp= " << ((double) signal.signal1_time
-                        / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time))
-                         << std::endl;
+                         << "    sp = " << std::to_string(((double) signal.signal1_time
+                        / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time))) << std::endl;
                 } else {
-                    for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++)
+                    for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++) {
+                        std::string temp_alias = it.first + std::to_string(wid_pos);
+                        if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end()) {
+                            std::cout << "Cannot find signal " << temp_alias << "\n";
+                            break;
+                        } else
+                            signal = vcd_signal_flip_table_.find(temp_alias)->second;
                         file << All_module << iter.first << "." << it.second.vcd_signal_title << "[" << wid_pos
-                             << "] "
-                             << std::endl;
+                             << "]    tc = " << signal.total_invert_counter
+                             << "    t1 = " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
+                             << vcd_header_struct_.vcd_time_unit
+                             << "    t0 = " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
+                             << vcd_header_struct_.vcd_time_unit
+                             << "    tx = " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
+                             << vcd_header_struct_.vcd_time_unit
+                             << "    sp = " << std::to_string(((double) signal.signal1_time
+                            / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time))) << std::endl;
+                    }
                 }
             }
         }
