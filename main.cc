@@ -74,11 +74,7 @@ int main(int argc, char **argv) {
 #ifndef IS_NOT_RUNNING_GUI
             argc = 1;
             auto app = Gtk::Application::create(argc, argv, "eda.challenge");
-            MainWindow *main_window;
-            if (cli_parser.valid_file())
-                main_window = new MainWindow(app, software_version, cli_parser.get_filename());
-            else
-                main_window = new MainWindow(app, software_version);
+            auto *main_window = new MainWindow(app, software_version, &cli_parser);
             return app->run(*main_window);
 #else
             std::cout << "You cannot use gui in this version.\n";
@@ -89,13 +85,9 @@ int main(int argc, char **argv) {
             uint64_t timestamp = 200;
             VCDParser parser(cli_parser.get_filename());
             parser.get_vcd_value_change_time();
-            if (parser.get_position_using_timestamp(&timestamp))
-                std::cout << "TimeStamp 200 is at byte " << timestamp << "\n\n";
-            else
-                std::cout << "Failed to find timestamp\n\n";
             parser.get_vcd_scope();
-            parser.get_vcd_signal_flip_info(0, 0);
-            std::cout << "Signal ! is " << parser.get_vcd_signal("!")->vcd_signal_title << "\n";
+            parser.get_vcd_signal_flip_info();
+            parser.printf_source_csv(cli_parser.get_output());
             endTime = clock();
             std::cout << "\nRunning time is:" << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s\n";
         }

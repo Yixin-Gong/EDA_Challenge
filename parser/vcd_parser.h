@@ -44,10 +44,10 @@ class VCDParser {
   struct VCDSignalStruct *get_vcd_signal(const std::string &label);
   void get_vcd_scope();
   void get_vcd_value_change_time();
-  void get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time);
+  void get_vcd_signal_flip_info();
   void printf_source_csv(const std::string &filepath);
   bool get_position_using_timestamp(uint64_t *begin);
-  void printf_source_csv(const std::string &filepath, const std::string &);
+  void printf_source_csv(const std::string &filepath, const std::string &label);
 
  private:
   struct VCDTimeStampStruct { uint64_t timestamp;uint64_t location; };
