@@ -26,11 +26,14 @@ class CLIParser {
   std::string get_filename() {
       return filepath_;
   }
+  std::string get_output() {
+      return output_;
+  }
 
  private:
   std::string filepath_;
-  std::string begin_time_;
-  std::string end_time_;
+  uint64_t begin_time_;
+  uint64_t end_time_;
   std::string scope_;
   std::string output_;
   bool using_gui_;

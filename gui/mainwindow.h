@@ -14,11 +14,11 @@
 #include <iostream>
 #include "vcd_parser.h"
 #include "aboutwindow.h"
+#include "cli_parser.h"
 
 class MainWindow : public Gtk::ApplicationWindow {
  public:
-  MainWindow(Glib::RefPtr<Gtk::Application> app, const std::string &software_version);
-  MainWindow(Glib::RefPtr<Gtk::Application> app, const std::string &software_version, const std::string &filename);
+  MainWindow(Glib::RefPtr<Gtk::Application> app, const std::string &software_version, CLIParser *cli);
   ~MainWindow() override;
 
  protected:
@@ -50,6 +50,7 @@ class MainWindow : public Gtk::ApplicationWindow {
   const Glib::ustring y_title_ = "Signal Number";
   const Glib::ustring plot_title_ = "Flip signal number statistics";
   const Gdk::RGBA curve_color_ = Gdk::RGBA("Blue");
+  CLIParser *cli_parser_;
   void initialize_window_();
   void parse_file_header_();
 };

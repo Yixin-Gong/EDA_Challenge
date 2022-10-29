@@ -10,20 +10,18 @@
 #include <ctime>
 
 MainWindow::~MainWindow() = default;
-MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app, const std::string &software_version) {
-    this->app_ = std::move(app);
-    this->software_version_ = software_version;
-    initialize_window_();
-}
 
 MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app,
                        const std::string &software_version,
-                       const std::string &filename) {
-    this->app_ = std::move(app);
-    this->software_version_ = software_version;
-    vcd_file_name_ = filename;
+                       CLIParser *cli) {
+    app_ = std::move(app);
+    software_version_ = software_version;
+    cli_parser_ = cli;
     initialize_window_();
-    parse_file_header_();
+    if (cli->valid_file()) {
+        vcd_file_name_ = cli->get_filename();
+        parse_file_header_();
+    }
 }
 
 void MainWindow::plot_button_clicked() {
@@ -48,16 +46,10 @@ void MainWindow::parse_button_clicked() {
     clock_t startTime, endTime;
     startTime = clock();
     if (parser_ != nullptr) {
-        uint64_t timestamp = 200;
         parser_->get_vcd_value_change_time();
-        if (parser_->get_position_using_timestamp(&timestamp))
-            std::cout << "TimeStamp 200 is at byte " << timestamp << "\n\n";
-        else
-            std::cout << "Failed to find timestamp\n\n";
         parser_->get_vcd_scope();
-        parser_->get_vcd_signal_flip_info(0, 0);
-        parser_->printf_source_csv("./out.csv");
-        std::cout << "Signal ! is " << parser_->get_vcd_signal("!")->vcd_signal_title << "\n";
+        parser_->get_vcd_signal_flip_info();
+        parser_->printf_source_csv(cli_parser_->get_output());
     }
     endTime = clock();
     std::cout << "\nRunning time is:" << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s\n";
