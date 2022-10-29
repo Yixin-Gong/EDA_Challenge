@@ -23,6 +23,7 @@ CLIParser::CLIParser(std::string filepath,
     scope_ = std::move(scope);
     output_ = std::move(output);
     using_gui_ = using_gui;
+    valid_filename_ = true;
     if (filepath_.empty() || (filepath_.find(".vcd") == std::string::npos)) {
         if ((!filepath_.empty()) && (filepath_.find(".vcd") == std::string::npos))
             std::cout << "Please input the VCD file with the .vcd extension\n";
