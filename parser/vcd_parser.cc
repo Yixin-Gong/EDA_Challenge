@@ -388,7 +388,8 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
                         / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time))) << std::endl;
                 } else {
                     for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++) {
-                        std::string temp_alias = it.first + std::to_string(wid_pos);
+                        std::string
+                            temp_alias = it.first + std::string("[") + std::to_string(wid_pos) + std::string("]");;
                         if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end()) {
                             std::cout << "Cannot find signal " << temp_alias << "\n";
                             break;
