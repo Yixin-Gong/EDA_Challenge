@@ -51,7 +51,7 @@ CLIParser::CLIParser(std::string filepath,
         valid_time_rage_ = false;
         if (!using_gui_)
             exit(5);
-    } else if (begin_time_ >= end_time_) {
+    } else if ((!begin_time.empty() && !end_time.empty()) && (begin_time_ >= end_time_)) {
         std::cout << "The start time should not be greater than the end time.\n";
         valid_time_rage_ = false;
         if (!using_gui_)
