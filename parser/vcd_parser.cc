@@ -423,16 +423,32 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
                             / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time))
                              << std::endl;
                     } else {
-                        for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++)
+                        for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++) {
+                            std::string
+                                temp_alias = it.first + std::string("[") + std::to_string(wid_pos) + std::string("]");;
+                            if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end()) {
+                                std::cout << "Cannot find signal " << temp_alias << "\n";
+                                break;
+                            } else
+                                signal = vcd_signal_flip_table_.find(temp_alias)->second;
                             file << All_module << iter.first << "." << it.second.vcd_signal_title << "[" << wid_pos
-                                 << "] "
+                                 << "]    tc = " << signal.total_invert_counter
+                                 << "    t1 = " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
+                                 << vcd_header_struct_.vcd_time_unit
+                                 << "    t0 = " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
+                                 << vcd_header_struct_.vcd_time_unit
+                                 << "    tx = " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
+                                 << vcd_header_struct_.vcd_time_unit
+                                 << "    sp = " << std::to_string(((double) signal.signal1_time
+                                / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time)))
                                  << std::endl;
+                        }
                     }
                 }
             }
         }
+        file.close();
     }
-    file.close();
 }
 uint64_t VCDParser::vcd_statistic_time_(uint64_t current_timestamp,
                                         std::unordered_map<std::string,
