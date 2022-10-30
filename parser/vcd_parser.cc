@@ -383,10 +383,12 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
     file.close();
 }
 
-void VCDParser::printf_source_csv(const std::string &filepath, const std::string &label) {
+void VCDParser::printf_source_csv(const std::string &filepath, const std::string &module_label) {
     std::ofstream file;
     file.open(filepath, std::ios::out | std::ios::trunc);
     std::list<std::string> all_module;
+    std::string label;
+    label = module_label.substr(module_label.rfind('/') + 1, module_label.length() - module_label.rfind('/'));
     for (auto &iter : vcd_signal_list_) {
         if (iter.first == "upscope") {
             all_module.pop_back();
@@ -401,7 +403,9 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
             for (auto &module : all_module) {
                 All_module += module + "/";
             }
+            All_module += iter.first;
             all_module.emplace_back(iter.first);
+            if (All_module != module_label)continue;
             if (iter.second.empty() != 1) {
                 for (auto &it : iter.second) {
                     struct VCDSignalStatisticStruct signal{};
@@ -409,9 +413,8 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
                         std::cout << "Cannot find signal " << it.first << "\n";
                     else
                         signal = vcd_signal_flip_table_.find(it.first)->second;
-
                     if (it.second.vcd_signal_width == 1) {
-                        file << All_module << iter.first << "." << it.second.vcd_signal_title
+                        file << All_module << "." << it.second.vcd_signal_title
                              << "   tc= " << signal.total_invert_counter
                              << "   t1= " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
                              << vcd_header_struct_.vcd_time_unit
@@ -425,13 +428,14 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
                     } else {
                         for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++) {
                             std::string
-                                temp_alias = it.first + std::string("[") + std::to_string(wid_pos) + std::string("]");;
+                                temp_alias =
+                                it.first + std::string("[") + std::to_string(wid_pos) + std::string("]");;
                             if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end()) {
                                 std::cout << "Cannot find signal " << temp_alias << "\n";
                                 break;
                             } else
                                 signal = vcd_signal_flip_table_.find(temp_alias)->second;
-                            file << All_module << iter.first << "." << it.second.vcd_signal_title << "[" << wid_pos
+                            file << All_module << "." << it.second.vcd_signal_title << "[" << wid_pos
                                  << "]    tc = " << signal.total_invert_counter
                                  << "    t1 = " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
                                  << vcd_header_struct_.vcd_time_unit
