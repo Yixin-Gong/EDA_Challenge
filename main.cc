@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
                                                "Specify the module where the signal to be counted is located",
                                                false, "", "string");
         TCLAP::ValueArg<std::string> output_arg("o", "output", "Location of the output csv file",
-                                                false, software_path + "/output.csv", "string");
+                                                false, software_path + "/summary.csv", "string");
         TCLAP::SwitchArg using_gui_switch("g", "gui", "Whether to display the gui interface",
                                           cmd, false);
         cmd.add(filename_arg);
@@ -82,7 +82,6 @@ int main(int argc, char **argv) {
         } else {
             clock_t startTime, endTime;
             startTime = clock();
-            uint64_t timestamp = 200;
             VCDParser parser(cli_parser.get_filename());
             parser.get_vcd_value_change_time();
             parser.get_vcd_scope();

@@ -13,8 +13,8 @@
 #include "system.h"
 
 CLIParser::CLIParser(std::string filepath,
-                     std::string begin_time,
-                     std::string end_time,
+                     const std::string &begin_time,
+                     const std::string &end_time,
                      std::string scope,
                      std::string output,
                      bool using_gui) {
@@ -25,6 +25,7 @@ CLIParser::CLIParser(std::string filepath,
     output_ = std::move(output);
     using_gui_ = using_gui;
     valid_filename_ = true;
+    valid_time_rage_ = true;
     if (filepath_.empty() || (filepath_.find(".vcd") == std::string::npos)) {
         if ((!filepath_.empty()) && (filepath_.find(".vcd") == std::string::npos))
             std::cout << "Please input the VCD file with the .vcd extension\n";
@@ -47,7 +48,14 @@ CLIParser::CLIParser(std::string filepath,
     }
     if (begin_time.empty() ^ end_time.empty()) {
         std::cout << "You can't just enter a start time or an end time.\n";
-        exit(5);
+        valid_time_rage_ = false;
+        if (!using_gui_)
+            exit(5);
+    } else if (begin_time_ >= end_time_) {
+        std::cout << "The start time should not be greater than the end time.\n";
+        valid_time_rage_ = false;
+        if (!using_gui_)
+            exit(6);
     }
 }
 
@@ -65,6 +73,7 @@ bool CLIParser::using_gui() {
         std::cout << "No gui with file: " << filepath_ << "\n";
         std::cout << "Output file path: " << output_ << "\n";
     }
-    std::cout << "From time " << begin_time_ << " to time " << end_time_ << "\n";
+    if (valid_time_rage_)
+        std::cout << "From time " << begin_time_ << " to time " << end_time_ << "\n";
     return using_gui_;
 }

@@ -14,8 +14,8 @@
 class CLIParser {
  public:
   CLIParser(std::string filepath,
-            std::string begin_time,
-            std::string end_time,
+            const std::string &begin_time,
+            const std::string &end_time,
             std::string scope,
             std::string output,
             bool using_gui);
@@ -38,6 +38,7 @@ class CLIParser {
   std::string output_;
   bool using_gui_;
   bool valid_filename_;
+  bool valid_time_rage_;
 };
 
 #endif //EDA_CHALLENGE_PARSER_CLI_PARSER_H_
