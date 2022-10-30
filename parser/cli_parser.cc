@@ -10,6 +10,7 @@
 #include <iostream>
 #include <utility>
 #include <fstream>
+#include <sstream>
 #include "system.h"
 
 CLIParser::CLIParser(std::string filepath,
@@ -19,8 +20,8 @@ CLIParser::CLIParser(std::string filepath,
                      std::string output,
                      bool using_gui) {
     filepath_ = std::move(filepath);
-    begin_time_ = strtoull(begin_time.c_str(), nullptr, 0);
-    end_time_ = strtoull(end_time.c_str(), nullptr, 0);
+    begin_time_ = begin_time;
+    end_time_ = end_time;
     scope_ = std::move(scope);
     output_ = std::move(output);
     using_gui_ = using_gui;
@@ -51,12 +52,14 @@ CLIParser::CLIParser(std::string filepath,
         valid_time_rage_ = false;
         if (!using_gui_)
             exit(5);
-    } else if ((!begin_time.empty() && !end_time.empty()) && (begin_time_ >= end_time_)) {
+    } else if ((!begin_time.empty() && !end_time.empty()) &&
+        (strtoull(begin_time_.c_str(), nullptr, 0) >= strtoull(end_time_.c_str(), nullptr, 0))) {
         std::cout << "The start time should not be greater than the end time.\n";
         valid_time_rage_ = false;
         if (!using_gui_)
             exit(6);
-    }
+    } else if (begin_time.empty() && end_time.empty())
+        valid_time_rage_ = false;
 }
 
 bool CLIParser::using_gui() {
@@ -76,4 +79,17 @@ bool CLIParser::using_gui() {
     if (valid_time_rage_)
         std::cout << "From time " << begin_time_ << " to time " << end_time_ << "\n";
     return using_gui_;
+}
+
+CLITimeStruct *CLIParser::get_time_range() {
+    if (valid_time_rage_) {
+        std::istringstream begin_time_stream(begin_time_);
+        begin_time_stream >> cli_time_struct_.begin_time >> cli_time_struct_.begin_time_unit;
+        std::istringstream end_time_stream(end_time_);
+        end_time_stream >> cli_time_struct_.end_time >> cli_time_struct_.end_time_unit;
+    } else {
+        cli_time_struct_.begin_time = 0;
+        cli_time_struct_.end_time = 0;
+    }
+    return &cli_time_struct_;
 }

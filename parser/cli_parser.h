@@ -11,6 +11,13 @@
 
 #include <string>
 
+struct CLITimeStruct {
+  uint64_t begin_time;
+  std::string begin_time_unit;
+  uint64_t end_time;
+  std::string end_time_unit;
+};
+
 class CLIParser {
  public:
   CLIParser(std::string filepath,
@@ -20,8 +27,12 @@ class CLIParser {
             std::string output,
             bool using_gui);
   bool using_gui();
+  CLITimeStruct *get_time_range();
   bool valid_file() const {
       return valid_filename_;
+  }
+  bool valid_time() const {
+      return valid_time_rage_;
   }
   std::string get_filename() {
       return filepath_;
@@ -32,13 +43,14 @@ class CLIParser {
 
  private:
   std::string filepath_;
-  uint64_t begin_time_;
-  uint64_t end_time_;
+  std::string begin_time_;
+  std::string end_time_;
   std::string scope_;
   std::string output_;
   bool using_gui_;
   bool valid_filename_;
   bool valid_time_rage_;
+  CLITimeStruct cli_time_struct_;
 };
 
 #endif //EDA_CHALLENGE_PARSER_CLI_PARSER_H_

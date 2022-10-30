@@ -31,6 +31,8 @@ class MainWindow : public Gtk::ApplicationWindow {
  private:
   Gtk::Box *box_{};
   Gtk::Grid *grid_{};
+  Glib::RefPtr<Gtk::Entry> from_txtbox_;
+  Glib::RefPtr<Gtk::Entry> to_txtbox_;
   Glib::RefPtr<Gtk::Label> status_label_;
   Glib::RefPtr<Gtk::Label> unit_label_;
   Glib::RefPtr<Gtk::Label> to_label_;

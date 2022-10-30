@@ -22,6 +22,10 @@ MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app,
         vcd_file_name_ = cli->get_filename();
         parse_file_header_();
     }
+    if (cli->valid_time()) {
+        from_txtbox_->set_text(std::to_string(cli_parser_->get_time_range()->begin_time));
+        to_txtbox_->set_text(std::to_string(cli_parser_->get_time_range()->end_time));
+    }
 }
 
 void MainWindow::plot_button_clicked() {
@@ -95,6 +99,9 @@ void MainWindow::initialize_window_() {
     canvas_.add_plot(*plot_);
     plot_->hide_legend();
     grid_->attach(canvas_, 0, 1, 3, 1);
+
+    from_txtbox_ = Glib::RefPtr<Gtk::Entry>::cast_dynamic(ui_->get_object("from_txtbox"));
+    to_txtbox_ = Glib::RefPtr<Gtk::Entry>::cast_dynamic(ui_->get_object("to_txtbox"));
 
     status_label_ = Glib::RefPtr<Gtk::Label>::cast_dynamic(ui_->get_object("status_label"));
     unit_label_ = Glib::RefPtr<Gtk::Label>::cast_dynamic(ui_->get_object("unit_label"));
