@@ -400,7 +400,12 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
         } else {
             std::string All_module;
             All_module.clear();
+            int select = 0;
             for (auto &module : all_module) {
+                if (select != 1) {
+                    select = 1;
+                    continue;
+                }
                 All_module += module + "/";
             }
             All_module += iter.first;
