@@ -388,7 +388,12 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
     file.open(filepath, std::ios::out | std::ios::trunc);
     std::list<std::string> all_module;
     std::string label;
-    label = module_label.substr(module_label.rfind('/') + 1, module_label.length() - module_label.rfind('/'));
+    int module_level = 0;
+    for (char character : module_label) {
+        if (character == '/')
+            module_level++;
+    }
+    label = module_label.substr(module_label.rfind('/') + 1, module_label.length() - module_label.rfind('/') + 1);
     for (auto &iter : vcd_signal_list_) {
         if (iter.first == "upscope") {
             all_module.pop_back();
@@ -402,15 +407,22 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
             All_module.clear();
             int select = 0;
             for (auto &module : all_module) {
-                if (select != 1) {
-                    select = 1;
+                if (select < all_module.size() - module_level) {
+                    select++;
                     continue;
                 }
                 All_module += module + "/";
             }
             All_module += iter.first;
             all_module.emplace_back(iter.first);
-            if (All_module != module_label)continue;
+            if (All_module != module_label)
+                continue;
+            all_module.pop_back();
+            All_module.clear();
+            for (auto &module : all_module)
+                All_module += module + "/";
+            All_module += iter.first;
+            all_module.emplace_back(iter.first);
             if (iter.second.empty() != 1) {
                 for (auto &it : iter.second) {
                     struct VCDSignalStatisticStruct signal{};
