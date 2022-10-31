@@ -55,7 +55,8 @@ void MainWindow::parse_button_clicked() {
         else
             std::cout << "Failed to find timestamp\n\n";
         parser_->get_vcd_scope();
-        parser_->get_vcd_signal_flip_info(0, 0);
+//        parser_->get_vcd_signal_flip_info(0, 0);
+        parser_->get_vcd_signal_info_from_time_range(150, 250);
         parser_->printf_source_csv("./out.csv");
         std::cout << "Signal ! is " << parser_->get_vcd_signal("!")->vcd_signal_title << "\n";
     }
