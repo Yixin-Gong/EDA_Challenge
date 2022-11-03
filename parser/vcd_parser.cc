@@ -383,6 +383,85 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
     file.close();
 }
 
+void VCDParser::get_specify_module(const std::string &filepath, const std::string &module_label) {
+    specify_vcd_signal_alias_table_.clear();
+    std::list<std::string> all_module;
+    int module_cnt = 1;
+    for (char pos : module_label) {
+        if (pos == '/')
+            module_cnt++;
+    }
+    std::vector<std::string> label(module_cnt);
+    int module_level = 0;
+    for (char pos : module_label) {
+        if (pos != '/')
+            label[module_level] += pos;
+        else
+            module_level++;
+    }
+    std::ifstream file;
+    file.open(vcd_filename_, std::ios_base::in);
+    std::string read_string;
+    int label_pos = 0;
+    bool read_label_start = false;
+    while (getline(file, read_string)) {
+        if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
+            std::string scope_module;
+            int space_pos = 0;
+            for (int pos = 0; read_string[pos] != 0 && space_pos != 3; pos++) {
+                if (read_string[pos] == ' ') {
+                    space_pos++;
+                    continue;
+                }
+                if (space_pos == 2)
+                    scope_module += read_string[pos];
+            }
+            if (label[label_pos] == scope_module && label_pos != module_level) {
+                label_pos++;
+                continue;
+            }
+            if (scope_module == label[label_pos] && scope_module == label[label_pos])
+                read_label_start = true;
+        }
+        if (read_label_start && read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
+            struct VCDSignalStruct signal;
+            int space_pos = 0;
+            std::string width;
+            for (int pos = 0; read_string[pos] != 0; pos++) {
+                if (read_string[pos] == ' ') {
+                    space_pos++;
+                    if (space_pos == 5) {
+                        signal.vcd_signal_width = std::stoi(width);
+                        break;
+                    }
+                    continue;
+                }
+                switch (space_pos) {
+                    case 1:signal.vcd_signal_type += read_string[pos];
+                        break;
+                    case 2:width += read_string[pos];
+                        break;
+                    case 3:signal.vcd_signal_label += read_string[pos];
+                        break;
+                    case 4:signal.vcd_signal_title += read_string[pos];
+                        break;
+                    default:break;
+                }
+            }
+            specify_vcd_signal_alias_table_.insert(std::pair<std::string,
+                                                             struct VCDSignalStruct>(signal.vcd_signal_label,
+                                                                                     signal));
+        } else if (read_label_start && read_string.c_str()[0] != '$' && read_string.c_str()[1] != 'v')
+            break;
+    }
+    file.close();
+    std::cout << "____________________" << "\n";
+    for (auto &it : specify_vcd_signal_alias_table_) {
+        std::cout << it.first << " " << it.second.vcd_signal_title << "\n";
+    }
+    std::cout << "____________________" << "\n";
+}
+
 void VCDParser::printf_source_csv(const std::string &filepath, const std::string &module_label) {
     std::ofstream file;
     file.open(filepath, std::ios::out | std::ios::trunc);
@@ -468,9 +547,10 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
                 }
             }
         }
-        file.close();
     }
+    file.close();
 }
+
 uint64_t VCDParser::vcd_statistic_time_(uint64_t current_timestamp,
                                         std::unordered_map<std::string,
                                                            struct VCDSignalStatisticStruct>::iterator iter) {
