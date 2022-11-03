@@ -383,10 +383,96 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
     file.close();
 }
 
-void VCDParser::printf_source_csv(const std::string &filepath, const std::string &label) {
+void VCDParser::get_specify_module(const std::string &filepath, const std::string &module_label) {
+    specify_vcd_signal_alias_table_.clear();
+    std::list<std::string> all_module;
+    int module_cnt = 1;
+    for (char pos : module_label) {
+        if (pos == '/')
+            module_cnt++;
+    }
+    std::vector<std::string> label(module_cnt);
+    int module_level = 0;
+    for (char pos : module_label) {
+        if (pos != '/')
+            label[module_level] += pos;
+        else
+            module_level++;
+    }
+    std::ifstream file;
+    file.open(vcd_filename_, std::ios_base::in);
+    std::string read_string;
+    int label_pos = 0;
+    bool read_label_start = false;
+    while (getline(file, read_string)) {
+        if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
+            std::string scope_module;
+            int space_pos = 0;
+            for (int pos = 0; read_string[pos] != 0 && space_pos != 3; pos++) {
+                if (read_string[pos] == ' ') {
+                    space_pos++;
+                    continue;
+                }
+                if (space_pos == 2)
+                    scope_module += read_string[pos];
+            }
+            if (label[label_pos] == scope_module && label_pos != module_level) {
+                label_pos++;
+                continue;
+            }
+            if (scope_module == label[label_pos] && scope_module == label[label_pos])
+                read_label_start = true;
+        }
+        if (read_label_start && read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
+            struct VCDSignalStruct signal;
+            int space_pos = 0;
+            std::string width;
+            for (int pos = 0; read_string[pos] != 0; pos++) {
+                if (read_string[pos] == ' ') {
+                    space_pos++;
+                    if (space_pos == 5) {
+                        signal.vcd_signal_width = std::stoi(width);
+                        break;
+                    }
+                    continue;
+                }
+                switch (space_pos) {
+                    case 1:signal.vcd_signal_type += read_string[pos];
+                        break;
+                    case 2:width += read_string[pos];
+                        break;
+                    case 3:signal.vcd_signal_label += read_string[pos];
+                        break;
+                    case 4:signal.vcd_signal_title += read_string[pos];
+                        break;
+                    default:break;
+                }
+            }
+            specify_vcd_signal_alias_table_.insert(std::pair<std::string,
+                                                             struct VCDSignalStruct>(signal.vcd_signal_label,
+                                                                                     signal));
+        } else if (read_label_start && read_string.c_str()[0] != '$' && read_string.c_str()[1] != 'v')
+            break;
+    }
+    file.close();
+    std::cout << "____________________" << "\n";
+    for (auto &it : specify_vcd_signal_alias_table_) {
+        std::cout << it.first << " " << it.second.vcd_signal_title << "\n";
+    }
+    std::cout << "____________________" << "\n";
+}
+
+void VCDParser::printf_source_csv(const std::string &filepath, const std::string &module_label) {
     std::ofstream file;
     file.open(filepath, std::ios::out | std::ios::trunc);
     std::list<std::string> all_module;
+    std::string label;
+    int module_level = 0;
+    for (char character : module_label) {
+        if (character == '/')
+            module_level++;
+    }
+    label = module_label.substr(module_label.rfind('/') + 1, module_label.length() - module_label.rfind('/') + 1);
     for (auto &iter : vcd_signal_list_) {
         if (iter.first == "upscope") {
             all_module.pop_back();
@@ -398,9 +484,23 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
         } else {
             std::string All_module;
             All_module.clear();
+            int select = 0;
             for (auto &module : all_module) {
+                if (select < all_module.size() - module_level) {
+                    select++;
+                    continue;
+                }
                 All_module += module + "/";
             }
+            All_module += iter.first;
+            all_module.emplace_back(iter.first);
+            if (All_module != module_label)
+                continue;
+            all_module.pop_back();
+            All_module.clear();
+            for (auto &module : all_module)
+                All_module += module + "/";
+            All_module += iter.first;
             all_module.emplace_back(iter.first);
             if (iter.second.empty() != 1) {
                 for (auto &it : iter.second) {
@@ -409,9 +509,8 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
                         std::cout << "Cannot find signal " << it.first << "\n";
                     else
                         signal = vcd_signal_flip_table_.find(it.first)->second;
-
                     if (it.second.vcd_signal_width == 1) {
-                        file << All_module << iter.first << "." << it.second.vcd_signal_title
+                        file << All_module << "." << it.second.vcd_signal_title
                              << "   tc= " << signal.total_invert_counter
                              << "   t1= " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
                              << vcd_header_struct_.vcd_time_unit
@@ -423,10 +522,27 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
                             / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time))
                              << std::endl;
                     } else {
-                        for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++)
-                            file << All_module << iter.first << "." << it.second.vcd_signal_title << "[" << wid_pos
-                                 << "] "
+                        for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++) {
+                            std::string
+                                temp_alias =
+                                it.first + std::string("[") + std::to_string(wid_pos) + std::string("]");;
+                            if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end()) {
+                                std::cout << "Cannot find signal " << temp_alias << "\n";
+                                break;
+                            } else
+                                signal = vcd_signal_flip_table_.find(temp_alias)->second;
+                            file << All_module << "." << it.second.vcd_signal_title << "[" << wid_pos
+                                 << "]    tc = " << signal.total_invert_counter
+                                 << "    t1 = " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
+                                 << vcd_header_struct_.vcd_time_unit
+                                 << "    t0 = " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
+                                 << vcd_header_struct_.vcd_time_unit
+                                 << "    tx = " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
+                                 << vcd_header_struct_.vcd_time_unit
+                                 << "    sp = " << std::to_string(((double) signal.signal1_time
+                                / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time)))
                                  << std::endl;
+                        }
                     }
                 }
             }
@@ -434,6 +550,7 @@ void VCDParser::printf_source_csv(const std::string &filepath, const std::string
     }
     file.close();
 }
+
 uint64_t VCDParser::vcd_statistic_time_(uint64_t current_timestamp,
                                         std::unordered_map<std::string,
                                                            struct VCDSignalStatisticStruct>::iterator iter) {
