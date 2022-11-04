@@ -398,7 +398,8 @@ void VCDParser::get_vcd_signal_flip_info() {
             && (it->second.last_level_status != 'x'))
             it->second.total_invert_counter++;
         it->second.final_level_status = it->second.last_level_status;
-        it->second.total_invert_counter--;
+        if (it->second.total_invert_counter != 0)
+            it->second.total_invert_counter--;
     }
 
     for (auto &i : vcd_signal_flip_table_)
@@ -604,4 +605,143 @@ void VCDParser::vcd_statistic_burr_(const char *buf, uint64_t time_difference, c
     } else if (burr_hash_table->find(signal_alias) == burr_hash_table->end())
         burr_hash_table->insert(std::pair<std::string, int8_t>(signal_alias, {0}));
     iter->second.last_level_status = buf[buf_index];
+}
+
+void VCDParser::get_vcd_signal_info_from_time_range(uint64_t begin_time, uint64_t end_time) {
+    vcd_signal_flip_table_.clear();
+    std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator iter;
+    static char buf[1024 * 1024];
+    FILE *fp = fopen64(vcd_filename_.c_str(), "r");
+    int8_t status = 0;
+
+    fseeko64(fp, (long) time_stamp_first_buffer_.first_element[0].location, SEEK_SET);
+    while (fgets(buf, sizeof(buf), fp) != nullptr) {
+        buf[strlen(buf) - 1] = '\0';
+        std::string bufs = buf;
+        VCDSignalStatisticStruct cnt{0, 0, 0, 0, 0, 0, 0};
+        if (buf[0] == '#' || bufs == "$dumpvars")
+            continue;
+        if (bufs == "$end")
+            break;
+        if (buf[0] == 'b') {
+            std::string signal_alias = bufs.substr(bufs.find_last_of(' ') + 1, bufs.length());
+            unsigned long signal_length = (bufs.substr(1, bufs.find_first_of(' '))).length();
+            for (unsigned long count = signal_length - 1; count > 0; count--) {
+                std::string temp_alias;
+                temp_alias = signal_alias + std::string("[") + std::to_string(count - 1) + std::string("]");
+                if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end()) {
+                    cnt.last_level_status = buf[signal_length - count];
+                    cnt.final_level_status = 'x';
+                    vcd_signal_flip_table_.insert(std::pair<std::string, struct VCDSignalStatisticStruct>(temp_alias,
+                                                                                                          cnt));
+                } else {
+                    iter = vcd_signal_flip_table_.find(temp_alias);
+                    iter->second.last_level_status = buf[signal_length - count];
+                    iter->second.final_level_status = 'x';
+                }
+            }
+        } else {
+            std::string signal_alias = std::string((char *) (&buf[1])).substr(0, bufs.length());
+            if (vcd_signal_flip_table_.find(signal_alias) == vcd_signal_flip_table_.end()) {
+                cnt.last_level_status = buf[0];
+                cnt.final_level_status = 'x';
+                vcd_signal_flip_table_.insert(std::pair<std::string, struct VCDSignalStatisticStruct>(signal_alias,
+                                                                                                      cnt));
+            } else {
+                iter = vcd_signal_flip_table_.find(signal_alias);
+                iter->second.last_level_status = buf[0];
+                iter->second.final_level_status = 'x';
+            }
+        }
+    }
+
+    std::unordered_map<std::string, int8_t> burr_hash_table;
+    static uint64_t current_timestamp = 0, last_timestamp = 0;
+    if (begin_time == 0)
+        status = 1;
+    while (fgets(buf, sizeof(buf), fp) != nullptr) {
+        buf[strlen(buf) - 1] = '\0';
+        std::string bufs = buf;
+        if (buf[0] == '#') {
+            last_timestamp = current_timestamp;
+            current_timestamp = strtoll(&buf[1], nullptr, 0);
+            if (current_timestamp == begin_time)
+                status = 1;
+            if (current_timestamp >= end_time && status != 2)
+                status = 2;
+            else if (status == 2) {
+                status = 3;
+                current_timestamp = last_timestamp;
+            }
+            for (auto &it : burr_hash_table)
+                std::cout << "The Signal " << it.first << " glitch at " <<
+                          "time " << current_timestamp << "\n";
+            burr_hash_table.clear();
+            continue;
+        }
+        switch (status) {
+            case 0:
+                if (buf[0] == 'b') {
+                    std::string signal_alias = bufs.substr(bufs.find_last_of(' ') + 1, bufs.length());
+                    unsigned long signal_length = (bufs.substr(1, bufs.find_first_of(' '))).length();
+                    for (unsigned long count = signal_length - 1; count > 0; count--) {
+                        std::string
+                            temp_alias = signal_alias + std::string("[") + std::to_string(count - 1) + std::string("]");
+                        iter = vcd_signal_flip_table_.find(temp_alias);
+                        iter->second.final_level_status = 'x';
+                        iter->second.last_timestamp = current_timestamp;
+                        iter->second.last_level_status = buf[signal_length - count];
+                    }
+                } else {
+                    std::string signal_alias = std::string((char *) (&buf[1])).substr(0, strlen(buf));
+                    iter = vcd_signal_flip_table_.find(signal_alias);
+                    iter->second.final_level_status = 'x';
+                    iter->second.last_timestamp = current_timestamp;
+                    iter->second.last_level_status = buf[0];
+                }
+                break;
+            case 2:
+            case 1:
+                if (buf[0] == 'b') {
+                    std::string signal_alias = bufs.substr(bufs.find_last_of(' ') + 1, bufs.length());
+                    unsigned long signal_length = (bufs.substr(1, bufs.find_first_of(' '))).length();
+                    for (unsigned long count = signal_length - 1; count > 0; count--) {
+                        std::string
+                            temp_alias = signal_alias + std::string("[") + std::to_string(count - 1) + std::string("]");
+                        iter = vcd_signal_flip_table_.find(temp_alias);
+                        uint64_t time_difference = vcd_statistic_time_(current_timestamp, iter);
+                        if (buf[signal_length - count] != iter->second.last_level_status)
+                            vcd_statistic_burr_(buf, time_difference, temp_alias, iter,
+                                                &burr_hash_table, signal_length - count);
+                    }
+                } else {
+                    std::string signal_alias = std::string((char *) (&buf[1])).substr(0, strlen(buf));
+                    iter = vcd_signal_flip_table_.find(signal_alias);
+                    uint64_t time_difference = vcd_statistic_time_(current_timestamp, iter);
+                    vcd_statistic_burr_(buf, time_difference, signal_alias, iter, &burr_hash_table, 0);
+                }
+                break;
+            default:break;
+        }
+        if (status == 3)
+            break;
+    }
+    fclose(fp);
+    for (auto &it : burr_hash_table)
+        std::cout << "The Signal " << it.first << " glitch at " << "time " << current_timestamp << "\n";
+    std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator it;
+    for (it = vcd_signal_flip_table_.begin(); it != vcd_signal_flip_table_.end(); it++) {
+        vcd_statistic_time_(current_timestamp, it);
+        if ((it->second.last_level_status != it->second.final_level_status)
+            && (it->second.last_level_status != 'x'))
+            it->second.total_invert_counter++;
+        if (it->second.total_invert_counter != 0)
+            it->second.total_invert_counter--;
+    }
+
+    for (auto &i : vcd_signal_flip_table_)
+        std::cout << i.first << " " << i.second.total_invert_counter << " " << i.second.signal1_time << " "
+                  << i.second.signal0_time << " " << i.second.signalx_time << " sp: " <<
+                  ((double) i.second.signal1_time
+                      / (double) (i.second.signal1_time + i.second.signal0_time + i.second.signalx_time)) << "\n";
 }

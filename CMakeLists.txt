@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.19)
 project(EDA_Challenge CXX)
 set(CMAKE_CXX_STANDARD 14)
 
-add_compile_options(-O2 -g)
+add_compile_options(-Og)
 
 if (NOT COMPILE_ON_SERVER)
     include_directories(system gtest/include gui . parser)
