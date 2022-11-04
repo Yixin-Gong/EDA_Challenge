@@ -10,20 +10,22 @@
 #include <ctime>
 
 MainWindow::~MainWindow() = default;
-MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app, const std::string &software_version) {
-    this->app_ = std::move(app);
-    this->software_version_ = software_version;
-    initialize_window_();
-}
 
 MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app,
                        const std::string &software_version,
-                       const std::string &filename) {
-    this->app_ = std::move(app);
-    this->software_version_ = software_version;
-    vcd_file_name_ = filename;
+                       CLIParser *cli) {
+    app_ = std::move(app);
+    software_version_ = software_version;
+    cli_parser_ = cli;
     initialize_window_();
-    parse_file_header_();
+    if (cli->valid_file()) {
+        vcd_file_name_ = cli->get_filename();
+        parse_file_header_();
+    }
+    if (cli->valid_time()) {
+        from_txtbox_->set_text(std::to_string(cli_parser_->get_time_range()->begin_time));
+        to_txtbox_->set_text(std::to_string(cli_parser_->get_time_range()->end_time));
+    }
 }
 
 void MainWindow::plot_button_clicked() {
@@ -48,17 +50,15 @@ void MainWindow::parse_button_clicked() {
     clock_t startTime, endTime;
     startTime = clock();
     if (parser_ != nullptr) {
-        uint64_t timestamp = 200;
         parser_->get_vcd_value_change_time();
-        if (parser_->get_position_using_timestamp(&timestamp))
-            std::cout << "TimeStamp 200 is at byte " << timestamp << "\n\n";
-        else
-            std::cout << "Failed to find timestamp\n\n";
-        parser_->get_vcd_scope();
-//        parser_->get_vcd_signal_flip_info(0, 0);
-        parser_->get_vcd_signal_info_from_time_range(150, 250);
-        parser_->printf_source_csv("./out.csv");
-        std::cout << "Signal ! is " << parser_->get_vcd_signal("!")->vcd_signal_title << "\n";
+        if (!cli_parser_->valid_scope()) {
+            parser_->get_vcd_scope();
+            parser_->get_vcd_signal_flip_info();
+        } else {
+            parser_->get_vcd_scope(cli_parser_->get_scope());
+            parser_->get_vcd_signal_flip_info(cli_parser_->get_scope());
+        }
+        parser_->printf_source_csv(cli_parser_->get_output() + "/summary.csv");
     }
     endTime = clock();
     std::cout << "\nRunning time is:" << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s\n";
@@ -104,6 +104,9 @@ void MainWindow::initialize_window_() {
     canvas_.add_plot(*plot_);
     plot_->hide_legend();
     grid_->attach(canvas_, 0, 1, 3, 1);
+
+    from_txtbox_ = Glib::RefPtr<Gtk::Entry>::cast_dynamic(ui_->get_object("from_txtbox"));
+    to_txtbox_ = Glib::RefPtr<Gtk::Entry>::cast_dynamic(ui_->get_object("to_txtbox"));
 
     status_label_ = Glib::RefPtr<Gtk::Label>::cast_dynamic(ui_->get_object("status_label"));
     unit_label_ = Glib::RefPtr<Gtk::Label>::cast_dynamic(ui_->get_object("unit_label"));

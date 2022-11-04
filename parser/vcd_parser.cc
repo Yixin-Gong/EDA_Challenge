@@ -15,7 +15,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <unordered_map>
-#include <iomanip>
 
 void VCDParser::vcd_delete_time_stamp_buffer_() {
     if (time_stamp_first_buffer_.first_element != nullptr) {
@@ -43,11 +42,6 @@ void VCDParser::parse_vcd_header_() {
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
     std::cout << "\nOpen file: " << vcd_filename_ << "\n";
     file.open(vcd_filename_, std::ios_base::in);
-    if (!file.is_open()) {
-        std::cout << "\nCannot open file " << vcd_filename_ << "\n";
-        return;
-    }
-
     while (getline(file, read_string)) {
         switch (parse_status) {
             default:
@@ -79,7 +73,7 @@ void VCDParser::parse_vcd_header_() {
                 break;
             case 2: {
                 std::istringstream read_stream(read_string);
-                read_stream >> this->vcd_header_struct_.vcd_time_scale >> this->vcd_header_struct_.vcd_time_unit;
+                read_stream >> vcd_header_struct_.vcd_time_scale >> vcd_header_struct_.vcd_time_unit;
                 parse_status = 0;
             }
                 break;
@@ -90,11 +84,10 @@ void VCDParser::parse_vcd_header_() {
     file.close();
 
     char tmp_buf[64] = {0};
-    strftime(tmp_buf, sizeof(tmp_buf), "%Y-%m-%d %H:%M:%S", &(this->vcd_header_struct_.vcd_create_time));
+    strftime(tmp_buf, sizeof(tmp_buf), "%Y-%m-%d %H:%M:%S", &vcd_header_struct_.vcd_create_time);
     std::cout << "File create time: " << tmp_buf << "\n";
-    std::cout << "File time scale: " << this->vcd_header_struct_.vcd_time_scale << vcd_header_struct_.vcd_time_unit
-              << "\n";
-    std::cout << "File hash value: " << this->vcd_header_struct_.vcd_comment_str << "\n\n";
+    std::cout << "File time scale: " << vcd_header_struct_.vcd_time_scale << vcd_header_struct_.vcd_time_unit << "\n";
+    std::cout << "File hash value: " << vcd_header_struct_.vcd_comment_str << "\n\n";
 }
 
 void VCDParser::get_vcd_scope() {
@@ -102,10 +95,6 @@ void VCDParser::get_vcd_scope() {
     vcd_signal_list_.clear();
     std::ifstream file;
     file.open(vcd_filename_, std::ios_base::in);
-    if (!file.is_open()) {
-        std::cout << "File open failed!\n";
-        return;
-    }
     std::string read_string;
     while (getline(file, read_string)) {
         if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
@@ -149,9 +138,8 @@ void VCDParser::get_vcd_scope() {
             if (vcd_signal_alias_table_.empty() != 1) {
                 vcd_signal_list_.back().second = vcd_signal_alias_table_;
                 vcd_signal_list_.emplace_back(scope_module, 0);
-            } else {
+            } else
                 vcd_signal_list_.emplace_back(scope_module, 0);
-            }
             vcd_signal_alias_table_.clear();
         } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'u') {
             if (vcd_signal_alias_table_.empty() != 1) {
@@ -166,16 +154,90 @@ void VCDParser::get_vcd_scope() {
             }
         }
     }
+}
 
-//    for (auto &iter : vcd_module_) {
-//        std::cout << iter << std::endl;
-//    }
-//    for (auto &iter : vcd_signal_list_) {
-//        std::cout << "Key:" << iter.first << std::endl;
-//        for (auto &it : iter.second) {
-//            std::cout << it.first << " Signal title: " << it.second.vcd_signal_title << std::endl;
-//        }
-//    }
+void VCDParser::get_vcd_scope(const std::string &module_label) {
+    vcd_signal_alias_table_.clear();
+    std::list<std::string> all_module;
+    int module_cnt = 1;
+    for (char pos : module_label) {
+        if (pos == '/')
+            module_cnt++;
+    }
+    std::vector<std::string> label(module_cnt);
+    int module_level = 0;
+    for (char pos : module_label) {
+        if (pos != '/')
+            label[module_level] += pos;
+        else
+            module_level++;
+    }
+    std::ifstream file;
+    file.open(vcd_filename_, std::ios_base::in);
+    std::string read_string;
+    int label_pos = 0;
+    bool read_label_start = false;
+    while (getline(file, read_string)) {
+        if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
+            std::string scope_module;
+            int space_pos = 0;
+            for (int pos = 0; read_string[pos] != 0 && space_pos != 3; pos++) {
+                if (read_string[pos] == ' ') {
+                    space_pos++;
+                    continue;
+                }
+                if (space_pos == 2)
+                    scope_module += read_string[pos];
+            }
+            if (label[label_pos] == scope_module && label_pos != module_level) {
+                label_pos++;
+                continue;
+            }
+            if (scope_module == label[label_pos] && scope_module == label[label_pos]) {
+                read_label_start = true;
+                vcd_signal_list_.emplace_back(module_label, 0);
+            }
+        }
+        if (read_label_start && read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
+            struct VCDSignalStruct signal;
+            int space_pos = 0;
+            std::string width;
+            for (int pos = 0; read_string[pos] != 0; pos++) {
+                if (read_string[pos] == ' ') {
+                    space_pos++;
+                    if (space_pos == 5) {
+                        signal.vcd_signal_width = std::stoi(width);
+                        break;
+                    }
+                    continue;
+                }
+                switch (space_pos) {
+                    case 1:signal.vcd_signal_type += read_string[pos];
+                        break;
+                    case 2:width += read_string[pos];
+                        break;
+                    case 3:signal.vcd_signal_label += read_string[pos];
+                        break;
+                    case 4:signal.vcd_signal_title += read_string[pos];
+                        break;
+                    default:break;
+                }
+            }
+            vcd_signal_alias_table_.insert(std::pair<std::string,
+                                                     struct VCDSignalStruct>(signal.vcd_signal_label, signal));
+        } else if (read_label_start && read_string.c_str()[0] != '$' && read_string.c_str()[1] != 'v') {
+            vcd_signal_list_.front().second = vcd_signal_alias_table_;
+            break;
+        }
+
+    }
+    file.close();
+    std::ofstream ofile;
+    ofile.open("text.csv", std::ios::out | std::ios::trunc);
+    std::cout << "____________________" << "\n";
+    for (auto &it : vcd_signal_alias_table_)
+        ofile << it.first << " " << it.second.vcd_signal_title << "\n";
+    std::cout << "____________________" << "\n";
 }
 
 struct VCDSignalStruct *VCDParser::get_vcd_signal(const std::string &label) {
@@ -196,10 +258,6 @@ void VCDParser::get_vcd_value_change_time() {
     time_stamp_first_buffer_.previous_buffer = nullptr;
     struct VCDTimeStampBufferStruct *current_buffer = &time_stamp_first_buffer_;
     FILE *fp = fopen64(vcd_filename_.c_str(), "r");
-    if (fp == nullptr) {
-        std::cout << "File open failed!\n";
-        return;
-    }
     while (fgets(reading_buffer, sizeof(reading_buffer), fp) != nullptr) {
         if (reading_buffer[0] == '#') {
             current_buffer->first_element[buf_counter].timestamp = strtoull(&reading_buffer[1], nullptr, 0);
@@ -251,15 +309,11 @@ bool VCDParser::get_position_using_timestamp(uint64_t *begin) {
     return true;
 }
 
-void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time) {
+void VCDParser::get_vcd_signal_flip_info() {
     vcd_signal_flip_table_.clear();
     std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator iter;
     static char buf[1024 * 1024];
     FILE *fp = fopen64(vcd_filename_.c_str(), "r");
-    if (fp == nullptr) {
-        std::cout << "File open failed!\n";
-        return;
-    }
     fseeko64(fp, (long) time_stamp_first_buffer_.first_element[0].location, SEEK_SET);
     while (fgets(buf, sizeof(buf), fp) != nullptr) {
         VCDSignalStatisticStruct cnt{0, 0, 0, 0, 0, 0, 0};
@@ -355,6 +409,115 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
                       / (double) (i.second.signal1_time + i.second.signal0_time + i.second.signalx_time)) << "\n";
 }
 
+void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
+    vcd_signal_flip_table_.clear();
+    std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator iter;
+    static char buf[1024 * 1024];
+    FILE *fp = fopen64(vcd_filename_.c_str(), "r");
+    fseeko64(fp, (long) time_stamp_first_buffer_.first_element[0].location, SEEK_SET);
+    while (fgets(buf, sizeof(buf), fp) != nullptr) {
+        VCDSignalStatisticStruct cnt{0, 0, 0, 0, 0, 0, 0};
+        buf[strlen(buf) - 1] = '\0';
+        std::string bufs = buf;
+        if (buf[0] == '#' || bufs == "$dumpvars")
+            continue;
+        if (bufs == "$end")
+            break;
+        if (buf[0] == 'b') {
+            std::string signal_alias = bufs.substr(bufs.find_last_of(' ') + 1, bufs.length());
+            if (vcd_signal_alias_table_.find(signal_alias) != vcd_signal_alias_table_.end()) {
+                unsigned long signal_length = (bufs.substr(1, bufs.find_first_of(' '))).length();
+                for (unsigned long count = signal_length - 1; count > 0; count--) {
+                    std::string temp_alias;
+                    temp_alias = signal_alias + std::string("[") + std::to_string(count - 1) + std::string("]");
+                    if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end()) {
+                        cnt.last_level_status = buf[signal_length - count];
+                        cnt.final_level_status = 'x';
+                        vcd_signal_flip_table_.insert(std::pair<std::string,
+                                                                struct VCDSignalStatisticStruct>(temp_alias,
+                                                                                                 cnt));
+                    } else {
+                        iter = vcd_signal_flip_table_.find(temp_alias);
+                        iter->second.last_level_status = buf[signal_length - count];
+                        iter->second.final_level_status = 'x';
+                    }
+                }
+            }
+        } else {
+            std::string signal_alias = std::string((char *) (&buf[1])).substr(0, bufs.length());
+            if (vcd_signal_alias_table_.find(signal_alias) != vcd_signal_alias_table_.end()) {
+                if (vcd_signal_flip_table_.find(signal_alias) == vcd_signal_flip_table_.end()) {
+                    cnt.last_level_status = buf[0];
+                    cnt.final_level_status = 'x';
+                    vcd_signal_flip_table_.insert(std::pair<std::string, struct VCDSignalStatisticStruct>(signal_alias,
+                                                                                                          cnt));
+                } else {
+                    iter = vcd_signal_flip_table_.find(signal_alias);
+                    iter->second.last_level_status = buf[0];
+                    iter->second.final_level_status = 'x';
+                }
+            }
+        }
+    }
+
+    static uint64_t current_timestamp = 0;
+    std::unordered_map<std::string, int8_t> burr_hash_table;
+
+    while (fgets(buf, sizeof(buf), fp) != nullptr) {
+        buf[strlen(buf) - 1] = '\0';
+        std::string bufs = buf;
+        if (buf[0] == '#') {
+            for (auto &it : burr_hash_table)
+                std::cout << "The Signal " << it.first << " glitch at " <<
+                          "time " << current_timestamp << "\n";
+            burr_hash_table.clear();
+            current_timestamp = strtoll(&buf[1], nullptr, 0);
+            continue;
+        }
+        if (buf[0] == 'b') {
+            std::string signal_alias = bufs.substr(bufs.find_last_of(' ') + 1, bufs.length());
+            if (vcd_signal_alias_table_.find(signal_alias) != vcd_signal_alias_table_.end()) {
+                unsigned long signal_length = (bufs.substr(1, bufs.find_first_of(' '))).length();
+                for (unsigned long count = signal_length - 1; count > 0; count--) {
+                    std::string
+                        temp_alias = signal_alias + std::string("[") + std::to_string(count - 1) + std::string("]");
+                    iter = vcd_signal_flip_table_.find(temp_alias);
+                    uint64_t time_difference = vcd_statistic_time_(current_timestamp, iter);
+                    if (buf[signal_length - count] != iter->second.last_level_status)
+                        vcd_statistic_burr_(buf, time_difference, temp_alias, iter,
+                                            &burr_hash_table, signal_length - count);
+                }
+            }
+        } else {
+            std::string signal_alias = std::string((char *) (&buf[1])).substr(0, strlen(buf));
+            if (vcd_signal_alias_table_.find(signal_alias) != vcd_signal_alias_table_.end()) {
+                iter = vcd_signal_flip_table_.find(signal_alias);
+                uint64_t time_difference = vcd_statistic_time_(current_timestamp, iter);
+                vcd_statistic_burr_(buf, time_difference, signal_alias, iter, &burr_hash_table, 0);
+            }
+        }
+    }
+    fclose(fp);
+
+    for (auto &it : burr_hash_table)
+        std::cout << "The Signal " << it.first << " glitch at " << "time " << current_timestamp << "\n";
+    std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator it;
+    for (it = vcd_signal_flip_table_.begin(); it != vcd_signal_flip_table_.end(); it++) {
+        vcd_statistic_time_(current_timestamp, it);
+        if ((it->second.last_level_status != it->second.final_level_status)
+            && (it->second.last_level_status != 'x'))
+            it->second.total_invert_counter++;
+        it->second.final_level_status = it->second.last_level_status;
+        it->second.total_invert_counter--;
+    }
+
+    for (auto &i : vcd_signal_flip_table_)
+        std::cout << i.first << " " << i.second.total_invert_counter << " " << i.second.signal1_time << " "
+                  << i.second.signal0_time << " " << i.second.signalx_time << " sp: " <<
+                  ((double) i.second.signal1_time
+                      / (double) (i.second.signal1_time + i.second.signal0_time + i.second.signalx_time)) << "\n";
+}
+
 void VCDParser::printf_source_csv(const std::string &filepath) {
     std::ofstream file;
     file.open(filepath, std::ios::out | std::ios::trunc);
@@ -414,57 +577,6 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
     file.close();
 }
 
-void VCDParser::printf_source_csv(const std::string &filepath, const std::string &label) {
-    std::ofstream file;
-    file.open(filepath, std::ios::out | std::ios::trunc);
-    std::list<std::string> all_module;
-    for (auto &iter : vcd_signal_list_) {
-        if (iter.first == "upscope") {
-            all_module.pop_back();
-            continue;
-        }
-        if (iter.first != label) {
-            all_module.emplace_back(iter.first);
-            continue;
-        } else {
-            std::string All_module;
-            All_module.clear();
-            for (auto &module : all_module) {
-                All_module += module + "/";
-            }
-            all_module.emplace_back(iter.first);
-            if (iter.second.empty() != 1) {
-                for (auto &it : iter.second) {
-                    struct VCDSignalStatisticStruct signal{};
-                    if (vcd_signal_flip_table_.find(it.first) == vcd_signal_flip_table_.end())
-                        std::cout << "Cannot find signal " << it.first << "\n";
-                    else
-                        signal = vcd_signal_flip_table_.find(it.first)->second;
-
-                    if (it.second.vcd_signal_width == 1) {
-                        file << All_module << iter.first << "." << it.second.vcd_signal_title
-                             << "   tc= " << signal.total_invert_counter
-                             << "   t1= " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
-                             << vcd_header_struct_.vcd_time_unit
-                             << "   t0= " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
-                             << vcd_header_struct_.vcd_time_unit
-                             << "   tx= " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
-                             << vcd_header_struct_.vcd_time_unit
-                             << "   sp= " << ((double) signal.signal1_time
-                            / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time))
-                             << std::endl;
-                    } else {
-                        for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++)
-                            file << All_module << iter.first << "." << it.second.vcd_signal_title << "[" << wid_pos
-                                 << "] "
-                                 << std::endl;
-                    }
-                }
-            }
-        }
-    }
-    file.close();
-}
 uint64_t VCDParser::vcd_statistic_time_(uint64_t current_timestamp,
                                         std::unordered_map<std::string,
                                                            struct VCDSignalStatisticStruct>::iterator iter) {
@@ -494,6 +606,7 @@ void VCDParser::vcd_statistic_burr_(const char *buf, uint64_t time_difference, c
         burr_hash_table->insert(std::pair<std::string, int8_t>(signal_alias, {0}));
     iter->second.last_level_status = buf[buf_index];
 }
+
 void VCDParser::get_vcd_signal_info_from_time_range(uint64_t begin_time, uint64_t end_time) {
     vcd_signal_flip_table_.clear();
     std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator iter;
