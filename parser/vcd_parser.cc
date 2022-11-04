@@ -232,12 +232,6 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
 
     }
     file.close();
-    std::ofstream ofile;
-    ofile.open("text.csv", std::ios::out | std::ios::trunc);
-    std::cout << "____________________" << "\n";
-    for (auto &it : vcd_signal_alias_table_)
-        ofile << it.first << " " << it.second.vcd_signal_title << "\n";
-    std::cout << "____________________" << "\n";
 }
 
 struct VCDSignalStruct *VCDParser::get_vcd_signal(const std::string &label) {
