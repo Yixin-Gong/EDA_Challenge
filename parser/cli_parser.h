@@ -34,11 +34,17 @@ class CLIParser {
   bool valid_time() const {
       return valid_time_rage_;
   }
+  bool valid_scope() const {
+      return valid_scope_;
+  }
   std::string get_filename() {
       return filepath_;
   }
   std::string get_output() {
       return output_;
+  }
+  std::string get_scope() {
+      return scope_;
   }
 
  private:
@@ -50,6 +56,7 @@ class CLIParser {
   bool using_gui_;
   bool valid_filename_;
   bool valid_time_rage_;
+  bool valid_scope_;
   CLITimeStruct cli_time_struct_;
 };
 

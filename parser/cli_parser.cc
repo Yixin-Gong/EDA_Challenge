@@ -60,6 +60,7 @@ CLIParser::CLIParser(std::string filepath,
             exit(6);
     } else if (begin_time.empty() && end_time.empty())
         valid_time_rage_ = false;
+    valid_scope_ = (!scope_.empty());
 }
 
 bool CLIParser::using_gui() {

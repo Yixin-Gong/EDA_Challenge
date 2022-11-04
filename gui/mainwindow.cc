@@ -53,7 +53,7 @@ void MainWindow::parse_button_clicked() {
         parser_->get_vcd_value_change_time();
         parser_->get_vcd_scope("x_sub_apb0_top/x_pwm_sec_top/x_pwm/x_pwm_ctrl/pwm_3_inst");
         parser_->get_vcd_signal_flip_info("x_sub_apb0_top/x_pwm_sec_top/x_pwm/x_pwm_ctrl/pwm_3_inst");
-        parser_->printf_source_csv(cli_parser_->get_output());
+        parser_->printf_source_csv(cli_parser_->get_output() + "/summary.csv");
     }
     endTime = clock();
     std::cout << "\nRunning time is:" << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s\n";
