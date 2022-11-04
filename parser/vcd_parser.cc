@@ -607,7 +607,7 @@ void VCDParser::vcd_statistic_burr_(const char *buf, uint64_t time_difference, c
     iter->second.last_level_status = buf[buf_index];
 }
 
-void VCDParser::get_vcd_signal_info_from_time_range(uint64_t begin_time, uint64_t end_time) {
+void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time) {
     vcd_signal_flip_table_.clear();
     std::unordered_map<std::string, struct VCDSignalStatisticStruct>::iterator iter;
     static char buf[1024 * 1024];

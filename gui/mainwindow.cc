@@ -51,12 +51,26 @@ void MainWindow::parse_button_clicked() {
     startTime = clock();
     if (parser_ != nullptr) {
         parser_->get_vcd_value_change_time();
-        if (!cli_parser_->valid_scope()) {
-            parser_->get_vcd_scope();
-            parser_->get_vcd_signal_flip_info();
+        if (!cli_parser_->valid_time()) {
+            if (!cli_parser_->valid_scope()) {
+                parser_->get_vcd_scope();
+                parser_->get_vcd_signal_flip_info();
+            } else {
+                parser_->get_vcd_scope(cli_parser_->get_scope());
+                parser_->get_vcd_signal_flip_info(cli_parser_->get_scope());
+            }
         } else {
-            parser_->get_vcd_scope(cli_parser_->get_scope());
-            parser_->get_vcd_signal_flip_info(cli_parser_->get_scope());
+            if ((cli_parser_->get_time_range()->end_time_unit != parser_->get_vcd_header()->vcd_time_unit) ||
+                (cli_parser_->get_time_range()->begin_time_unit != parser_->get_vcd_header()->vcd_time_unit)) {
+                std::cout << "The time units you entered do not match the vcd file.\n";
+                return;
+            }
+            uint64_t begin_timestamp =
+                (cli_parser_->get_time_range()->begin_time) / (parser_->get_vcd_header()->vcd_time_scale);
+            uint64_t end_timestamp =
+                (cli_parser_->get_time_range()->end_time) / (parser_->get_vcd_header()->vcd_time_scale);
+            parser_->get_vcd_scope();
+            parser_->get_vcd_signal_flip_info(begin_timestamp, end_timestamp);
         }
         parser_->printf_source_csv(cli_parser_->get_output() + "/summary.csv");
     }

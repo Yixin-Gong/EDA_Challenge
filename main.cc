@@ -84,12 +84,26 @@ int main(int argc, char **argv) {
             startTime = clock();
             VCDParser parser(cli_parser.get_filename());
             parser.get_vcd_value_change_time();
-            if (!cli_parser.valid_scope()) {
-                parser.get_vcd_scope();
-                parser.get_vcd_signal_flip_info();
+            if (!cli_parser.valid_time()) {
+                if (!cli_parser.valid_scope()) {
+                    parser.get_vcd_scope();
+                    parser.get_vcd_signal_flip_info();
+                } else {
+                    parser.get_vcd_scope(cli_parser.get_scope());
+                    parser.get_vcd_signal_flip_info(cli_parser.get_scope());
+                }
             } else {
-                parser.get_vcd_scope(cli_parser.get_scope());
-                parser.get_vcd_signal_flip_info(cli_parser.get_scope());
+                if ((cli_parser.get_time_range()->end_time_unit != parser.get_vcd_header()->vcd_time_unit) ||
+                    (cli_parser.get_time_range()->begin_time_unit != parser.get_vcd_header()->vcd_time_unit)) {
+                    std::cout << "The time units you entered do not match the vcd file.\n";
+                    exit(8);
+                }
+                uint64_t begin_timestamp =
+                    (cli_parser.get_time_range()->begin_time) / (parser.get_vcd_header()->vcd_time_scale);
+                uint64_t end_timestamp =
+                    (cli_parser.get_time_range()->end_time) / (parser.get_vcd_header()->vcd_time_scale);
+                parser.get_vcd_scope();
+                parser.get_vcd_signal_flip_info(begin_timestamp, end_timestamp);
             }
             parser.printf_source_csv(cli_parser.get_output() + "/summary.csv");
             endTime = clock();
