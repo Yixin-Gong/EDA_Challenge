@@ -51,8 +51,13 @@ void MainWindow::parse_button_clicked() {
     startTime = clock();
     if (parser_ != nullptr) {
         parser_->get_vcd_value_change_time();
-        parser_->get_vcd_scope("x_sub_apb0_top/x_pwm_sec_top/x_pwm/x_pwm_ctrl/pwm_3_inst");
-        parser_->get_vcd_signal_flip_info("x_sub_apb0_top/x_pwm_sec_top/x_pwm/x_pwm_ctrl/pwm_3_inst");
+        if (!cli_parser_->valid_scope()) {
+            parser_->get_vcd_scope();
+            parser_->get_vcd_signal_flip_info();
+        } else {
+            parser_->get_vcd_scope(cli_parser_->get_scope());
+            parser_->get_vcd_signal_flip_info(cli_parser_->get_scope());
+        }
         parser_->printf_source_csv(cli_parser_->get_output() + "/summary.csv");
     }
     endTime = clock();

@@ -522,7 +522,6 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
     file.open(filepath, std::ios::out | std::ios::trunc);
     std::list<std::string> all_module;
     for (auto &iter : vcd_signal_list_) {
-        file << iter.first << "\n";
         if (iter.first == "upscope") {
             all_module.pop_back();
             continue;
