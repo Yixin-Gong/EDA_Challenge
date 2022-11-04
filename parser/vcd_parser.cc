@@ -344,7 +344,8 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
             && (it->second.last_level_status != 'x'))
             it->second.total_invert_counter++;
         it->second.final_level_status = it->second.last_level_status;
-        it->second.total_invert_counter--;
+        if (it->second.total_invert_counter != 0)
+            it->second.total_invert_counter--;
     }
 
     for (auto &i : vcd_signal_flip_table_)
@@ -542,20 +543,23 @@ void VCDParser::get_vcd_signal_info_from_time_range(uint64_t begin_time, uint64_
     }
 
     std::unordered_map<std::string, int8_t> burr_hash_table;
-    static uint64_t current_timestamp = 0;
+    static uint64_t current_timestamp = 0, last_timestamp = 0;
     if (begin_time == 0)
         status = 1;
     while (fgets(buf, sizeof(buf), fp) != nullptr) {
         buf[strlen(buf) - 1] = '\0';
         std::string bufs = buf;
         if (buf[0] == '#') {
+            last_timestamp = current_timestamp;
             current_timestamp = strtoll(&buf[1], nullptr, 0);
             if (current_timestamp == begin_time)
                 status = 1;
-            if (current_timestamp == end_time)
+            if (current_timestamp >= end_time && status != 2)
                 status = 2;
-            else if (status == 2)
+            else if (status == 2) {
                 status = 3;
+                current_timestamp = last_timestamp;
+            }
             for (auto &it : burr_hash_table)
                 std::cout << "The Signal " << it.first << " glitch at " <<
                           "time " << current_timestamp << "\n";
@@ -583,6 +587,7 @@ void VCDParser::get_vcd_signal_info_from_time_range(uint64_t begin_time, uint64_
                     iter->second.last_level_status = buf[0];
                 }
                 break;
+            case 2:
             case 1:
                 if (buf[0] == 'b') {
                     std::string signal_alias = bufs.substr(bufs.find_last_of(' ') + 1, bufs.length());
@@ -617,7 +622,8 @@ void VCDParser::get_vcd_signal_info_from_time_range(uint64_t begin_time, uint64_
         if ((it->second.last_level_status != it->second.final_level_status)
             && (it->second.last_level_status != 'x'))
             it->second.total_invert_counter++;
-        it->second.total_invert_counter--;
+        if (it->second.total_invert_counter != 0)
+            it->second.total_invert_counter--;
     }
 
     for (auto &i : vcd_signal_flip_table_)
