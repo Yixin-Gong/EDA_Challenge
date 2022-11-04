@@ -43,12 +43,12 @@ class VCDParser {
   }
   struct VCDSignalStruct *get_vcd_signal(const std::string &label);
   void get_vcd_scope();
+  void get_vcd_scope(const std::string &module_label);
   void get_vcd_value_change_time();
   void get_vcd_signal_flip_info();
+  void get_vcd_signal_flip_info(const std::string &module_label);
   void printf_source_csv(const std::string &filepath);
   bool get_position_using_timestamp(uint64_t *begin);
-  void printf_source_csv(const std::string &filepath, const std::string &module_label);
-  void get_specify_module(const std::string &filepath, const std::string &module_label);
 
  private:
   struct VCDTimeStampStruct { uint64_t timestamp;uint64_t location; };
@@ -75,7 +75,6 @@ class VCDParser {
   std::list<std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
   std::unordered_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
   std::unordered_map<std::string, struct VCDSignalStruct> vcd_signal_alias_table_;
-  std::unordered_map<std::string, struct VCDSignalStruct> specify_vcd_signal_alias_table_;
 
   void parse_vcd_header_();
   void vcd_delete_time_stamp_buffer_();
