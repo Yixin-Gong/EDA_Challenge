@@ -305,12 +305,18 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
                     scope_module += read_string[pos];
             }
             if (label[label_pos] == scope_module && label_pos != module_level) {
+                all_module.emplace_back(scope_module);
                 label_pos++;
                 continue;
             }
             if (scope_module == label[label_pos] && scope_module == label[label_pos]) {
+                std::string module;
+                for (const auto &it : all_module) {
+                    module += it + '/';
+                }
+                module += scope_module;
                 read_label_start = true;
-                vcd_signal_list_.emplace_back(module_label, 0);
+                vcd_signal_list_.emplace_back(module, 0);
             }
         }
         if (read_label_start && read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
