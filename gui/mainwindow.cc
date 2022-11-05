@@ -23,8 +23,13 @@ MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app,
         parse_file_header_();
     }
     if (cli->valid_time()) {
-        from_txtbox_->set_text(std::to_string(cli_parser_->get_time_range()->begin_time));
-        to_txtbox_->set_text(std::to_string(cli_parser_->get_time_range()->end_time));
+        if ((cli_parser_->get_time_range()->end_time_unit != parser_->get_vcd_header()->vcd_time_unit) ||
+            (cli_parser_->get_time_range()->begin_time_unit != parser_->get_vcd_header()->vcd_time_unit))
+            std::cout << "The time units you entered do not match the vcd file.\n";
+        else {
+            from_txtbox_->set_text(std::to_string(cli_parser_->get_time_range()->begin_time));
+            to_txtbox_->set_text(std::to_string(cli_parser_->get_time_range()->end_time));
+        }
     }
 }
 
@@ -50,7 +55,6 @@ void MainWindow::parse_button_clicked() {
     clock_t startTime, endTime;
     startTime = clock();
     if (parser_ != nullptr) {
-        parser_->get_vcd_value_change_time();
         if (!cli_parser_->valid_time()) {
             if (!cli_parser_->valid_scope()) {
                 parser_->get_vcd_scope();
@@ -60,11 +64,6 @@ void MainWindow::parse_button_clicked() {
                 parser_->get_vcd_signal_flip_info(cli_parser_->get_scope());
             }
         } else {
-            if ((cli_parser_->get_time_range()->end_time_unit != parser_->get_vcd_header()->vcd_time_unit) ||
-                (cli_parser_->get_time_range()->begin_time_unit != parser_->get_vcd_header()->vcd_time_unit)) {
-                std::cout << "The time units you entered do not match the vcd file.\n";
-                return;
-            }
             uint64_t begin_timestamp =
                 (cli_parser_->get_time_range()->begin_time) / (parser_->get_vcd_header()->vcd_time_scale);
             uint64_t end_timestamp =
@@ -75,7 +74,7 @@ void MainWindow::parse_button_clicked() {
         parser_->printf_source_csv(cli_parser_->get_output() + "/summary.csv");
     }
     endTime = clock();
-    std::cout << "\nRunning time is:" << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s\n";
+    std::cout << "Running time is:" << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
 void MainWindow::open_button_clicked() {

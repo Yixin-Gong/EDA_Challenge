@@ -83,7 +83,6 @@ int main(int argc, char **argv) {
             clock_t startTime, endTime;
             startTime = clock();
             VCDParser parser(cli_parser.get_filename());
-            parser.get_vcd_value_change_time();
             if (!cli_parser.valid_time()) {
                 if (!cli_parser.valid_scope()) {
                     parser.get_vcd_scope();
@@ -107,7 +106,7 @@ int main(int argc, char **argv) {
             }
             parser.printf_source_csv(cli_parser.get_output() + "/summary.csv");
             endTime = clock();
-            std::cout << "\nRunning time is:" << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s\n";
+            std::cout << "Running time is:" << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s\n";
         }
     } catch (TCLAP::ArgException &e) {
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
