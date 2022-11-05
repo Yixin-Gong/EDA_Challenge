@@ -578,11 +578,14 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
         if (iter.second.empty() != 1) {
             for (auto &it : iter.second) {
                 struct VCDSignalStatisticStruct signal{};
+                char sp_buffer[16] = {0};
                 if (it.second.vcd_signal_width == 1) {
                     if (vcd_signal_flip_table_.find(it.first) == vcd_signal_flip_table_.end())
-                        std::cout << "Cannot find signal " << it.first << "\n";
+                        memset(&signal, 0x00, sizeof(struct VCDSignalStatisticStruct));
                     else
                         signal = vcd_signal_flip_table_.find(it.first)->second;
+                    sprintf(sp_buffer, "%.5lf", (double) signal.signal1_time
+                        / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time));
                     file << All_module << iter.first << "." << it.second.vcd_signal_title
                          << "    tc = " << signal.total_invert_counter
                          << "    t1 = " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
@@ -590,18 +593,17 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
                          << "    t0 = " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
                          << vcd_header_struct_.vcd_time_unit
                          << "    tx = " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
-                         << vcd_header_struct_.vcd_time_unit
-                         << "    sp = " << std::to_string(((double) signal.signal1_time
-                        / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time))) << std::endl;
+                         << vcd_header_struct_.vcd_time_unit << "    sp = " << sp_buffer << std::endl;
                 } else {
                     for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++) {
                         std::string
                             temp_alias = it.first + std::string("[") + std::to_string(wid_pos) + std::string("]");;
-                        if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end()) {
-                            std::cout << "Cannot find signal " << temp_alias << "\n";
-                            break;
-                        } else
+                        if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end())
+                            memset(&signal, 0x00, sizeof(struct VCDSignalStatisticStruct));
+                        else
                             signal = vcd_signal_flip_table_.find(temp_alias)->second;
+                        sprintf(sp_buffer, "%.5lf", (double) signal.signal1_time
+                            / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time));
                         file << All_module << iter.first << "." << it.second.vcd_signal_title << "[" << wid_pos
                              << "]    tc = " << signal.total_invert_counter
                              << "    t1 = " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
@@ -609,9 +611,7 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
                              << "    t0 = " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
                              << vcd_header_struct_.vcd_time_unit
                              << "    tx = " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
-                             << vcd_header_struct_.vcd_time_unit
-                             << "    sp = " << std::to_string(((double) signal.signal1_time
-                            / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time))) << std::endl;
+                             << vcd_header_struct_.vcd_time_unit << "    sp = " << sp_buffer << std::endl;
                     }
                 }
             }
