@@ -302,7 +302,7 @@ void VCDParser::get_vcd_scope() {
 
 void VCDParser::get_vcd_scope(const std::string &module_label) {
     vcd_signal_alias_table_.clear();
-    std::list<std::string> all_module;
+
     int module_cnt = 1;
     for (char pos : module_label) {
         if (pos == '/')
@@ -322,10 +322,16 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
     /* Start reading the signal when label_pos is equal to module_cnt minus 1*/
     int label_pos = 0;
     bool read_label_start = false;
+    std::list<std::string> all_module;
 
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
+
+        /* If read the upscope.*/
+        if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'u') {
+            all_module.pop_back();
+        }
 
         /* If read the scope.*/
         if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
