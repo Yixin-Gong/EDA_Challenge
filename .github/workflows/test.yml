@@ -18,8 +18,8 @@ jobs:
           fetch-depth: 1
       - name: Build Software
         run: |
-          mkdir build && cd build && cmake .. -DCOMPILE_ON_SERVER=y && cmake --build . --target version_h
-          cmake .. -DCOMPILE_ON_SERVER=y && cmake --build . --target EDA_Challenge
+          mkdir build && cd build && cmake .. -DCOMPILE_ON_SERVER=y -DNO_STATISTIC_GLITCH=ON && cmake --build . --target version_h
+          cmake .. -DCOMPILE_ON_SERVER=y -DNO_STATISTIC_GLITCH=ON && cmake --build . --target EDA_Challenge
       - name: Run Software
         run: |
           cd build && ./EDA_Challenge -v && ./EDA_Challenge -h

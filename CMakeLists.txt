@@ -23,6 +23,10 @@ if (NOT COMPILE_ON_SERVER)
     pkg_check_modules(GTKMM3 REQUIRED gtkmm-3.0)
     pkg_check_modules(GTKMM_PLPLOT REQUIRED gtkmm-plplot-2.0)
 
+    if (NO_STATISTIC_GLITCH)
+        add_compile_definitions(NO_STATISTIC_GLITCH)
+    endif ()
+
     add_compile_definitions(GTK_LIBRARY_VERSION="${GTK3_VERSION}" GTKMM_LIBRARY_VERSION="${GTKMM3_VERSION}")
     add_compile_definitions(CXX_COMPILER_VERSION="${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 
@@ -44,6 +48,10 @@ if (NOT COMPILE_ON_SERVER)
 else ()
     include_directories(system . parser)
     file(GLOB_RECURSE SOURCES "main.cc" "system/*.cc" "parser/*.cc")
+
+    if (NO_STATISTIC_GLITCH)
+        add_compile_definitions(NO_STATISTIC_GLITCH)
+    endif ()
 
     add_compile_definitions(GTK_LIBRARY_VERSION="No gtk library" GTKMM_LIBRARY_VERSION="No gtkmm library")
     add_compile_definitions(CXX_COMPILER_VERSION="${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
