@@ -1,5 +1,5 @@
 #!/bin/bash
-valgrind --tool=massif --quiet ./build/EDA_Challenge -g --file ./testcase/case1/test.vcd
+valgrind --tool=massif --quiet ./build/EDA_Challenge --file ./testcase/case1/test.vcd
 ls
 rm massif.out
 mv massif.out* massif.out
