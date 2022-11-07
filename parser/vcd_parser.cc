@@ -211,14 +211,21 @@ void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp,
             it.value().total_invert_counter--;
     }
 }
-
+/*!  \brief      Get all modules and information of signals and store them in a list.
+ *   \param[in]  vcd_signal_alias_table_:A hash table to store information of signals.
+ *   \param[in]  vcd_signal_list:A list that stores <string,unordered_map>pairs,key being module.
+ */
 void VCDParser::get_vcd_scope() {
     vcd_signal_alias_table_.clear();
     vcd_signal_list_.clear();
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
+
+        /* If read the information of the signal,cut information is stored*/
         if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
+            /* Cut the information of signals with a space as a demarcation.
+             * And store the information in struct.*/
             struct VCDSignalStruct signal;
             int space_pos = 0;
             std::string width;
@@ -245,7 +252,11 @@ void VCDParser::get_vcd_scope() {
             }
             vcd_signal_alias_table_.insert(std::pair<std::string, struct VCDSignalStruct>(signal.vcd_signal_label,
                                                                                           signal));
-        } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
+        }
+
+            /* If read the information of the module.*/
+        else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
+            /* Cut the module title.*/
             std::string scope_module;
             int space_pos = 0;
             for (int pos = 0; read_string[pos] != 0 && space_pos != 3; pos++) {
@@ -256,20 +267,33 @@ void VCDParser::get_vcd_scope() {
                 if (space_pos == 2)
                     scope_module += read_string[pos];
             }
+
+            /* Insert the stored signal in the hash table into the list in the corresponding scope_module.
+             * Store the scope_module in the list*/
             if (vcd_signal_alias_table_.empty() != 1) {
                 vcd_signal_list_.back().second = vcd_signal_alias_table_;
                 vcd_signal_list_.emplace_back(scope_module, 0);
             } else
                 vcd_signal_list_.emplace_back(scope_module, 0);
             vcd_signal_alias_table_.clear();
-        } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'u') {
+        }
+
+            /* If read the upscope*/
+        else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'u') {
+            /* Insert the stored signal in the hash table into the list in the corresponding scope_module.*/
             if (vcd_signal_alias_table_.empty() != 1) {
                 vcd_signal_list_.back().second = vcd_signal_alias_table_;
                 vcd_signal_alias_table_.clear();
             }
+
+            /* Store the upscope in the list*/
             vcd_signal_list_.emplace_back("upscope", 0);
-        } else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'e') {
+        }
+
+            /* If read the enddefinitions*/
+        else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'e') {
             if (read_string == "$enddefinitions $end") {
+                /* Insert the stored signal in the hash table into the list in the corresponding scope_module.*/
                 vcd_signal_list_.back().second = vcd_signal_alias_table_;
                 break;
             }
@@ -277,14 +301,20 @@ void VCDParser::get_vcd_scope() {
     }
 }
 
+/*!  \brief      Get specified scope contains information of signals and store them in a hash table.
+ *   \param[in]  vcd_signal_alias_table_:A hash table to store information of signals.
+ */
+
 void VCDParser::get_vcd_scope(const std::string &module_label) {
     vcd_signal_alias_table_.clear();
-    std::list<std::string> all_module;
+
     int module_cnt = 1;
     for (char pos : module_label) {
         if (pos == '/')
             module_cnt++;
     }
+
+    /* Cut module_label to store in vector.*/
     std::vector<std::string> label(module_cnt);
     int module_level = 0;
     for (char pos : module_label) {
@@ -293,12 +323,24 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
         else
             module_level++;
     }
+
+    /* Start reading the signal when label_pos is equal to module_cnt minus 1*/
     int label_pos = 0;
     bool read_label_start = false;
+    std::list<std::string> all_module;
+
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
+
+        /* If read the upscope.*/
+        if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'u') {
+            all_module.pop_back();
+        }
+
+        /* If read the scope.*/
         if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
+            /* Cut the module title.*/
             std::string scope_module;
             int space_pos = 0;
             for (int pos = 0; read_string[pos] != 0 && space_pos != 3; pos++) {
@@ -309,16 +351,34 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
                 if (space_pos == 2)
                     scope_module += read_string[pos];
             }
+
+            all_module.emplace_back(scope_module);
+
+            /* Compare scope_module and module_label in order.
+             * Start with the first in module_label.
+             * When the comparison is successful, the next one of the module_label will be compared.*/
             if (label[label_pos] == scope_module && label_pos != module_level) {
                 label_pos++;
                 continue;
             }
+
+            /* When all the modules in the module_label are compared, start reading the signal.
+             * Store the current scope_module.*/
             if (scope_module == label[label_pos] && scope_module == label[label_pos]) {
+                std::string module;
+                for (const auto &it : all_module) {
+                    module += it + '/';
+                }
+                module += scope_module;
                 read_label_start = true;
-                vcd_signal_list_.emplace_back(module_label, 0);
+                vcd_signal_list_.emplace_back(module, 0);
             }
         }
+
+        /* If start reading the signal and read the information of the signal.*/
         if (read_label_start && read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
+            /*Cut the information of signals with a space as a demarcation.
+             *And store the information in struct.*/
             struct VCDSignalStruct signal;
             int space_pos = 0;
             std::string width;
@@ -343,9 +403,15 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
                     default:break;
                 }
             }
+
+            /* Store information in a hash table.*/
             vcd_signal_alias_table_.insert(std::pair<std::string,
                                                      struct VCDSignalStruct>(signal.vcd_signal_label, signal));
-        } else if (read_label_start && read_string.c_str()[0] != '$' && read_string.c_str()[1] != 'v') {
+
+        }
+
+            /* Exit when the information read is not a signal after starting to read.*/
+        else if (read_label_start && read_string.c_str()[0] != '$' && read_string.c_str()[1] != 'v') {
             vcd_signal_list_.front().second = vcd_signal_alias_table_;
             break;
         }
@@ -576,24 +642,39 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
     vcd_signal_flip_post_processing_(current_timestamp, &burr_hash_table);
 }
 
+/*!  \brief      Output the stored and counted results to file.
+ *   \param[in]  vcd_signal_list:A list that stores <string,unordered_map>pairs,key being module.
+ */
 void VCDParser::printf_source_csv(const std::string &filepath) {
     std::ofstream file;
     file.open(filepath, std::ios::out | std::ios::trunc);
+
+    /* Output the information in the list.
+     * all_module is used to store modules that have not exited at each layer.*/
     std::list<std::string> all_module;
     for (auto &iter : vcd_signal_list_) {
+
+        /* If read upscope delete a module*/
         if (iter.first == "upscope") {
             all_module.pop_back();
             continue;
         }
+
+        /* Merging of modules at all levels.*/
         std::string All_module;
         All_module.clear();
         for (auto &module : all_module)
             All_module += module + "/";
+
         all_module.emplace_back(iter.first);
+
+        /* Output modules and signals to file.*/
         if (iter.second.empty() != 1) {
             for (auto &it : iter.second) {
                 struct VCDSignalStatisticStruct signal{};
                 char sp_buffer[16] = {0};
+
+                /* 1-bit wide and multi-bit wide outputs.*/
                 if (it.second.vcd_signal_width == 1) {
                     if (vcd_signal_flip_table_.find(it.first) == vcd_signal_flip_table_.end())
                         memset(&signal, 0x00, sizeof(struct VCDSignalStatisticStruct));
