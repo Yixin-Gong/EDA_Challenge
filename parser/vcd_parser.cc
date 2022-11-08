@@ -697,3 +697,8 @@ bool VCDParser::get_position_using_timestamp(uint64_t *begin) {
     *begin = get_time_stamp_from_pos_(begin_pos_est)->location;
     return true;
 }
+
+VCDSignalStatisticStruct *VCDParser::get_signal_flip_info(const std::string &signal_alias) {
+    VCDSignalStatisticStruct *signal = &(vcd_signal_flip_table_.find(signal_alias)->second);
+    return signal;
+}

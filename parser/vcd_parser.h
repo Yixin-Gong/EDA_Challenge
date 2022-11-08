@@ -30,6 +30,16 @@ struct VCDSignalStruct {
   std::string vcd_signal_title;
 };
 
+struct VCDSignalStatisticStruct {
+  uint64_t total_invert_counter;
+  uint64_t signal0_time;
+  uint64_t signal1_time;
+  uint64_t signalx_time;
+  uint64_t last_timestamp;
+  int8_t last_level_status;
+  int8_t final_level_status;
+};
+
 class VCDParser {
  public:
   explicit VCDParser(const std::string &filename) {
@@ -59,6 +69,7 @@ class VCDParser {
   void get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time);
   void printf_source_csv(const std::string &filepath);
   bool get_position_using_timestamp(uint64_t *begin);
+  VCDSignalStatisticStruct *get_signal_flip_info(const std::string &signal_alias);
 
  private:
   struct VCDTimeStampStruct { uint64_t timestamp;uint64_t location; };
@@ -66,15 +77,6 @@ class VCDParser {
     struct VCDTimeStampStruct *first_element;
     struct VCDTimeStampBufferStruct *next_buffer;
     struct VCDTimeStampBufferStruct *previous_buffer;
-  };
-  struct VCDSignalStatisticStruct {
-    uint64_t total_invert_counter;
-    uint64_t signal0_time;
-    uint64_t signal1_time;
-    uint64_t signalx_time;
-    uint64_t last_timestamp;
-    int8_t last_level_status;
-    int8_t final_level_status;
   };
 
   FILE *fp_;
