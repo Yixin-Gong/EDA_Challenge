@@ -13,8 +13,8 @@
 #include <vector>
 #include <map>
 #include <list>
-#include <unordered_map>
 #include <iostream>
+#include "hopscotch_map.h"
 
 struct VCDHeaderStruct {
   struct tm vcd_create_time;
@@ -46,15 +46,19 @@ class VCDParser {
       fp_ = fopen64(filename.c_str(), "r");
       std::cout << "\nOpen file: " << filename << "\n";
       parse_vcd_header_();
+#ifndef IS_NOT_RUNNING_GUI
       vcd_delete_time_stamp_buffer_();
       auto *vcdtime_buf = new struct VCDTimeStampStruct[ktime_stamp_buffer_size_];
       time_stamp_first_buffer_.first_element = vcdtime_buf;
       time_stamp_first_buffer_.next_buffer = nullptr;
       time_stamp_first_buffer_.previous_buffer = nullptr;
+#endif
   }
   ~VCDParser() {
       fclose(fp_);
+#ifndef IS_NOT_RUNNING_GUI
       vcd_delete_time_stamp_buffer_();
+#endif
       vcd_signal_list_.clear();
       vcd_signal_flip_table_.clear();
       vcd_signal_alias_table_.clear();
@@ -85,19 +89,19 @@ class VCDParser {
   const uint32_t ktime_stamp_buffer_size_ = 1024;
   bool timestamp_statistic_flag = false;
 
-  std::list<std::pair<std::string, std::unordered_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
-  std::unordered_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
-  std::unordered_map<std::string, struct VCDSignalStruct> vcd_signal_alias_table_;
+  std::list<std::pair<std::string, tsl::hopscotch_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
+  tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
+  tsl::hopscotch_map<std::string, struct VCDSignalStruct> vcd_signal_alias_table_;
 
   void parse_vcd_header_();
   void vcd_delete_time_stamp_buffer_();
   VCDTimeStampStruct *get_time_stamp_from_pos_(uint32_t pos);
   static void vcd_statistic_signal_(uint64_t current_timestamp,
                                     struct VCDSignalStatisticStruct *signal,
-                                    std::unordered_map<std::string, int8_t> *burr_hash_table,
+                                    tsl::hopscotch_map<std::string, int8_t> *burr_hash_table,
                                     char current_level_status, const std::string &signal_alias);
   void initialize_vcd_signal_flip_table_();
-  void vcd_signal_flip_post_processing_(uint64_t timestamp, std::unordered_map<std::string, int8_t> *burr_hash_table);
+  void vcd_signal_flip_post_processing_(uint64_t timestamp, tsl::hopscotch_map<std::string, int8_t> *burr_hash_table);
   uint64_t get_vcd_value_change_time_(struct VCDTimeStampBufferStruct *current_buffer,
                                       uint64_t timestamp, uint64_t buf_counter);
 };
