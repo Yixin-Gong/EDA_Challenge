@@ -114,7 +114,7 @@ VCDParser::VCDTimeStampStruct *VCDParser::get_time_stamp_from_pos_(uint32_t pos)
 
 void VCDParser::vcd_statistic_signal_(uint64_t current_timestamp,
                                       struct VCDSignalStatisticStruct *signal,
-                                      tsl::robin_map<std::string, int8_t> *burr_hash_table,
+                                      tsl::hopscotch_map<std::string, int8_t> *burr_hash_table,
                                       char current_level_status, const std::string &signal_alias) {
     uint64_t time_difference = current_timestamp - signal->last_timestamp;
     switch (signal->last_level_status) {
@@ -190,12 +190,12 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
 }
 
 void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp,
-                                                 tsl::robin_map<std::string, int8_t> *burr_hash_table) {
+                                                 tsl::hopscotch_map<std::string, int8_t> *burr_hash_table) {
 #ifndef NO_STATISTIC_GLITCH
     for (auto &it : (*burr_hash_table))
         std::cout << "Signal " << it.first << " glitches at time " << current_timestamp << "\n";
 #endif
-    tsl::robin_map<std::string, struct VCDSignalStatisticStruct>::iterator it;
+    tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct>::iterator it;
     for (it = vcd_signal_flip_table_.begin(); it != vcd_signal_flip_table_.end(); it++) {
         uint64_t time_difference = current_timestamp - it->second.last_timestamp;
         switch (it->second.last_level_status) {
@@ -429,7 +429,7 @@ void VCDParser::get_vcd_signal_flip_info() {
     clock_t startTime = clock();
     struct VCDTimeStampBufferStruct *current_buffer = &time_stamp_first_buffer_;
     static uint64_t current_timestamp = 0, buf_counter = 0;
-    tsl::robin_map<std::string, int8_t> burr_hash_table;
+    tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
@@ -530,7 +530,7 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
     }
 
     static uint64_t current_timestamp = 0;
-    tsl::robin_map<std::string, int8_t> burr_hash_table;
+    tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
 
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
@@ -573,7 +573,7 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
     vcd_signal_flip_table_.clear();
     int8_t status = (begin_time == 0) ? 1 : 0;
     initialize_vcd_signal_flip_table_();
-    tsl::robin_map<std::string, int8_t> burr_hash_table;
+    tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
     static uint64_t current_timestamp = 0, last_timestamp = 0;
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';

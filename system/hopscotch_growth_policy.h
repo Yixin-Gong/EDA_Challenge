@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2017 Thibaut Goetghebuer-Planchon <tessil@gmx.com>
+ * Copyright (c) 2018 Thibaut Goetghebuer-Planchon <tessil@gmx.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef TSL_ROBIN_GROWTH_POLICY_H
-#define TSL_ROBIN_GROWTH_POLICY_H
+#ifndef TSL_HOPSCOTCH_GROWTH_POLICY_H
+#define TSL_HOPSCOTCH_GROWTH_POLICY_H
 
 #include <algorithm>
 #include <array>
@@ -35,10 +35,16 @@
 #include <ratio>
 #include <stdexcept>
 
+/**
+ * Only activate tsl_hh_assert if TSL_DEBUG is defined.
+ * This way we avoid the performance hit when NDEBUG is not defined with assert
+ * as tsl_hh_assert is used a lot (people usually compile with "-O3" and not
+ * "-O3 -DNDEBUG").
+ */
 #ifdef TSL_DEBUG
-#define tsl_rh_assert(expr) assert(expr)
+#define tsl_hh_assert(expr) assert(expr)
 #else
-#define tsl_rh_assert(expr) (static_cast<void>(0))
+#define tsl_hh_assert(expr) (static_cast<void>(0))
 #endif
 
 /**
@@ -48,31 +54,23 @@
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || \
      (defined(_MSC_VER) && defined(_CPPUNWIND))) &&        \
     !defined(TSL_NO_EXCEPTIONS)
-#define TSL_RH_THROW_OR_TERMINATE(ex, msg) throw ex(msg)
+#define TSL_HH_THROW_OR_TERMINATE(ex, msg) throw ex(msg)
 #else
-#define TSL_RH_NO_EXCEPTIONS
+#define TSL_HH_NO_EXCEPTIONS
 #ifdef TSL_DEBUG
 #include <iostream>
-#define TSL_RH_THROW_OR_TERMINATE(ex, msg) \
+#define TSL_HH_THROW_OR_TERMINATE(ex, msg) \
   do {                                     \
     std::cerr << msg << std::endl;         \
     std::terminate();                      \
   } while (0)
 #else
-#define TSL_RH_THROW_OR_TERMINATE(ex, msg) std::terminate()
+#define TSL_HH_THROW_OR_TERMINATE(ex, msg) std::terminate()
 #endif
 #endif
-
-#if defined(__GNUC__) || defined(__clang__)
-#define TSL_RH_LIKELY(exp) (__builtin_expect(!!(exp), true))
-#else
-#define TSL_RH_LIKELY(exp) (exp)
-#endif
-
-#define TSL_RH_UNUSED(x) static_cast<void>(x)
 
 namespace tsl {
-namespace rh {
+namespace hh {
 
 /**
  * Grow the hash table by a factor of GrowthFactor keeping the bucket count to a
@@ -94,7 +92,7 @@ class power_of_two_growth_policy {
    */
   explicit power_of_two_growth_policy(std::size_t& min_bucket_count_in_out) {
     if (min_bucket_count_in_out > max_bucket_count()) {
-      TSL_RH_THROW_OR_TERMINATE(std::length_error,
+      TSL_HH_THROW_OR_TERMINATE(std::length_error,
                                 "The hash table exceeds its maximum size.");
     }
 
@@ -116,11 +114,11 @@ class power_of_two_growth_policy {
   }
 
   /**
-   * Return the number of buckets that should be used on next growth.
+   * Return the bucket count to use when the bucket array grows on rehash.
    */
   std::size_t next_bucket_count() const {
     if ((m_mask + 1) > max_bucket_count() / GrowthFactor) {
-      TSL_RH_THROW_OR_TERMINATE(std::length_error,
+      TSL_HH_THROW_OR_TERMINATE(std::length_error,
                                 "The hash table exceeds its maximum size.");
     }
 
@@ -164,7 +162,7 @@ class power_of_two_growth_policy {
     return value != 0 && (value & (value - 1)) == 0;
   }
 
- protected:
+ private:
   static_assert(is_power_of_two(GrowthFactor) && GrowthFactor >= 2,
                 "GrowthFactor must be a power of two >= 2.");
 
@@ -181,7 +179,7 @@ class mod_growth_policy {
  public:
   explicit mod_growth_policy(std::size_t& min_bucket_count_in_out) {
     if (min_bucket_count_in_out > max_bucket_count()) {
-      TSL_RH_THROW_OR_TERMINATE(std::length_error,
+      TSL_HH_THROW_OR_TERMINATE(std::length_error,
                                 "The hash table exceeds its maximum size.");
     }
 
@@ -198,14 +196,14 @@ class mod_growth_policy {
 
   std::size_t next_bucket_count() const {
     if (m_mod == max_bucket_count()) {
-      TSL_RH_THROW_OR_TERMINATE(std::length_error,
+      TSL_HH_THROW_OR_TERMINATE(std::length_error,
                                 "The hash table exceeds its maximum size.");
     }
 
     const double next_bucket_count =
         std::ceil(double(m_mod) * REHASH_SIZE_MULTIPLICATION_FACTOR);
     if (!std::isnormal(next_bucket_count)) {
-      TSL_RH_THROW_OR_TERMINATE(std::length_error,
+      TSL_HH_THROW_OR_TERMINATE(std::length_error,
                                 "The hash table exceeds its maximum size.");
     }
 
@@ -236,14 +234,14 @@ class mod_growth_policy {
 namespace detail {
 
 #if SIZE_MAX >= ULLONG_MAX
-#define TSL_RH_NB_PRIMES 51
+#define TSL_HH_NB_PRIMES 51
 #elif SIZE_MAX >= ULONG_MAX
-#define TSL_RH_NB_PRIMES 40
+#define TSL_HH_NB_PRIMES 40
 #else
-#define TSL_RH_NB_PRIMES 23
+#define TSL_HH_NB_PRIMES 23
 #endif
 
-static constexpr const std::array<std::size_t, TSL_RH_NB_PRIMES> PRIMES = {{
+static constexpr const std::array<std::size_t, TSL_HH_NB_PRIMES> PRIMES = {{
     1u,
     5u,
     17u,
@@ -310,7 +308,7 @@ static constexpr std::size_t mod(std::size_t hash) {
 // faster modulo as the compiler can optimize the modulo code better with a
 // constant known at the compilation.
 static constexpr const std::array<std::size_t (*)(std::size_t),
-                                  TSL_RH_NB_PRIMES>
+                                  TSL_HH_NB_PRIMES>
     MOD_PRIME = {{
         &mod<0>,  &mod<1>,  &mod<2>,  &mod<3>,  &mod<4>,  &mod<5>,
         &mod<6>,  &mod<7>,  &mod<8>,  &mod<9>,  &mod<10>, &mod<11>,
@@ -331,7 +329,7 @@ static constexpr const std::array<std::size_t (*)(std::size_t),
 
 /**
  * Grow the hash table by using prime numbers as bucket count. Slower than
- * tsl::rh::power_of_two_growth_policy in general but will probably distribute
+ * tsl::hh::power_of_two_growth_policy in general but will probably distribute
  * the values around better in the buckets with a poor hash function.
  *
  * To allow the compiler to optimize the modulo operation, a lookup table is
@@ -362,7 +360,7 @@ class prime_growth_policy {
     auto it_prime = std::lower_bound(
         detail::PRIMES.begin(), detail::PRIMES.end(), min_bucket_count_in_out);
     if (it_prime == detail::PRIMES.end()) {
-      TSL_RH_THROW_OR_TERMINATE(std::length_error,
+      TSL_HH_THROW_OR_TERMINATE(std::length_error,
                                 "The hash table exceeds its maximum size.");
     }
 
@@ -381,7 +379,7 @@ class prime_growth_policy {
 
   std::size_t next_bucket_count() const {
     if (m_iprime + 1 >= detail::PRIMES.size()) {
-      TSL_RH_THROW_OR_TERMINATE(std::length_error,
+      TSL_HH_THROW_OR_TERMINATE(std::length_error,
                                 "The hash table exceeds its maximum size.");
     }
 
@@ -400,7 +398,7 @@ class prime_growth_policy {
                 "The type of m_iprime is not big enough.");
 };
 
-}  // namespace rh
+}  // namespace hh
 }  // namespace tsl
 
 #endif
