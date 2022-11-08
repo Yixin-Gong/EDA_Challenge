@@ -57,9 +57,8 @@ jobs:
           tar xfvz gtkmm-plplot-2.5.tar.gz && rm gtkmm-plplot-2.5.tar.gz
           cd gtkmm-plplot-2.5 && mkdir build && cd build && meson ..
           ninja && sudo ninja install && cd ../.. && rm -rf gtkmm-plplot-2.5
-          mkdir testcase && cd testcase
           wget http://www.acmetech.top/wp-content/eda_files/testcase.7z
-          7z x testcase.7z && rm testcase.7z && cd ..
+          7z x testcase.7z && rm testcase.7z
       - name: Running gtest
         run: |
           mkdir build && mv ./Google_Test build && cd build

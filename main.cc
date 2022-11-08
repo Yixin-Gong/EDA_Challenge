@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
                 parser.get_vcd_signal_flip_info(begin_timestamp, end_timestamp);
             }
             parser.printf_source_csv(cli_parser.get_output() + "/summary.csv");
-            std::cout << "Total time is:" << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
+            std::cout << "Total time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
         }
     } catch (TCLAP::ArgException &e) {
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;

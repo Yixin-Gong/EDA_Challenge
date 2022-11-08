@@ -141,6 +141,7 @@ void VCDParser::vcd_statistic_signal_(uint64_t current_timestamp,
 }
 
 void VCDParser::initialize_vcd_signal_flip_table_() {
+    clock_t startTime = clock();
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
@@ -185,6 +186,7 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
             }
         }
     }
+    std::cout << "Init flip time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
 void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp,
@@ -216,6 +218,7 @@ void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp,
  *   \param[in]  vcd_signal_list:A list that stores <string,unordered_map>pairs,key being module.
  */
 void VCDParser::get_vcd_scope() {
+    clock_t startTime = clock();
     vcd_signal_alias_table_.clear();
     vcd_signal_list_.clear();
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
@@ -299,6 +302,7 @@ void VCDParser::get_vcd_scope() {
             }
         }
     }
+    std::cout << "Get scope time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
 /*!  \brief      Get specified scope contains information of signals and store them in a hash table.
@@ -307,7 +311,7 @@ void VCDParser::get_vcd_scope() {
 
 void VCDParser::get_vcd_scope(const std::string &module_label) {
     vcd_signal_alias_table_.clear();
-
+    clock_t startTime = clock();
     int module_cnt = 1;
     for (char pos : module_label) {
         if (pos == '/')
@@ -416,11 +420,13 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
             break;
         }
     }
+    std::cout << "Get scope time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
 void VCDParser::get_vcd_signal_flip_info() {
     vcd_signal_flip_table_.clear();
     initialize_vcd_signal_flip_table_();
+    clock_t startTime = clock();
     struct VCDTimeStampBufferStruct *current_buffer = &time_stamp_first_buffer_;
     static uint64_t current_timestamp = 0, buf_counter = 0;
     tsl::robin_map<std::string, int8_t> burr_hash_table;
@@ -467,6 +473,7 @@ void VCDParser::get_vcd_signal_flip_info() {
     }
     time_stamp_first_buffer_.previous_buffer = current_buffer;
 #endif
+    std::cout << "Get flip time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
 void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
