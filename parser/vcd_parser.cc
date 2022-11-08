@@ -145,7 +145,7 @@ void VCDParser::vcd_statistic_signal_(uint64_t current_timestamp,
 */
 void VCDParser::initialize_vcd_signal_flip_table_() {
     clock_t startTime = clock();
-    
+
     /* Seek the fp_ pointer to timestamp 0 */
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
@@ -802,6 +802,6 @@ bool VCDParser::get_position_using_timestamp(uint64_t *begin) {
 }
 
 VCDSignalStatisticStruct *VCDParser::get_signal_flip_info(const std::string &signal_alias) {
-    VCDSignalStatisticStruct *signal = &(vcd_signal_flip_table_.find(signal_alias)->second);
+    VCDSignalStatisticStruct *signal = &(vcd_signal_flip_table_.find(signal_alias).value());
     return signal;
 }

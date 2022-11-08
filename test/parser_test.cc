@@ -72,41 +72,25 @@ TEST(TestParser, ParseSignal) {
     EXPECT_EQ(signal->signal1_time, 250);
     EXPECT_EQ(signal->signal0_time, 250);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case0/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"");
     EXPECT_EQ(signal->total_invert_counter, 1);
     EXPECT_EQ(signal->signal1_time, 100);
     EXPECT_EQ(signal->signal0_time, 400);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case0/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("#[0]");
     EXPECT_EQ(signal->total_invert_counter, 4);
     EXPECT_EQ(signal->signal1_time, 200);
     EXPECT_EQ(signal->signal0_time, 250);
     EXPECT_EQ(signal->signalx_time, 50);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case0/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("#[2]");
     EXPECT_EQ(signal->total_invert_counter, 1);
     EXPECT_EQ(signal->signal1_time, 50);
     EXPECT_EQ(signal->signal0_time, 400);
     EXPECT_EQ(signal->signalx_time, 50);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case0/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("#[3]");
     EXPECT_EQ(signal->total_invert_counter, 0);
     EXPECT_EQ(signal->signal1_time, 0);
@@ -122,47 +106,32 @@ TEST(TestParser, ParseSignal) {
     EXPECT_EQ(signal->signal1_time, 695750);
     EXPECT_EQ(signal->signal0_time, 141000);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case1/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"W");
     EXPECT_EQ(signal->total_invert_counter, 114);
     EXPECT_EQ(signal->signal1_time, 28500);
     EXPECT_EQ(signal->signal0_time, 808250);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case1/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"s[30]");
     EXPECT_EQ(signal->total_invert_counter, 491);
     EXPECT_EQ(signal->signal1_time, 207500);
     EXPECT_EQ(signal->signal0_time, 427000);
     EXPECT_EQ(signal->signalx_time, 202250);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case1/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"s[30]");
     EXPECT_EQ(signal->total_invert_counter, 491);
     EXPECT_EQ(signal->signal1_time, 207500);
     EXPECT_EQ(signal->signal0_time, 427000);
     EXPECT_EQ(signal->signalx_time, 202250);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case1/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("#");
     EXPECT_EQ(signal->total_invert_counter, 3347);
     EXPECT_EQ(signal->signal1_time, 418250);
     EXPECT_EQ(signal->signal0_time, 418500);
     EXPECT_EQ(signal->signalx_time, 0);
     delete parser;
+
     parser = new VCDParser("../testcase/case2/test.vcd");
     parser->get_vcd_scope();
     parser->get_vcd_signal_flip_info();
@@ -171,51 +140,31 @@ TEST(TestParser, ParseSignal) {
     EXPECT_EQ(signal->signal1_time, 471250);
     EXPECT_EQ(signal->signal0_time, 15000);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case2/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("#");
     EXPECT_EQ(signal->total_invert_counter, 1945);
     EXPECT_EQ(signal->signal1_time, 243000);
     EXPECT_EQ(signal->signal0_time, 243250);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case2/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("#`");
     EXPECT_EQ(signal->total_invert_counter, 0);
     EXPECT_EQ(signal->signal1_time, 486250);
     EXPECT_EQ(signal->signal0_time, 0);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case2/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"*[6]");
     EXPECT_EQ(signal->total_invert_counter, 96);
     EXPECT_EQ(signal->signal1_time, 26000);
     EXPECT_EQ(signal->signal0_time, 460250);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case2/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"C[11]");
     EXPECT_EQ(signal->total_invert_counter, 191);
     EXPECT_EQ(signal->signal1_time, 210500);
     EXPECT_EQ(signal->signal0_time, 275750);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case2/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("$s[0]");
     EXPECT_EQ(signal->total_invert_counter, 0);
     EXPECT_EQ(signal->signal1_time, 0);
@@ -228,41 +177,25 @@ TEST(TestParser, ParseSignal) {
     parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("=");
     EXPECT_EQ(signal->total_invert_counter, 6);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case3/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("$");
     EXPECT_EQ(signal->total_invert_counter, 5);
     EXPECT_EQ(signal->signal1_time, 455986);
     EXPECT_EQ(signal->signal0_time, 457764);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case3/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("!");
     EXPECT_EQ(signal->total_invert_counter, 3655);
     EXPECT_EQ(signal->signal1_time, 456750);
     EXPECT_EQ(signal->signal0_time, 457000);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case3/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("$=[31]");
     EXPECT_EQ(signal->total_invert_counter, 2);
     EXPECT_EQ(signal->signal1_time, 494750);
     EXPECT_EQ(signal->signal0_time, 207000);
     EXPECT_EQ(signal->signalx_time, 212000);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case3/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("##[31]");
     EXPECT_EQ(signal->total_invert_counter, 4);
     EXPECT_EQ(signal->signal1_time, 10000);
@@ -278,51 +211,31 @@ TEST(TestParser, ParseSignal) {
     EXPECT_EQ(signal->signal1_time, 0);
     EXPECT_EQ(signal->signal0_time, 2910000);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case4/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"*[4]");
     EXPECT_EQ(signal->total_invert_counter, 2);
     EXPECT_EQ(signal->signal1_time, 500);
     EXPECT_EQ(signal->signal0_time, 2909500);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case4/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("#");
     EXPECT_EQ(signal->total_invert_counter, 11640);
     EXPECT_EQ(signal->signal1_time, 1455000);
     EXPECT_EQ(signal->signal0_time, 1455000);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case4/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"]d");
     EXPECT_EQ(signal->total_invert_counter, 0);
     EXPECT_EQ(signal->signal1_time, 2910000);
     EXPECT_EQ(signal->signal0_time, 0);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case4/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("~P[1]");
     EXPECT_EQ(signal->total_invert_counter, 17);
     EXPECT_EQ(signal->signal1_time, 10500);
     EXPECT_EQ(signal->signal0_time, 2696750);
     EXPECT_EQ(signal->signalx_time, 202750);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case4/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("~P[1]");
     EXPECT_EQ(signal->total_invert_counter, 17);
     EXPECT_EQ(signal->signal1_time, 10500);
@@ -338,41 +251,25 @@ TEST(TestParser, ParseSignal) {
     EXPECT_EQ(signal->signal1_time, 4500);
     EXPECT_EQ(signal->signal0_time, 703750);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case5/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"*[28]");
     EXPECT_EQ(signal->total_invert_counter, 266);
     EXPECT_EQ(signal->signal1_time, 71500);
     EXPECT_EQ(signal->signal0_time, 636750);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case5/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\":P[0]");
     EXPECT_EQ(signal->total_invert_counter, 0);
     EXPECT_EQ(signal->signal1_time, 0);
     EXPECT_EQ(signal->signal0_time, 708250);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case5/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("~I");
     EXPECT_EQ(signal->total_invert_counter, 1);
     EXPECT_EQ(signal->signal1_time, 506250);
     EXPECT_EQ(signal->signal0_time, 202000);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case5/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"7M");
     EXPECT_EQ(signal->total_invert_counter, 2011);
     EXPECT_EQ(signal->signal1_time, 251250);
@@ -388,31 +285,19 @@ TEST(TestParser, ParseSignal) {
     EXPECT_EQ(signal->signal1_time, 19000);
     EXPECT_EQ(signal->signal0_time, 22588750);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case6/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"]e[0]");
     EXPECT_EQ(signal->total_invert_counter, 17501);
     EXPECT_EQ(signal->signal1_time, 4436500);
     EXPECT_EQ(signal->signal0_time, 17969000);
     EXPECT_EQ(signal->signalx_time, 202250);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case6/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("~#[9]");
     EXPECT_EQ(signal->total_invert_counter, 0);
     EXPECT_EQ(signal->signal1_time, 0);
     EXPECT_EQ(signal->signal0_time, 22607750);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case6/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"!(");
     EXPECT_EQ(signal->total_invert_counter, 17254);
     EXPECT_EQ(signal->signal1_time, 4314500);
@@ -428,41 +313,25 @@ TEST(TestParser, ParseSignal) {
     EXPECT_EQ(signal->signal1_time, 520500);
     EXPECT_EQ(signal->signal0_time, 520750);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case7/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("-$[17]");
     EXPECT_EQ(signal->total_invert_counter, 519);
     EXPECT_EQ(signal->signal1_time, 263500);
     EXPECT_EQ(signal->signal0_time, 777750);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case7/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("~P[4]");
     EXPECT_EQ(signal->total_invert_counter, 252);
     EXPECT_EQ(signal->signal1_time, 454000);
     EXPECT_EQ(signal->signal0_time, 384500);
     EXPECT_EQ(signal->signalx_time, 202750);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case7/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("~d[28]");
     EXPECT_EQ(signal->total_invert_counter, 410);
     EXPECT_EQ(signal->signal1_time, 104500);
     EXPECT_EQ(signal->signal0_time, 734000);
     EXPECT_EQ(signal->signalx_time, 202750);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case7/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"!W");
     EXPECT_EQ(signal->total_invert_counter, 632);
     EXPECT_EQ(signal->signal1_time, 662250);
@@ -478,46 +347,29 @@ TEST(TestParser, ParseSignal) {
     EXPECT_EQ(signal->signal1_time, 14000);
     EXPECT_EQ(signal->signal0_time, 9777750);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case8/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"M");
     EXPECT_EQ(signal->total_invert_counter, 901);
     EXPECT_EQ(signal->signal1_time, 405500);
     EXPECT_EQ(signal->signal0_time, 9386250);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case8/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"i");
     EXPECT_EQ(signal->total_invert_counter, 93);
     EXPECT_EQ(signal->signal1_time, 7160500);
     EXPECT_EQ(signal->signal0_time, 2392500);
     EXPECT_EQ(signal->signalx_time, 0);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case8/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("\"]3[31]");
     EXPECT_EQ(signal->total_invert_counter, 5036);
     EXPECT_EQ(signal->signal1_time, 1582000);
     EXPECT_EQ(signal->signal0_time, 8007500);
     EXPECT_EQ(signal->signalx_time, 202250);
-    delete parser;
 
-    parser = new VCDParser("../testcase/case8/test.vcd");
-    parser->get_vcd_scope();
-    parser->get_vcd_signal_flip_info();
     signal = parser->get_signal_flip_info("$");
     EXPECT_EQ(signal->total_invert_counter, 39167);
     EXPECT_EQ(signal->signal1_time, 4895750);
     EXPECT_EQ(signal->signal0_time, 4896000);
     EXPECT_EQ(signal->signalx_time, 0);
     delete parser;
-
 }
