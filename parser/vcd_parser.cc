@@ -15,22 +15,6 @@
 
 static char reading_buffer[1024 * 1024] = {0};
 
-void VCDParser::vcd_delete_time_stamp_buffer_() {
-    if (time_stamp_first_buffer_.first_element != nullptr) {
-        if (time_stamp_first_buffer_.next_buffer != nullptr) {
-            struct VCDTimeStampBufferStruct *last_buffer = time_stamp_first_buffer_.previous_buffer;
-            while (true) {
-                last_buffer = last_buffer->previous_buffer;
-                delete last_buffer->next_buffer->first_element;
-                delete last_buffer->next_buffer;
-                if (last_buffer == &time_stamp_first_buffer_)
-                    break;
-            }
-        }
-        delete time_stamp_first_buffer_.first_element;
-    }
-}
-
 void VCDParser::parse_vcd_header_() {
     unsigned int parse_status = 0;
     static char week[32], month[32];
@@ -83,33 +67,6 @@ void VCDParser::parse_vcd_header_() {
     std::cout << "File create time: " << reading_buffer << "\n";
     std::cout << "File time scale: " << vcd_header_struct_.vcd_time_scale << vcd_header_struct_.vcd_time_unit << "\n";
     std::cout << "File hash value: " << vcd_header_struct_.vcd_comment_str << "\n\n";
-}
-
-uint64_t VCDParser::get_vcd_value_change_time_(struct VCDTimeStampBufferStruct *current_buffer,
-                                               uint64_t timestamp, uint64_t buf_counter) {
-    current_buffer->first_element[buf_counter].timestamp = timestamp;
-    current_buffer->first_element[buf_counter].location = ftello64(fp_);
-    buf_counter++;
-    if (buf_counter == ktime_stamp_buffer_size_) {
-        buf_counter = 0;
-        auto *next_buffer = new struct VCDTimeStampBufferStruct;
-        auto *vcdtime_buf = new struct VCDTimeStampStruct[ktime_stamp_buffer_size_];
-        current_buffer->next_buffer = next_buffer;
-        next_buffer->previous_buffer = current_buffer;
-        next_buffer->first_element = vcdtime_buf;
-        next_buffer->next_buffer = nullptr;
-        current_buffer = next_buffer;
-    }
-    return buf_counter;
-}
-
-VCDParser::VCDTimeStampStruct *VCDParser::get_time_stamp_from_pos_(uint32_t pos) {
-    struct VCDTimeStampBufferStruct *tmp_buffer = &time_stamp_first_buffer_;
-    for (int counter = 0; counter < pos / ktime_stamp_buffer_size_; ++counter) {
-        if (tmp_buffer->next_buffer == nullptr) return nullptr;
-        tmp_buffer = tmp_buffer->next_buffer;
-    }
-    return &(tmp_buffer->first_element[pos % ktime_stamp_buffer_size_]);
 }
 
 void VCDParser::vcd_statistic_signal_(uint64_t current_timestamp,
@@ -493,7 +450,6 @@ void VCDParser::get_vcd_signal_flip_info() {
     vcd_signal_flip_table_.clear();
     initialize_vcd_signal_flip_table_();
     clock_t startTime = clock();
-    struct VCDTimeStampBufferStruct *current_buffer = &time_stamp_first_buffer_;
     static uint64_t current_timestamp = 0, buf_counter = 0;
     tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
@@ -508,10 +464,6 @@ void VCDParser::get_vcd_signal_flip_info() {
 
             burr_hash_table.clear();
 #endif
-#ifndef IS_NOT_RUNNING_GUI
-            if (!timestamp_statistic_flag)
-                get_vcd_value_change_time_(current_buffer, current_timestamp, buf_counter);
-#endif
             current_timestamp = strtoll(&reading_buffer[1], nullptr, 0);
             continue;
         }
@@ -523,7 +475,7 @@ void VCDParser::get_vcd_signal_flip_info() {
 
             /* Split the vector signals to scalar signals by its bit ,and parse them one by one */
             for (unsigned long count = signal_length - 1; count > 0; count--) {
-                /* Find position of matched signals, if current status is unequal to last status of the signal,parse the signal */
+                /* Find position of matched signals, if current status is unequal to last status of the signal, parse the signal */
                 std::string temp_alias = signal_alias + std::string("[") + std::to_string(count - 1) + std::string("]");
                 auto iter = vcd_signal_flip_table_.find(temp_alias);
                 if (reading_buffer[signal_length - count] != iter->second.last_level_status)
@@ -541,17 +493,7 @@ void VCDParser::get_vcd_signal_flip_info() {
                                   reading_buffer[0], signal_alias);
         }
     }
-
     vcd_signal_flip_post_processing_(current_timestamp, &burr_hash_table);
-#ifndef IS_NOT_RUNNING_GUI
-    if (!timestamp_statistic_flag)
-        timestamp_statistic_flag = true;
-    for (uint64_t counter = buf_counter; counter < ktime_stamp_buffer_size_; ++counter) {
-        current_buffer->first_element[buf_counter].timestamp = 0;
-        current_buffer->first_element[buf_counter].location = 0;
-    }
-    time_stamp_first_buffer_.previous_buffer = current_buffer;
-#endif
     std::cout << "Get flip time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
@@ -793,7 +735,7 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
                 } else {
                     for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++) {
                         std::string
-                            temp_alias = it.first + std::string("[") + std::to_string(wid_pos) + std::string("]");;
+                            temp_alias = it.first + std::string("[") + std::to_string(wid_pos) + std::string("]");
                         if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end())
                             memset(&signal, 0x00, sizeof(struct VCDSignalStatisticStruct));
                         else
@@ -816,24 +758,38 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
     file.close();
 }
 
-bool VCDParser::get_position_using_timestamp(uint64_t *begin) {
-    uint32_t begin_pos_est = *begin
-        / (time_stamp_first_buffer_.first_element[1].timestamp - time_stamp_first_buffer_.first_element[0].timestamp);
-    for (uint32_t last_begin_pos_est = 0;
-         !(last_begin_pos_est == begin_pos_est || get_time_stamp_from_pos_(begin_pos_est)->timestamp == *begin);) {
-        last_begin_pos_est = begin_pos_est;
-        if (get_time_stamp_from_pos_(begin_pos_est) == nullptr)
-            return false;
-        begin_pos_est =
-            begin_pos_est - ((int64_t) get_time_stamp_from_pos_(begin_pos_est)->timestamp - (int64_t) *begin) /
-                (int64_t) (get_time_stamp_from_pos_(begin_pos_est)->timestamp
-                    - get_time_stamp_from_pos_(begin_pos_est - 1)->timestamp);
-    }
-    *begin = get_time_stamp_from_pos_(begin_pos_est)->location;
-    return true;
-}
-
 VCDSignalStatisticStruct *VCDParser::get_signal_flip_info(const std::string &signal_alias) {
     VCDSignalStatisticStruct *signal = &(vcd_signal_flip_table_.find(signal_alias).value());
     return signal;
 }
+
+void VCDParser::get_total_flips_in_time_range(uint64_t begin_time,
+                                              uint64_t end_time,
+                                              std::vector<double> *x_value,
+                                              std::vector<double> *y_value) {
+    uint64_t current_timestamp = 0, signal_counter = 0;
+    fseeko64(fp_, 1, SEEK_SET);
+    while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
+        reading_buffer[strlen(reading_buffer) - 1] = '\0';
+        if (reading_buffer[0] == '#') {
+            current_timestamp = strtoll(&reading_buffer[1], nullptr, 0);
+            if (current_timestamp >= begin_time)
+                break;
+        }
+    }
+    (*x_value).push_back((double) current_timestamp - 1);
+    (*y_value).push_back(0);
+    while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
+        if (reading_buffer[0] == '#') {
+            (*x_value).push_back((double) current_timestamp);
+            (*y_value).push_back((double) signal_counter);
+            current_timestamp = strtoll(&reading_buffer[1], nullptr, 0);
+            signal_counter = 0;
+            if (current_timestamp >= end_time)
+                break;
+            continue;
+        } else if (reading_buffer[0] == '0' || reading_buffer[0] == '1' || reading_buffer[0] == 'b')
+            signal_counter++;
+    }
+}
+

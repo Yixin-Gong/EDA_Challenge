@@ -34,10 +34,19 @@ MainWindow::MainWindow(Glib::RefPtr<Gtk::Application> app,
 }
 
 void MainWindow::plot_button_clicked() {
-    std::valarray<double> x_va(1000), y_va(1000);
-    for (unsigned int i = 0; i < 1000; i++)
-        x_va[i] = 4 * M_PI * i / 999;
-    y_va = sin(x_va);
+    if (from_txtbox_->get_text().empty() || to_txtbox_->get_text().empty()) {
+        std::cout << "Please input time range.\n";
+        return;
+    }
+    uint64_t begin_time = strtoll(from_txtbox_->get_text().c_str(), nullptr, 0);
+    uint64_t end_time = strtoll(to_txtbox_->get_text().c_str(), nullptr, 0);
+    std::vector<double> x_va, y_va;
+
+    if (parser_ != nullptr)
+        parser_->get_total_flips_in_time_range(begin_time / parser_->get_vcd_header()->vcd_time_scale,
+                                               end_time / parser_->get_vcd_header()->vcd_time_scale,
+                                               &x_va, &y_va);
+
     auto plot_data = Gtk::manage(new Gtk::PLplot::PlotData2D(x_va, y_va, curve_color_,
                                                              Gtk::PLplot::LineStyle::CONTINUOUS, 2.5));
     plot_ = Gtk::manage(new Gtk::PLplot::Plot2D(*plot_data, x_title_, y_title_, plot_title_));
