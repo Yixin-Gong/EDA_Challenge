@@ -219,7 +219,7 @@ void VCDParser::get_vcd_scope() {
         if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
             /* Cut the information of signals with a space as a demarcation.
              * And store the information in struct.*/
-            struct VCDSignalStruct signal;
+            auto *signal = new struct VCDSignalStruct;
             int space_pos = 0;
             std::string width;
             std::string signal_label;
@@ -227,7 +227,7 @@ void VCDParser::get_vcd_scope() {
                 if (read_string[pos] == ' ') {
                     space_pos++;
                     if (space_pos == 5) {
-                        signal.vcd_signal_width = std::stoi(width);
+                        signal->vcd_signal_width = std::stoi(width);
                         break;
                     }
                     continue;
@@ -237,13 +237,27 @@ void VCDParser::get_vcd_scope() {
                         break;
                     case 3:signal_label += read_string[pos];
                         break;
-                    case 4:signal.vcd_signal_title += read_string[pos];
+                    case 4:signal->vcd_signal_title += read_string[pos];
                         break;
                     default:break;
                 }
             }
-            vcd_signal_table_.insert(std::pair<std::string, struct VCDSignalStruct>(signal_label,
-                                                                                    signal));
+
+            /* Store information in a hash table.*/
+            vcd_signal_alias_table_.insert(std::pair<std::string, int8_t>(signal_label, 0));
+            auto current_signal = vcd_signal_table_.find(signal_label);
+            if (current_signal == vcd_signal_table_.end()) {
+                vcd_signal_table_.insert(std::pair<std::string,
+                                                   struct VCDSignalStruct>(signal_label, *signal));
+            } else {
+                auto *current_signal_struct = &(current_signal.value());
+                while (true) {
+                    if (current_signal_struct->next_signal == nullptr)
+                        break;
+                    current_signal_struct = current_signal_struct->next_signal;
+                }
+                current_signal_struct->next_signal = signal;
+            }
         }
 
             /* If read the information of the module.*/
