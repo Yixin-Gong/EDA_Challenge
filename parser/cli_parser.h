@@ -44,6 +44,8 @@ class CLIParser {
       return output_;
   }
   std::string get_scope() {
+      if (scope_[0] == '/')
+          scope_.erase(0, 1);
       return scope_;
   }
 

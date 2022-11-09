@@ -24,9 +24,7 @@ struct VCDHeaderStruct {
 };
 
 struct VCDSignalStruct {
-  std::string vcd_signal_type;
   unsigned int vcd_signal_width;
-  std::string vcd_signal_label;
   std::string vcd_signal_title;
 };
 
