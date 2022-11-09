@@ -229,6 +229,7 @@ void VCDParser::get_vcd_scope() {
             struct VCDSignalStruct signal;
             int space_pos = 0;
             std::string width;
+            std::string signal_label;
             for (int pos = 0; read_string[pos] != 0; pos++) {
                 if (read_string[pos] == ' ') {
                     space_pos++;
@@ -239,18 +240,16 @@ void VCDParser::get_vcd_scope() {
                     continue;
                 }
                 switch (space_pos) {
-                    case 1:signal.vcd_signal_type += read_string[pos];
-                        break;
                     case 2:width += read_string[pos];
                         break;
-                    case 3:signal.vcd_signal_label += read_string[pos];
+                    case 3:signal_label += read_string[pos];
                         break;
                     case 4:signal.vcd_signal_title += read_string[pos];
                         break;
                     default:break;
                 }
             }
-            vcd_signal_alias_table_.insert(std::pair<std::string, struct VCDSignalStruct>(signal.vcd_signal_label,
+            vcd_signal_alias_table_.insert(std::pair<std::string, struct VCDSignalStruct>(signal_label,
                                                                                           signal));
         }
 
@@ -422,6 +421,7 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
             struct VCDSignalStruct signal;
             int space_pos = 0;
             std::string width;
+            std::string signal_label;
             for (int pos = 0; read_string[pos] != 0; pos++) {
                 if (read_string[pos] == ' ') {
                     space_pos++;
@@ -432,11 +432,9 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
                     continue;
                 }
                 switch (space_pos) {
-                    case 1:signal.vcd_signal_type += read_string[pos];
-                        break;
                     case 2:width += read_string[pos];
                         break;
-                    case 3:signal.vcd_signal_label += read_string[pos];
+                    case 3:signal_label += read_string[pos];
                         break;
                     case 4:signal.vcd_signal_title += read_string[pos];
                         break;
@@ -446,7 +444,7 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
 
             /* Store information in a hash table.*/
             vcd_signal_alias_table_.insert(std::pair<std::string,
-                                                     struct VCDSignalStruct>(signal.vcd_signal_label, signal));
+                                                     struct VCDSignalStruct>(signal_label, signal));
 
         }
     }
