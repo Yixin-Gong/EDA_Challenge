@@ -26,6 +26,7 @@ struct VCDHeaderStruct {
 struct VCDSignalStruct {
   unsigned int vcd_signal_width;
   std::string vcd_signal_title;
+  struct VCDSignalStruct *next_signal;
 };
 
 struct VCDSignalStatisticStruct {
@@ -89,7 +90,7 @@ class VCDParser {
 
   std::list<std::pair<std::string, tsl::hopscotch_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
   tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
-  tsl::hopscotch_map<std::string, struct VCDSignalStruct> vcd_signal_alias_table_;
+  tsl::hopscotch_map<std::string, int8_t> vcd_signal_alias_table_;
 
   void parse_vcd_header_();
   void vcd_delete_time_stamp_buffer_();
