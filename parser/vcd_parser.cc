@@ -223,6 +223,7 @@ void VCDParser::get_vcd_scope() {
             int space_pos = 0;
             std::string width;
             std::string signal_label;
+            signal->next_signal = nullptr;
             for (int pos = 0; read_string[pos] != 0; pos++) {
                 if (read_string[pos] == ' ') {
                     space_pos++;
