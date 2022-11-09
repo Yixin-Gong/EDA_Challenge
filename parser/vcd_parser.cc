@@ -306,6 +306,7 @@ void VCDParser::get_vcd_scope() {
  */
 
 void VCDParser::get_vcd_scope(const std::string &module_label) {
+    vcd_signal_list_.clear();
     vcd_signal_alias_table_.clear();
 
     int module_cnt = 1;
@@ -324,22 +325,50 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
             module_level++;
     }
 
-    /* Start reading the signal when label_pos is equal to module_cnt minus 1*/
+    /* Start reading the signal when label_pos is equal to module_cnt minus 1.
+     * read_label_start is true will start reading signal.
+     * skip_store is true will skip store.*/
     int label_pos = 0;
     bool read_label_start = false;
+    bool skip_store = false;
     std::list<std::string> all_module;
+    std::string break_module;
 
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
 
-        /* If read the upscope.*/
-        if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'u') {
+        /* If read the upscope and read_label_start is false.*/
+        if (!read_label_start && read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'u') {
             all_module.pop_back();
         }
+            /* If read the upscope and read_label_start is true.*/
+        else if (read_label_start && read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'u') {
+            /* When the specified scope is to be upscope*/
+            if (all_module.back() == break_module) {
+                if (vcd_signal_alias_table_.empty() != 1) {
+                    vcd_signal_list_.back().second = vcd_signal_alias_table_;
+                    vcd_signal_alias_table_.clear();
+                }
+                break;
+            }
 
-        /* If read the scope.*/
-        if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
+            if (vcd_signal_alias_table_.empty() != 1) {
+                vcd_signal_list_.back().second = vcd_signal_alias_table_;
+                vcd_signal_alias_table_.clear();
+            }
+
+            /* If read begin need to skip store.*/
+            if (skip_store) {
+                skip_store = false;
+                vcd_signal_alias_table_.clear();
+                continue;
+            }
+            vcd_signal_list_.emplace_back("upscope", 0);
+            all_module.pop_back();
+        }
+            /* If read the scope module.*/
+        else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's' && read_string.c_str()[7] == 'm') {
             /* Cut the module title.*/
             std::string scope_module;
             int space_pos = 0;
@@ -351,20 +380,21 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
                 if (space_pos == 2)
                     scope_module += read_string[pos];
             }
-
-            all_module.emplace_back(scope_module);
-
+            if (vcd_signal_alias_table_.empty() != 1) {
+                vcd_signal_list_.back().second = vcd_signal_alias_table_;
+                vcd_signal_alias_table_.clear();
+            }
             /* Compare scope_module and module_label in order.
              * Start with the first in module_label.
              * When the comparison is successful, the next one of the module_label will be compared.*/
-            if (label[label_pos] == scope_module && label_pos != module_level) {
+            if (!read_label_start && label[label_pos] == scope_module && label_pos != module_level) {
                 label_pos++;
-                continue;
             }
 
-            /* When all the modules in the module_label are compared, start reading the signal.
-             * Store the current scope_module.*/
-            if (scope_module == label[label_pos] && scope_module == label[label_pos]) {
+                /* When all the modules in the module_label are compared, start reading the signal.
+                 * Store the current scope_module.*/
+            else if (!read_label_start && scope_module == label[label_pos]) {
+                break_module = scope_module;
                 std::string module;
                 for (const auto &it : all_module) {
                     module += it + '/';
@@ -372,11 +402,21 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
                 module += scope_module;
                 read_label_start = true;
                 vcd_signal_list_.emplace_back(module, 0);
+            } else if (read_label_start) {
+                vcd_signal_list_.emplace_back(scope_module, 0);
             }
+            all_module.emplace_back(scope_module);
+
         }
 
-        /* If start reading the signal and read the information of the signal.*/
-        if (read_label_start && read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
+            /*If read the scope begin*/
+        else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's' && read_string.c_str()[7] == 'b') {
+            if (read_label_start)
+                skip_store = true;
+        }
+
+            /* If start reading the signal and read the information of the signal.*/
+        else if (read_label_start && read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'v') {
             /*Cut the information of signals with a space as a demarcation.
              *And store the information in struct.*/
             struct VCDSignalStruct signal;
@@ -408,12 +448,6 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
             vcd_signal_alias_table_.insert(std::pair<std::string,
                                                      struct VCDSignalStruct>(signal.vcd_signal_label, signal));
 
-        }
-
-            /* Exit when the information read is not a signal after starting to read.*/
-        else if (read_label_start && read_string.c_str()[0] != '$' && read_string.c_str()[1] != 'v') {
-            vcd_signal_list_.front().second = vcd_signal_alias_table_;
-            break;
         }
     }
 }
