@@ -372,4 +372,71 @@ TEST(TestParser, ParseSignal) {
     EXPECT_EQ(signal->signal0_time, 4896000);
     EXPECT_EQ(signal->signalx_time, 0);
     delete parser;
+
+    parser = new VCDParser("../testcase/case9/test.vcd");
+    parser->get_vcd_scope();
+    parser->get_vcd_signal_flip_info();
+    signal = parser->get_signal_flip_info("#");
+    EXPECT_EQ(signal->total_invert_counter, 263991);
+    EXPECT_EQ(signal->signal1_time, 32998750);
+    EXPECT_EQ(signal->signal0_time, 32999000);
+    EXPECT_EQ(signal->signalx_time, 0);
+
+    signal = parser->get_signal_flip_info("\"]X[1]");
+    EXPECT_EQ(signal->total_invert_counter, 230);
+    EXPECT_EQ(signal->signal1_time, 65630500);
+    EXPECT_EQ(signal->signal0_time, 367250);
+    EXPECT_EQ(signal->signalx_time, 0);
+
+    signal = parser->get_signal_flip_info("#%");
+    EXPECT_EQ(signal->total_invert_counter, 1);
+    EXPECT_EQ(signal->signal1_time, 65795750);
+    EXPECT_EQ(signal->signal0_time, 202000);
+    EXPECT_EQ(signal->signalx_time, 0);
+
+    signal = parser->get_signal_flip_info("z[16]");
+    EXPECT_EQ(signal->total_invert_counter, 58);
+    EXPECT_EQ(signal->signal1_time, 14500);
+    EXPECT_EQ(signal->signal0_time, 65983250);
+    EXPECT_EQ(signal->signalx_time, 0);
+
+    signal = parser->get_signal_flip_info("#_[31]");
+    EXPECT_EQ(signal->total_invert_counter, 0);
+    EXPECT_EQ(signal->signal1_time, 0);
+    EXPECT_EQ(signal->signal0_time, 65795000);
+    EXPECT_EQ(signal->signalx_time, 202750);
+
+    parser = new VCDParser("../testcase/case10/test.vcd");
+    parser->get_vcd_scope();
+    parser->get_vcd_signal_flip_info();
+    signal = parser->get_signal_flip_info("\"");
+    EXPECT_EQ(signal->total_invert_counter, 4469);
+    EXPECT_EQ(signal->signal1_time, 446950000);
+    EXPECT_EQ(signal->signal0_time, 447000000);
+    EXPECT_EQ(signal->signalx_time, 0);
+
+    signal = parser->get_signal_flip_info("=,[260]");
+    EXPECT_EQ(signal->total_invert_counter, 6);
+    EXPECT_EQ(signal->signal1_time, 1800000);
+    EXPECT_EQ(signal->signal0_time, 891150000);
+    EXPECT_EQ(signal->signalx_time, 1000000);
+
+    signal = parser->get_signal_flip_info("`B[2]");
+    EXPECT_EQ(signal->total_invert_counter, 1);
+    EXPECT_EQ(signal->signal1_time, 788800000);
+    EXPECT_EQ(signal->signal0_time, 105150000);
+    EXPECT_EQ(signal->signalx_time, 0);
+
+    signal = parser->get_signal_flip_info("`v");
+    EXPECT_EQ(signal->total_invert_counter, 2);
+    EXPECT_EQ(signal->signal1_time, 800000);
+    EXPECT_EQ(signal->signal0_time, 892150000);
+    EXPECT_EQ(signal->signalx_time, 1000000);
+
+    signal = parser->get_signal_flip_info("#wI[5]");
+    EXPECT_EQ(signal->total_invert_counter, 2);
+    EXPECT_EQ(signal->signal1_time, 626500000);
+    EXPECT_EQ(signal->signal0_time, 160300000);
+    EXPECT_EQ(signal->signalx_time, 107150000);
+
 }

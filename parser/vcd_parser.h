@@ -37,6 +37,7 @@ struct VCDSignalStatisticStruct {
   uint64_t last_timestamp;
   int8_t last_level_status;
   int8_t final_level_status;
+  int32_t total_glitch_counter;
 };
 
 class VCDParser {

@@ -85,14 +85,22 @@ void VCDParser::vcd_statistic_signal_(uint64_t current_timestamp,
     signal->last_timestamp = current_timestamp;
 
     if (time_difference != 0) {
-        if ((signal->last_level_status != signal->final_level_status)
-            && (signal->last_level_status != 'x'))
+        bool case0 =
+            signal->last_level_status == 'x' && signal->final_level_status != 'x' && current_level_status != 'x';
+        bool case1 =
+            signal->last_level_status != 'x' && signal->final_level_status == 'x' && current_level_status == 'x';
+
+        if (signal->last_level_status != signal->final_level_status && !(case0 || case1))
             signal->total_invert_counter++;
-        signal->final_level_status = signal->last_level_status;
+        if (signal->last_level_status != 'x')
+            signal->final_level_status = signal->last_level_status;
     }
 #ifndef NO_STATISTIC_GLITCH
-    else if (burr_hash_table->find(signal_alias) == burr_hash_table->end())
-        burr_hash_table->insert(std::pair<std::string, int8_t>(signal_alias, {0}));
+    else {
+        if (burr_hash_table->find(signal_alias) == burr_hash_table->end())
+            burr_hash_table->insert(std::pair<std::string, int8_t>(signal_alias, {0}));
+        signal->total_glitch_counter++;
+    }
 #endif
     signal->last_level_status = current_level_status;
 }
@@ -115,7 +123,7 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
-        VCDSignalStatisticStruct cnt{0, 0, 0, 0, 0, 0, 0};
+        VCDSignalStatisticStruct cnt{0, 0, 0, 0, 0, 0, 0, 0};
 
         /* Skip useless lines and define cut-off range. */
         if (reading_buffer[0] == '#' || read_string == "$dumpvars")
@@ -136,7 +144,7 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
                 /* Insert signal into vcd_signal_flip_table_ and initialize the content */
                 if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end()) {
                     cnt.last_level_status = reading_buffer[signal_length - count];
-                    cnt.final_level_status = 'x';
+                    cnt.final_level_status = '\0';
                     vcd_signal_flip_table_.insert(std::pair<std::string, struct VCDSignalStatisticStruct>
                                                       (temp_alias, cnt));
                 } else {
@@ -152,7 +160,7 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
             /* Insert signal into vcd_signal_flip_table_ and initialize the content */
             if (vcd_signal_flip_table_.find(signal_alias) == vcd_signal_flip_table_.end()) {
                 cnt.last_level_status = reading_buffer[0];
-                cnt.final_level_status = 'x';
+                cnt.final_level_status = '\0';
                 vcd_signal_flip_table_.insert(std::pair<std::string, struct VCDSignalStatisticStruct>
                                                   (signal_alias, cnt));
             } else {
@@ -195,7 +203,7 @@ void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp,
 
         /* Count total change times of signals */
         if ((it->second.last_level_status != it->second.final_level_status)
-            && (it->second.last_level_status != 'x'))
+            && (it->second.final_level_status != 'x'))
             it.value().total_invert_counter++;
         if (it->second.total_invert_counter != 0)
             it.value().total_invert_counter--;
