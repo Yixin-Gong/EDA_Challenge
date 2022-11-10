@@ -17,6 +17,7 @@
 #include "tclap/CmdLine.h"
 #else
 #include "gtest/gtest.h"
+#include "csv_parser.h"
 #endif
 
 /*!
@@ -111,7 +112,13 @@ int main(int argc, char **argv) {
     }
     return 0;
 #else
+    auto *parser = new CSVParser("../testcase/case0/test.csv");
+    parser->parse_csv();
+    parser->get_vcd_scope("../testcase/case0/test.vcd");
+    parser->csv_find_vcd();
+//    parser->printf_csv();
     ::testing::InitGoogleTest(&argc, argv);
+    delete parser;
     return RUN_ALL_TESTS();
 #endif
 }
