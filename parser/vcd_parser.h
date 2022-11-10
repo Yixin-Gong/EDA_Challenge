@@ -63,7 +63,7 @@ class VCDParser {
   void get_vcd_signal_flip_info(const std::string &module_label);
   void get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time);
   void printf_source_csv(const std::string &filepath);
-  void printf_glitch_csv(tsl::hopscotch_map<std::string, int8_t> *burr_hash_table, uint64_t current_timestamp);
+  void printf_glitch_csv(const std::string &filepath);
   VCDSignalStatisticStruct *get_signal_flip_info(const std::string &signal_alias);
   void get_total_flips_in_time_range(uint64_t begin_time,
                                      uint64_t end_time,
@@ -89,6 +89,7 @@ class VCDParser {
   void initialize_vcd_signal_flip_table_();
   void vcd_signal_flip_post_processing_(uint64_t timestamp, tsl::hopscotch_map<std::string, int8_t> *burr_hash_table);
   std::string get_vcd_signal_(std::string label);
+  void vcd_statistic_glitch_(tsl::hopscotch_map<std::string, int8_t> *burr_hash_table, uint64_t current_timestamp);
 };
 
 #endif //EDA_CHALLENGE_PARSER_VCD_PARSER_H_
