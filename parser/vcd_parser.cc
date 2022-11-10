@@ -740,7 +740,8 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
                              << "    t0 = " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
                              << vcd_header_struct_.vcd_time_unit
                              << "    tx = " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
-                             << vcd_header_struct_.vcd_time_unit << "    sp = " << sp_buffer << std::endl;
+                             << vcd_header_struct_.vcd_time_unit << "    sp = " << sp_buffer
+                             << "    tg = " << signal.total_glitch_counter << std::endl;
                         if (current_signal->next_signal == nullptr)
                             break;
                         current_signal = current_signal->next_signal;
@@ -767,7 +768,8 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
                                  << "    t0 = " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
                                  << vcd_header_struct_.vcd_time_unit
                                  << "    tx = " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
-                                 << vcd_header_struct_.vcd_time_unit << "    sp = " << sp_buffer << std::endl;
+                                 << vcd_header_struct_.vcd_time_unit << "    sp = " << sp_buffer
+                                 << "    tg = " << signal.total_glitch_counter << std::endl;
                             if (current_signal->next_signal == nullptr)
                                 break;
                             current_signal = current_signal->next_signal;
