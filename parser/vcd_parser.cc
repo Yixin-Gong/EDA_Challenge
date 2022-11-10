@@ -212,19 +212,24 @@ void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp,
     FILE *glitch_fp_ = fopen64("./glitch.csv", "w");
     for (const auto &glitch : signal_glitch_position_) {
         auto *glitch_signal_buf = glitch.second;
-        fprintf(glitch_fp_, "%s ", get_vcd_signal_(glitch.first).c_str());
-        while (true) {
-            for (int counter = 0; counter < glitch_signal_buf->counter; ++counter)
-                fprintf(glitch_fp_, "%lu%s ", glitch_signal_buf->buffer[counter] * vcd_header_struct_.vcd_time_scale,
-                        vcd_header_struct_.vcd_time_unit.c_str());
-            delete glitch_signal_buf->buffer;
-            if (glitch_signal_buf->next != nullptr)
-                glitch_signal_buf = glitch_signal_buf->next;
-            else
-                break;
+        std::string signal_string = get_vcd_signal_(glitch.first);
+        if (!signal_string.empty()) {
+            fprintf(glitch_fp_, "%s ", signal_string.c_str());
+            while (true) {
+                for (int counter = 0; counter < glitch_signal_buf->counter; ++counter)
+                    fprintf(glitch_fp_,
+                            "%lu%s ",
+                            glitch_signal_buf->buffer[counter] * vcd_header_struct_.vcd_time_scale,
+                            vcd_header_struct_.vcd_time_unit.c_str());
+                delete glitch_signal_buf->buffer;
+                if (glitch_signal_buf->next != nullptr)
+                    glitch_signal_buf = glitch_signal_buf->next;
+                else
+                    break;
+            }
+            delete glitch_signal_buf;
+            fprintf(glitch_fp_, "\n");
         }
-        delete glitch_signal_buf;
-        fprintf(glitch_fp_, "\n");
     }
     fclose(glitch_fp_);
 }
@@ -835,9 +840,15 @@ void VCDParser::get_total_flips_in_time_range(uint64_t begin_time,
     }
 }
 
-std::string VCDParser::get_vcd_signal_(const std::string &label) {
+std::string VCDParser::get_vcd_signal_(std::string label) {
     std::list<std::string> all_module;
-    std::string signal_title;
+    std::string signal_title, signal_bit = "   ";
+    unsigned long label_length = label.length();
+    if (label_length > 3)
+        signal_bit = label.substr(label_length - 3, label_length);
+    if (signal_bit[0] == '[' && signal_bit[2] == ']')
+        label = label.substr(0, (label_length - 3));
+
     for (auto &it : vcd_signal_list_) {
         if (it.second.find(label) != it.second.end()) {
             std::string module;
@@ -848,8 +859,14 @@ std::string VCDParser::get_vcd_signal_(const std::string &label) {
             signal_title = module + "." + it.second.find(label).value().vcd_signal_title;
             break;
         }
+        if (it.first == "upscope") {
+            all_module.pop_back();
+            continue;
+        }
         all_module.emplace_back(it.first);
     }
+    if (signal_bit[0] == '[' && signal_bit[2] == ']')
+        signal_title = signal_title + signal_bit;
     return signal_title;
 }
 
