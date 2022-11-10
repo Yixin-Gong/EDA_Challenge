@@ -18,6 +18,7 @@
 #else
 #include <fstream>
 #include "gtest/gtest.h"
+#include "csv_parser.h"
 #endif
 
 /*!
@@ -112,6 +113,14 @@ int main(int argc, char **argv) {
     }
     return 0;
 #else
+
+//    auto *parser = new CSVParser("../testcase/case0/test.csv");
+//    parser->parse_csv();
+//    parser->get_vcd_scope("../testcase/case0/test.vcd");
+//    parser->csv_find_vcd();
+//    parser->printf_csv();
+
+/*
     std::ofstream output_file;
     output_file.open("./signal_extract.txt", std::ios::out | std::ios::trunc);
     uint64_t current_timestamp = 0, last_timestamp = 0;
@@ -134,7 +143,9 @@ int main(int argc, char **argv) {
         }
     }
     output_file.close();
+*/
     ::testing::InitGoogleTest(&argc, argv);
+    delete parser;
     return RUN_ALL_TESTS();
 #endif
 }
