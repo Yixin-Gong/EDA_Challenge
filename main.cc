@@ -16,6 +16,7 @@
 #include "cli_parser.h"
 #include "tclap/CmdLine.h"
 #else
+#include <fstream>
 #include "gtest/gtest.h"
 #include "csv_parser.h"
 #endif
@@ -112,11 +113,37 @@ int main(int argc, char **argv) {
     }
     return 0;
 #else
-    auto *parser = new CSVParser("../testcase/case0/test.csv");
-    parser->parse_csv();
-    parser->get_vcd_scope("../testcase/case0/test.vcd");
-    parser->csv_find_vcd();
+
+//    auto *parser = new CSVParser("../testcase/case0/test.csv");
+//    parser->parse_csv();
+//    parser->get_vcd_scope("../testcase/case0/test.vcd");
+//    parser->csv_find_vcd();
 //    parser->printf_csv();
+
+/*
+    std::ofstream output_file;
+    output_file.open("./signal_extract.txt", std::ios::out | std::ios::trunc);
+    uint64_t current_timestamp = 0, last_timestamp = 0;
+    FILE *fp_ = fopen64("../testcase/case3/test.vcd", "r");
+    static char reading_buffer[1024 * 1024] = {0};
+    while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
+        reading_buffer[strlen(reading_buffer) - 1] = '\0';
+        std::string read_string = reading_buffer;
+        if (reading_buffer[0] == '#')
+            current_timestamp = strtoll(&reading_buffer[1], nullptr, 0);
+        else if (reading_buffer[0] == 'b') {
+            std::string signal_alias = read_string.substr(read_string.find_last_of(' ') + 1, read_string.length());
+            if (signal_alias == "$=") {
+                if (current_timestamp != last_timestamp || current_timestamp == 0) {
+                    output_file << "#" << std::to_string(current_timestamp) << "\n";
+                    last_timestamp = current_timestamp;
+                }
+                output_file << read_string << "\n";
+            }
+        }
+    }
+    output_file.close();
+*/
     ::testing::InitGoogleTest(&argc, argv);
     delete parser;
     return RUN_ALL_TESTS();
