@@ -814,7 +814,21 @@ void VCDParser::get_total_flips_in_time_range(uint64_t begin_time,
 }
 
 std::string VCDParser::get_vcd_signal_(const std::string &label) {
-    return label;
+    std::list<std::string> all_module;
+    std::string signal_title;
+    for (auto &it : vcd_signal_list_) {
+        if (it.second.find(label) != it.second.end()) {
+            std::string module;
+            for (auto &iter : all_module) {
+                module += iter + "/";
+            }
+            module += it.first;
+            signal_title = module + "." + it.second.find(label).value().vcd_signal_title;
+            break;
+        }
+        all_module.emplace_back(it.first);
+    }
+    return signal_title;
 }
 
 void VCDParser::printf_glitch_csv(tsl::hopscotch_map<std::string, int8_t> *burr_hash_table,
