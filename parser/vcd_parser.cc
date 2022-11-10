@@ -813,12 +813,28 @@ void VCDParser::get_total_flips_in_time_range(uint64_t begin_time,
     }
 }
 
+std::string VCDParser::get_vcd_signal_(const std::string &label) {
+    return label;
+}
+
 void VCDParser::printf_glitch_csv(tsl::hopscotch_map<std::string, int8_t> *burr_hash_table,
                                   uint64_t current_timestamp) {
     FILE *fp = fopen("./glitch.csv", "a");
     for (const auto &glitch : *burr_hash_table) {
-//        std::cout << glitch.first << " Glitch at " << current_timestamp << "\n";
-        fprintf(fp, "%s Glitch at %lu\n", glitch.first.c_str(), current_timestamp);
+        auto signal_pos = signal_glitch_position_.find(glitch.first);
+        if (signal_pos != signal_glitch_position_.end()) {
+            fseeko64(fp, (long) signal_pos->second, SEEK_CUR);
+            fprintf(fp, " %lu%s",
+                    current_timestamp * vcd_header_struct_.vcd_time_scale,
+                    vcd_header_struct_.vcd_time_unit.c_str());
+            signal_pos.value() = ftello64(fp);
+        } else {
+            fseeko64(fp, 0, SEEK_END);
+            fprintf(fp, "\n%s %lu%s", get_vcd_signal_(glitch.first).c_str(),
+                    current_timestamp * vcd_header_struct_.vcd_time_scale,
+                    vcd_header_struct_.vcd_time_unit.c_str());
+            signal_glitch_position_.insert(std::pair<std::string, uint64_t>(glitch.first, ftello64(fp)));
+        }
     }
     fclose(fp);
 }

@@ -85,6 +85,7 @@ class VCDParser {
                                     char current_level_status, const std::string &signal_alias);
   void initialize_vcd_signal_flip_table_();
   void vcd_signal_flip_post_processing_(uint64_t timestamp, tsl::hopscotch_map<std::string, int8_t> *burr_hash_table);
+  std::string get_vcd_signal_(const std::string &label);
 };
 
 #endif //EDA_CHALLENGE_PARSER_VCD_PARSER_H_
