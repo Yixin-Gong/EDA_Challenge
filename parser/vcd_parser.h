@@ -52,6 +52,7 @@ class VCDParser {
       vcd_signal_list_.clear();
       vcd_signal_flip_table_.clear();
       vcd_signal_alias_table_.clear();
+      signal_glitch_position_.clear();
   }
   struct VCDHeaderStruct *get_vcd_header() {
       return &vcd_header_struct_;
@@ -70,10 +71,12 @@ class VCDParser {
                                      std::vector<double> *y_value);
 
  private:
+  struct SignalGlitchStruct { uint32_t counter; uint64_t *buffer;struct SignalGlitchStruct *next; };
+  const uint32_t kglitch_max_size = 1024;
   FILE *fp_;
   struct VCDHeaderStruct vcd_header_struct_{};
-  tsl::hopscotch_map<std::string, uint64_t> signal_glitch_position_;
 
+  tsl::hopscotch_map<std::string, struct SignalGlitchStruct *> signal_glitch_position_;
   std::list<std::pair<std::string, tsl::hopscotch_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
   tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
   tsl::hopscotch_map<std::string, int8_t> vcd_signal_alias_table_;
