@@ -62,6 +62,7 @@ class VCDParser {
   void get_vcd_signal_flip_info(const std::string &module_label);
   void get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time);
   void printf_source_csv(const std::string &filepath);
+  void printf_glitch_csv(tsl::hopscotch_map<std::string, int8_t> *burr_hash_table, uint64_t current_timestamp);
   VCDSignalStatisticStruct *get_signal_flip_info(const std::string &signal_alias);
   void get_total_flips_in_time_range(uint64_t begin_time,
                                      uint64_t end_time,
@@ -71,6 +72,7 @@ class VCDParser {
  private:
   FILE *fp_;
   struct VCDHeaderStruct vcd_header_struct_{};
+  tsl::hopscotch_map<std::string, uint64_t> signal_glitch_position_;
 
   std::list<std::pair<std::string, tsl::hopscotch_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
   tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;

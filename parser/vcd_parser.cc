@@ -180,9 +180,9 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
 void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp,
                                                  tsl::hopscotch_map<std::string, int8_t> *burr_hash_table) {
 #ifndef NO_STATISTIC_GLITCH
-    /* Print all items in burr_hash_table which store the glitches information of VCD file */
-    for (auto &it : (*burr_hash_table))
-        std::cout << "Signal " << it.first << " glitches at time " << current_timestamp << "\n";
+    /* Print glitches information */
+    printf_glitch_csv(burr_hash_table, current_timestamp);
+    burr_hash_table->clear();
 #endif
 
     tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct>::iterator it;
@@ -465,9 +465,8 @@ void VCDParser::get_vcd_signal_flip_info() {
         /* Print glitches information */
         if (reading_buffer[0] == '#') {
 #ifndef NO_STATISTIC_GLITCH
-            for (auto &it : burr_hash_table)
-                std::cout << "Signal " << it.first << " glitches at time " << current_timestamp << "\n";
-
+            /* Print glitches information */
+            printf_glitch_csv(&burr_hash_table, current_timestamp);
             burr_hash_table.clear();
 #endif
             current_timestamp = strtoll(&reading_buffer[1], nullptr, 0);
@@ -564,8 +563,8 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
         std::string read_string = reading_buffer;
         if (reading_buffer[0] == '#') {
 #ifndef NO_STATISTIC_GLITCH
-            for (auto &it : burr_hash_table)
-                std::cout << "Signal " << it.first << " glitches at time " << current_timestamp << "\n";
+            /* Print glitches information */
+            printf_glitch_csv(&burr_hash_table, current_timestamp);
             burr_hash_table.clear();
 #endif
             current_timestamp = strtoll(&reading_buffer[1], nullptr, 0);
@@ -627,9 +626,8 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
                 current_timestamp = last_timestamp;
             }
 #ifndef NO_STATISTIC_GLITCH
-            /* Ergodic burr_hash_table and print glitches information */
-            for (auto &it : burr_hash_table)
-                std::cout << "Signal " << it.first << " glitches at time " << current_timestamp << "\n";
+            /* Print glitches information */
+            printf_glitch_csv(&burr_hash_table, current_timestamp);
             burr_hash_table.clear();
 #endif
             continue;
@@ -813,5 +811,15 @@ void VCDParser::get_total_flips_in_time_range(uint64_t begin_time,
         } else if (reading_buffer[0] == '0' || reading_buffer[0] == '1' || reading_buffer[0] == 'b')
             signal_counter++;
     }
+}
+
+void VCDParser::printf_glitch_csv(tsl::hopscotch_map<std::string, int8_t> *burr_hash_table,
+                                  uint64_t current_timestamp) {
+    FILE *fp = fopen("./glitch.csv", "a");
+    for (const auto &glitch : *burr_hash_table) {
+//        std::cout << glitch.first << " Glitch at " << current_timestamp << "\n";
+        fprintf(fp, "%s Glitch at %lu\n", glitch.first.c_str(), current_timestamp);
+    }
+    fclose(fp);
 }
 
