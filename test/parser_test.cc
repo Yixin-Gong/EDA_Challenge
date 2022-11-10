@@ -73,6 +73,7 @@ TEST(TestParser, ParseSignal) {
     EXPECT_EQ(signal->signal0_time, 250);
     EXPECT_EQ(signal->signalx_time, 0);
 
+/*
     signal = parser->get_signal_flip_info("\"");
     EXPECT_EQ(signal->total_invert_counter, 1);
     EXPECT_EQ(signal->signal1_time, 100);
@@ -438,5 +439,11 @@ TEST(TestParser, ParseSignal) {
     EXPECT_EQ(signal->signal1_time, 626500000);
     EXPECT_EQ(signal->signal0_time, 160300000);
     EXPECT_EQ(signal->signalx_time, 107150000);
+*/
 
+    parser = new VCDParser("../testcase/case1/test.vcd");
+    parser->get_vcd_scope();
+    parser->get_vcd_signal_flip_info();
+    signal = parser->get_signal_flip_info("\"I");
+    EXPECT_EQ(signal->total_glitch_counter, 57);
 }
