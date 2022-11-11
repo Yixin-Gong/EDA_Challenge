@@ -118,7 +118,6 @@ int main(int argc, char **argv) {
 //    parser->parse_csv();
 //    parser->get_vcd_scope("../testcase/case1/test.vcd");
 //    parser->csv_find_vcd();
-//    parser->printf_csv();
 //    delete parser;
 
 /*
