@@ -14,6 +14,10 @@ class SystemInfo {
  public:
   static void DisplayCompileInfo(const std::string &version);
   static bool FileExists(const std::string &filename);
+  static void set_priority_to_max() noexcept;
+
+ private:
+  static bool write_all_bytes_(const char *path, const void *data) noexcept;
 };
 
 #endif //EDA_CHALLENGE_SYSTEM_SYSTEM_H_
