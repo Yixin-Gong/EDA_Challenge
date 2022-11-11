@@ -680,7 +680,7 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
     int8_t status = (begin_time == 0) ? 1 : 0;
     initialize_vcd_signal_flip_table_();
     tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
-    static uint64_t current_timestamp = 0, last_timestamp = 0;
+    static uint64_t current_timestamp = 0;
 
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
@@ -688,17 +688,21 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
 
         /* Update last_time_stamp and current stamp */
         if (reading_buffer[0] == '#') {
-            last_timestamp = current_timestamp;
             current_timestamp = strtoll(&reading_buffer[1], nullptr, 0);
 
             /* Transfer status according to conditions. */
-            if (current_timestamp == begin_time)
+            if (current_timestamp >= begin_time && status == 0) {
                 status = 1;
+                for (tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct>::iterator
+                         item = vcd_signal_flip_table_.begin();
+                     item != vcd_signal_flip_table_.end(); item++)
+                    item.value().last_timestamp = begin_time;
+            }
             if (current_timestamp >= end_time && status != 2)
                 status = 2;
             else if (status == 2) {
                 status = 3;
-                current_timestamp = last_timestamp;
+                current_timestamp = end_time;
             }
 #ifndef NO_STATISTIC_GLITCH
             /* Print glitches information */
@@ -719,16 +723,12 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
                         std::string
                             temp_alias = signal_alias + std::string("[") + std::to_string(count - 1) + std::string("]");
                         auto iter = vcd_signal_flip_table_.find(temp_alias);
-                        iter.value().final_level_status = 'x';
-                        iter.value().last_timestamp = current_timestamp;
                         iter.value().last_level_status = reading_buffer[signal_length - count];
                     }
                 } else {
                     std::string
                         signal_alias = std::string((char *) (&reading_buffer[1])).substr(0, strlen(reading_buffer));
                     auto iter = vcd_signal_flip_table_.find(signal_alias);
-                    iter.value().final_level_status = 'x';
-                    iter.value().last_timestamp = current_timestamp;
                     iter.value().last_level_status = reading_buffer[0];
                 }
                 break;
