@@ -267,6 +267,7 @@ void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp,
         if (it->second.total_invert_counter != 0)
             it.value().total_invert_counter--;
     }
+    total_time = current_timestamp;
 }
 
 /*!  \brief      Get all modules and information of signals and store them in a list.
@@ -761,6 +762,7 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
             break;
     }
     vcd_signal_flip_post_processing_(current_timestamp, &burr_hash_table);
+    total_time = end_time - begin_time;
 }
 
 /*!  \brief      Output the stored and counted results to file.
@@ -798,24 +800,25 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
 
                 /* 1-bit wide and multi-bit wide outputs.*/
                 if (it.second.vcd_signal_width == 1) {
-                    if (vcd_signal_flip_table_.find(it.first) == vcd_signal_flip_table_.end())
+                    if (vcd_signal_flip_table_.find(it.first) == vcd_signal_flip_table_.end()) {
                         memset(&signal, 0x00, sizeof(struct VCDSignalStatisticStruct));
-                    else
+                        signal.signalx_time = total_time;
+                    } else
                         signal = vcd_signal_flip_table_.find(it.first)->second;
-                    sprintf(sp_buffer, "%.5lf", (double) signal.signal1_time
-                        / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time));
+                    sprintf(sp_buffer, "%.5lf", (double) (total_time - signal.signal0_time
+                        - signal.signalx_time) / (double) total_time);
 
                     auto *current_signal = &(it.second);
                     while (true) {
                         file << All_module << iter.first << "." << current_signal->vcd_signal_title
-                             << "    tc = " << signal.total_invert_counter
-                             << "    t1 = " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
+                             << "\ttc = " << signal.total_invert_counter
+                             << "\tt1 = " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
                              << vcd_header_struct_.vcd_time_unit
-                             << "    t0 = " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
+                             << "\tt0 = " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
                              << vcd_header_struct_.vcd_time_unit
-                             << "    tx = " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
-                             << vcd_header_struct_.vcd_time_unit << "    sp = " << sp_buffer
-                             << "    tg = " << signal.total_glitch_counter << std::endl;
+                             << "\ttx = " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
+                             << vcd_header_struct_.vcd_time_unit << "\tsp = " << sp_buffer
+                             << "\ttg = " << signal.total_glitch_counter << std::endl;
                         if (current_signal->next_signal == nullptr)
                             break;
                         current_signal = current_signal->next_signal;
@@ -825,25 +828,26 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
                     for (int wid_pos = 0; wid_pos < it.second.vcd_signal_width; wid_pos++) {
                         std::string
                             temp_alias = it.first + std::string("[") + std::to_string(wid_pos) + std::string("]");
-                        if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end())
+                        if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end()) {
                             memset(&signal, 0x00, sizeof(struct VCDSignalStatisticStruct));
-                        else
+                            signal.signalx_time = total_time;
+                        } else
                             signal = vcd_signal_flip_table_.find(temp_alias)->second;
-                        sprintf(sp_buffer, "%.5lf", (double) signal.signal1_time
-                            / (double) (signal.signal0_time + signal.signal1_time + signal.signalx_time));
+                        sprintf(sp_buffer, "%.5lf", (double) (total_time - signal.signal0_time
+                            - signal.signalx_time) / (double) total_time);
 
                         auto *current_signal = &(it.second);
                         while (true) {
-                            file << All_module << iter.first << "." << current_signal->vcd_signal_title << "["
-                                 << wid_pos
-                                 << "]    tc = " << signal.total_invert_counter
-                                 << "    t1 = " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
+                            file << All_module << iter.first << "." << current_signal->vcd_signal_title
+                                 << "[" << wid_pos << "]"
+                                 << "\ttc = " << signal.total_invert_counter
+                                 << "\tt1 = " << signal.signal1_time * vcd_header_struct_.vcd_time_scale
                                  << vcd_header_struct_.vcd_time_unit
-                                 << "    t0 = " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
+                                 << "\tt0 = " << signal.signal0_time * vcd_header_struct_.vcd_time_scale
                                  << vcd_header_struct_.vcd_time_unit
-                                 << "    tx = " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
-                                 << vcd_header_struct_.vcd_time_unit << "    sp = " << sp_buffer
-                                 << "    tg = " << signal.total_glitch_counter << std::endl;
+                                 << "\ttx = " << signal.signalx_time * vcd_header_struct_.vcd_time_scale
+                                 << vcd_header_struct_.vcd_time_unit << "\tsp = " << sp_buffer
+                                 << "\ttg = " << signal.total_glitch_counter << std::endl;
                             if (current_signal->next_signal == nullptr)
                                 break;
                             current_signal = current_signal->next_signal;
