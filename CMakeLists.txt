@@ -5,9 +5,8 @@ cmake_minimum_required(VERSION 3.19)
 project(EDA_Challenge CXX)
 set(CMAKE_CXX_STANDARD 14)
 
-add_compile_options(-Og)
-
 if (NOT COMPILE_ON_SERVER)
+    add_compile_options(-Og)
     include_directories(system gtest/include gui . parser)
     file(GLOB_RECURSE SOURCES "main.cc" "system/*.cc" "gui/*.cc" "parser/*.cc")
     file(GLOB_RECURSE TEST_SOURCES "test/*.cc")
@@ -46,6 +45,7 @@ if (NOT COMPILE_ON_SERVER)
     set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS "IS_NOT_RUNNING_GOOGLE_TEST")
     set_target_properties(version_h PROPERTIES COMPILE_DEFINITIONS "IS_NOT_RUNNING_GOOGLE_TEST")
 else ()
+    add_compile_options(-Ofast)
     include_directories(system . parser)
     file(GLOB_RECURSE SOURCES "main.cc" "system/*.cc" "parser/*.cc")
 
