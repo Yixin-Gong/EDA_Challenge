@@ -15,6 +15,7 @@
 #include <sys/resource.h>
 #include <sys/file.h>
 #include <csignal>
+#include <unistd.h>
 
 /*!
     \brief  Show software system compilation time and version
