@@ -114,11 +114,12 @@ int main(int argc, char **argv) {
     return 0;
 #else
 
-//    auto *parser = new CSVParser("../testcase/case0/test.csv");
+//    auto *parser = new CSVParser("../testcase/case1/test.csv");
 //    parser->parse_csv();
-//    parser->get_vcd_scope("../testcase/case0/test.vcd");
+//    parser->get_vcd_scope("../testcase/case1/test.vcd");
 //    parser->csv_find_vcd();
 //    parser->printf_csv();
+//    delete parser;
 
 /*
     std::ofstream output_file;
@@ -145,7 +146,6 @@ int main(int argc, char **argv) {
     output_file.close();
 */
     ::testing::InitGoogleTest(&argc, argv);
-    delete parser;
     return RUN_ALL_TESTS();
 #endif
 }
