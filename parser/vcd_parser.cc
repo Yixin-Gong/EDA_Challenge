@@ -12,6 +12,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <unistd.h>
 
 static char reading_buffer[1024 * 1024] = {0};
 
@@ -94,14 +95,11 @@ void VCDParser::vcd_statistic_signal_(uint64_t current_timestamp,
             signal->total_invert_counter++;
         if (signal->last_level_status != 'x')
             signal->final_level_status = signal->last_level_status;
-    }
-#ifndef NO_STATISTIC_GLITCH
-    else {
+    } else {
         if (burr_hash_table->find(signal_alias) == burr_hash_table->end())
             burr_hash_table->insert(std::pair<std::string, int8_t>(signal_alias, {0}));
         signal->total_glitch_counter++;
     }
-#endif
     signal->last_level_status = current_level_status;
 }
 
@@ -238,11 +236,9 @@ void VCDParser::vcd_statistic_glitch_(tsl::hopscotch_map<std::string, int8_t> *b
 */
 void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp,
                                                  tsl::hopscotch_map<std::string, int8_t> *burr_hash_table) {
-#ifndef NO_STATISTIC_GLITCH
     /* Print glitches information */
     vcd_statistic_glitch_(burr_hash_table, current_timestamp);
     burr_hash_table->clear();
-#endif
 
     tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct>::iterator it;
 
@@ -533,40 +529,40 @@ void VCDParser::get_vcd_signal_flip_info() {
     static uint64_t current_timestamp = 0, buf_counter = 0;
     tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
-        reading_buffer[strlen(reading_buffer) - 1] = '\0';
-        std::string read_string = reading_buffer;
+        size_t last_word_position = strlen(reading_buffer) - 1;
 
         /* Print glitches information */
         if (reading_buffer[0] == '#') {
-#ifndef NO_STATISTIC_GLITCH
             /* Print glitches information */
             vcd_statistic_glitch_(&burr_hash_table, current_timestamp);
             burr_hash_table.clear();
-#endif
             current_timestamp = strtoll(&reading_buffer[1], nullptr, 0);
             continue;
         }
 
         /* If meet b,parse the signal as vector standard */
         if (reading_buffer[0] == 'b') {
-            std::string signal_alias = read_string.substr(read_string.find_last_of(' ') + 1, read_string.length());
-            unsigned long signal_length = (read_string.substr(1, read_string.find_first_of(' '))).length();
+            reading_buffer[last_word_position] = '[';
+            std::string read_string = reading_buffer;
+            size_t first_pos = std::string(reading_buffer).find_first_of(' ');
+            size_t signal_length = first_pos - 1;
+            std::string signal_alias = std::string(&reading_buffer[first_pos + 1]);
 
             /* Split the vector signals to scalar signals by its bit ,and parse them one by one */
-            for (unsigned long count = signal_length - 1; count > 0; count--) {
+            for (unsigned long count = signal_length; count > 0; count--) {
                 /* Find position of matched signals, if current status is unequal to last status of the signal, parse the signal */
-                std::string temp_alias = signal_alias + std::string("[") + std::to_string(count - 1) + std::string("]");
+                std::string temp_alias = signal_alias + std::to_string(count - 1) + std::string("]");
                 auto iter = vcd_signal_flip_table_.find(temp_alias);
                 if (reading_buffer[signal_length - count] != iter->second.last_level_status)
                     vcd_statistic_signal_(current_timestamp, &(iter.value()), &burr_hash_table,
                                           reading_buffer[signal_length - count], temp_alias);
             }
         }
-
             /* if not meet b,then parse the signals with scalar standard */
         else {
             /* Find position of matched signals, if current status is unequal to last status of the signal,parse the signal */
-            std::string signal_alias = std::string((char *) (&reading_buffer[1])).substr(0, strlen(reading_buffer));
+            reading_buffer[last_word_position] = '\0';
+            std::string signal_alias = std::string((char *) (&reading_buffer[1]));
             auto iter = vcd_signal_flip_table_.find(signal_alias);
             vcd_statistic_signal_(current_timestamp, &(iter.value()), &burr_hash_table,
                                   reading_buffer[0], signal_alias);
@@ -602,14 +598,13 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
                     temp_alias = signal_alias + std::string("[") + std::to_string(count - 1) + std::string("]");
                     if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end()) {
                         cnt.last_level_status = reading_buffer[signal_length - count];
-                        cnt.final_level_status = 'x';
+                        cnt.final_level_status = '\0';
                         vcd_signal_flip_table_.insert(std::pair<std::string,
                                                                 struct VCDSignalStatisticStruct>(temp_alias,
                                                                                                  cnt));
                     } else {
                         auto iter = vcd_signal_flip_table_.find(temp_alias);
                         iter.value().last_level_status = reading_buffer[signal_length - count];
-                        iter.value().final_level_status = 'x';
                     }
                 }
             }
@@ -618,13 +613,12 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
             if (vcd_signal_alias_table_.find(signal_alias) != vcd_signal_alias_table_.end()) {
                 if (vcd_signal_flip_table_.find(signal_alias) == vcd_signal_flip_table_.end()) {
                     cnt.last_level_status = reading_buffer[0];
-                    cnt.final_level_status = 'x';
+                    cnt.final_level_status = '\0';
                     vcd_signal_flip_table_.insert(std::pair<std::string, struct VCDSignalStatisticStruct>(signal_alias,
                                                                                                           cnt));
                 } else {
                     auto iter = vcd_signal_flip_table_.find(signal_alias);
                     iter.value().last_level_status = reading_buffer[0];
-                    iter.value().final_level_status = 'x';
                 }
             }
         }
@@ -637,21 +631,19 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
         if (reading_buffer[0] == '#') {
-#ifndef NO_STATISTIC_GLITCH
             /* Print glitches information */
             vcd_statistic_glitch_(&burr_hash_table, current_timestamp);
             burr_hash_table.clear();
-#endif
             current_timestamp = strtoll(&reading_buffer[1], nullptr, 0);
             continue;
         }
         if (reading_buffer[0] == 'b') {
-            std::string signal_alias = read_string.substr(read_string.find_last_of(' ') + 1, read_string.length());
+            size_t first_pos = read_string.find_first_of(' ');
+            std::string signal_alias = read_string.substr(first_pos + 1, read_string.length()) + std::string("[");
             if (vcd_signal_alias_table_.find(signal_alias) != vcd_signal_alias_table_.end()) {
-                unsigned long signal_length = (read_string.substr(1, read_string.find_first_of(' '))).length();
-                for (unsigned long count = signal_length - 1; count > 0; count--) {
-                    std::string
-                        temp_alias = signal_alias + std::string("[") + std::to_string(count - 1) + std::string("]");
+                size_t signal_length = first_pos - 1;
+                for (unsigned long count = signal_length; count > 0; count--) {
+                    std::string temp_alias = signal_alias + std::to_string(count - 1) + std::string("]");
                     auto iter = vcd_signal_flip_table_.find(temp_alias);
                     if (reading_buffer[signal_length - count] != iter->second.last_level_status)
                         vcd_statistic_signal_(current_timestamp, &(iter.value()), &burr_hash_table,
@@ -659,7 +651,7 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
                 }
             }
         } else {
-            std::string signal_alias = std::string((char *) (&reading_buffer[1])).substr(0, strlen(reading_buffer));
+            std::string signal_alias = std::string((char *) (&reading_buffer[1]));
             if (vcd_signal_alias_table_.find(signal_alias) != vcd_signal_alias_table_.end()) {
                 auto iter = vcd_signal_flip_table_.find(signal_alias);
                 vcd_statistic_signal_(current_timestamp, &(iter.value()), &burr_hash_table,
@@ -705,11 +697,9 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
                 status = 3;
                 current_timestamp = end_time;
             }
-#ifndef NO_STATISTIC_GLITCH
             /* Print glitches information */
             vcd_statistic_glitch_(&burr_hash_table, current_timestamp);
             burr_hash_table.clear();
-#endif
             continue;
         }
         /*Set a finite stats machine */
@@ -737,20 +727,20 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
             case 2:
             case 1:
                 if (reading_buffer[0] == 'b') {
+                    size_t first_pos = read_string.find_first_of(' ');
+                    size_t signal_length = first_pos - 1;
                     std::string
-                        signal_alias = read_string.substr(read_string.find_last_of(' ') + 1, read_string.length());
-                    unsigned long signal_length = (read_string.substr(1, read_string.find_first_of(' '))).length();
-                    for (unsigned long count = signal_length - 1; count > 0; count--) {
-                        std::string
-                            temp_alias = signal_alias + std::string("[") + std::to_string(count - 1) + std::string("]");
+                        signal_alias = read_string.substr(first_pos + 1, read_string.length()) + std::string("[");
+
+                    for (unsigned long count = signal_length; count > 0; count--) {
+                        std::string temp_alias = signal_alias + std::to_string(count - 1) + std::string("]");
                         auto iter = vcd_signal_flip_table_.find(temp_alias);
                         if (reading_buffer[signal_length - count] != iter->second.last_level_status)
                             vcd_statistic_signal_(current_timestamp, &(iter.value()), &burr_hash_table,
                                                   reading_buffer[signal_length - count], temp_alias);
                     }
                 } else {
-                    std::string
-                        signal_alias = std::string((char *) (&reading_buffer[1])).substr(0, strlen(reading_buffer));
+                    std::string signal_alias = std::string((char *) (&reading_buffer[1]));
                     auto iter = vcd_signal_flip_table_.find(signal_alias);
                     vcd_statistic_signal_(current_timestamp, &(iter.value()), &burr_hash_table,
                                           reading_buffer[0], signal_alias);
