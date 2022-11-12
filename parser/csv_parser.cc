@@ -21,7 +21,7 @@ void CSVParser::parse_csv() {
                 read_str += pos;
         }
 
-        signal_title = read_str.substr(0, read_str.find("tc=") - 1);
+        signal_title = read_str.substr(0, read_str.find("tc="));
         struct CSVSignalStatisticStruct signal{};
 
         std::string tc, t1, t0, tx, sp, tg;
@@ -154,5 +154,11 @@ void CSVParser::csv_find_vcd() {
             signal_label = csv_vcd_signal_table_.find(label).value().vcd_signal_label + width;
         merge_csv_vcd_table_.insert(std::pair<std::string, struct CSVSignalStatisticStruct>(signal_label, iter.second));
     }
+}
+
+struct CSVSignalStatisticStruct *CSVParser::find_signal(const std::string &signal_label) {
+    if (merge_csv_vcd_table_.find(signal_label) == merge_csv_vcd_table_.end())
+        return nullptr;
+    return &merge_csv_vcd_table_.find(signal_label)->second;
 }
 
