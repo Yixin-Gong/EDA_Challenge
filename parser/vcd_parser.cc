@@ -834,20 +834,20 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
 
 void VCDParser::printf_glitch_csv(const std::string &filepath) {
     clock_t startTime = clock();
-    FILE *glitch_fp_ = fopen64(filepath.c_str(), "w");
+    std::ofstream file;
+    file.open(filepath, std::ios::out | std::ios::trunc);
     for (const auto &glitch : signal_glitch_position_) {
         auto signal_list = glitch.second;
         std::string signal_string = get_vcd_signal_(glitch.first);
         if (!signal_string.empty()) {
-            fprintf(glitch_fp_, "%s ", signal_string.c_str());
-            for (auto &it : signal_list) {
-                fprintf(glitch_fp_, "%lu%s ",
-                        it * vcd_header_struct_.vcd_time_scale, vcd_header_struct_.vcd_time_unit.c_str());
-            }
-            fprintf(glitch_fp_, "\n");
+            std::string signal_glitch_string = signal_string + " ";
+            for (auto &it : signal_list)
+                signal_glitch_string +=
+                    std::to_string(it * vcd_header_struct_.vcd_time_scale) + vcd_header_struct_.vcd_time_unit;
+            file << signal_glitch_string << std::endl;
         }
     }
-    fclose(glitch_fp_);
+    file.close();
     std::cout << "Print glitch time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
