@@ -34,6 +34,7 @@ int main(int argc, char **argv) {
     std::string software_path = "./";
     if (getcwd(buffer, 512) != nullptr)
         software_path = buffer;
+    SystemInfo::set_priority_to_max();
     try {
         TCLAP::CmdLine cmd("This software is VCD file parsing and statistics software, optimized for large files."
                            " You can visit https://github.com/ZhuYanzhen1/EDA_Challenge to get more information about this software.",
@@ -119,6 +120,7 @@ int main(int argc, char **argv) {
     //    parser->parse_csv();
     //    parser->get_vcd_scope("../testcase/case1/test.vcd");
     //    parser->csv_find_vcd();
+    //    parser->printf_csv();
     //    delete parser;
 
     /*

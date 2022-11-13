@@ -43,9 +43,11 @@ struct VCDSignalStatisticStruct {
 class VCDParser {
  public:
   explicit VCDParser(const std::string &filename) {
+      static char filebuffer[1024 * 1024 * 128] = {0};
       fp_ = fopen64(filename.c_str(), "r");
       std::cout << "\nOpen file: " << filename << "\n";
       parse_vcd_header_();
+      setbuffer(fp_, filebuffer, sizeof(filebuffer));
   }
   ~VCDParser() {
       fclose(fp_);
@@ -80,6 +82,7 @@ class VCDParser {
   std::list<std::pair<std::string, tsl::hopscotch_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
   tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
   tsl::hopscotch_map<std::string, int8_t> vcd_signal_alias_table_;
+  uint64_t total_time{};
 
   void parse_vcd_header_();
   static void vcd_statistic_signal_(uint64_t current_timestamp,

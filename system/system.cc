@@ -10,6 +10,12 @@
 #include <iostream>
 #include <sys/stat.h>
 #include "gitver.h"
+#include <sched.h>
+#include <pthread.h>
+#include <sys/resource.h>
+#include <sys/file.h>
+#include <csignal>
+#include <unistd.h>
 
 /*!
     \brief  Show software system compilation time and version
@@ -26,4 +32,30 @@ void SystemInfo::DisplayCompileInfo(const std::string &version) {
 bool SystemInfo::FileExists(const std::string &filename) {
     struct stat buffer{};
     return (stat(filename.c_str(), &buffer) == 0);
+}
+
+bool SystemInfo::write_all_bytes_(const char *path, const void *data) noexcept {
+    FILE *f = fopen(path, "wb+");
+    if (nullptr == f)
+        return false;
+    fwrite((char *) data, 4, 1, f);
+    fflush(f);
+    fclose(f);
+    return true;
+}
+
+void SystemInfo::set_priority_to_max() noexcept {
+    char path_[260];
+    snprintf(path_, sizeof(path_), "/proc/%d/oom_adj", getpid());
+
+    char level_[] = "-17";
+    write_all_bytes_(path_, level_);
+
+    /* Processo pai deve ter prioridade maior que os filhos. */
+    setpriority(PRIO_PROCESS, 0, -20);
+
+    /* ps -eo state,uid,pid,ppid,rtprio,time,comm */
+    struct sched_param param_{};
+    param_.sched_priority = sched_get_priority_max(SCHED_FIFO); // SCHED_RR
+    sched_setscheduler(getpid(), SCHED_RR, &param_);
 }
