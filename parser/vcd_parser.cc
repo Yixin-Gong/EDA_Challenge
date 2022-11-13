@@ -182,36 +182,6 @@ void VCDParser::vcd_statistic_glitch_(tsl::hopscotch_map<std::string, int8_t> *b
     }
 }
 
-std::string VCDParser::get_vcd_signal_(std::string label) {
-    std::list<std::string> all_module;
-    std::string signal_title, signal_bit = "   ";
-    unsigned long label_length = label.length();
-    if (label_length > 3)
-        signal_bit = label.substr(label_length - 3, label_length);
-    if (signal_bit[0] == '[' && signal_bit[2] == ']')
-        label = label.substr(0, (label_length - 3));
-
-    for (auto &it : vcd_signal_list_) {
-        if (it.second.find(label) != it.second.end()) {
-            std::string module;
-            for (auto &iter : all_module) {
-                module += iter + "/";
-            }
-            module += it.first;
-            signal_title = module + "." + it.second.find(label).value().vcd_signal_title;
-            break;
-        }
-        if (it.first == "upscope") {
-            all_module.pop_back();
-            continue;
-        }
-        all_module.emplace_back(it.first);
-    }
-    if (signal_bit[0] == '[' && signal_bit[2] == ']')
-        signal_title = signal_title + signal_bit;
-    return signal_title;
-}
-
 /*!
      \brief     Count signal flip by post processing pattern
      \param[in] current_timestamp: time in current parsing section.
@@ -256,6 +226,7 @@ void VCDParser::get_vcd_scope() {
     tsl::hopscotch_map<std::string, struct VCDSignalStruct> vcd_signal_table_;
     vcd_signal_table_.clear();
     vcd_signal_list_.clear();
+    std::list<std::string> Module;
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
@@ -288,6 +259,16 @@ void VCDParser::get_vcd_scope() {
                 }
             }
 
+            if (signal_glitch_table_.find(signal_label) == signal_glitch_table_.end()) {
+                std::string all_module_signal;
+                for (auto &iter : Module)
+                    all_module_signal += iter + '/';
+                all_module_signal.pop_back();
+                all_module_signal += '.' + signal->vcd_signal_title;
+                signal_glitch_table_.insert(std::pair<std::string, std::string>(signal_label,
+                                                                                all_module_signal));
+            }
+
             /* Store information in a hash table.*/
             auto current_signal = vcd_signal_table_.find(signal_label);
             if (current_signal == vcd_signal_table_.end()) {
@@ -302,6 +283,7 @@ void VCDParser::get_vcd_scope() {
                 }
                 current_signal_struct->next_signal = signal;
             }
+
         }
 
             /* If read the information of the module.*/
@@ -326,6 +308,8 @@ void VCDParser::get_vcd_scope() {
             } else
                 vcd_signal_list_.emplace_back(scope_module, 0);
             vcd_signal_table_.clear();
+
+            Module.emplace_back(scope_module);
         }
 
             /* If read the upscope*/
@@ -338,6 +322,7 @@ void VCDParser::get_vcd_scope() {
 
             /* Store the upscope in the list*/
             vcd_signal_list_.emplace_back("upscope", 0);
+            Module.pop_back();
         }
 
             /* If read the enddefinitions*/
@@ -837,13 +822,33 @@ void VCDParser::printf_glitch_csv(const std::string &filepath) {
     std::ofstream file;
     file.open(filepath, std::ios::out | std::ios::trunc);
     for (const auto &glitch : signal_glitch_position_) {
-        auto signal_list = glitch.second;
-        std::string signal_string = get_vcd_signal_(glitch.first);
-        if (!signal_string.empty()) {
-            std::string signal_glitch_string = signal_string + " ";
-            for (auto &it : signal_list)
+        std::string label, signal_bit;
+        bool read_bit = false;
+        for (auto &pos : glitch.first) {
+            if (pos == '[' && glitch.first.length() - label.length() >= 3) {
+                read_bit = true;
+            }
+            if (!read_bit) {
+                label += pos;
+            } else {
+                signal_bit += pos;
+            }
+        }
+
+        if (signal_glitch_table_.find(label) != signal_glitch_table_.end()) {
+            auto signal_list = glitch.second;
+            std::string signal_string = signal_glitch_table_.find(label).value();
+            std::string signal_glitch_string;
+            if (!read_bit) {
+                signal_glitch_string = signal_string;
+            } else {
+                signal_glitch_string = signal_string + signal_bit;
+            }
+            signal_glitch_string += " ";
+            for (auto &it : signal_list) {
                 signal_glitch_string +=
-                    std::to_string(it * vcd_header_struct_.vcd_time_scale) + vcd_header_struct_.vcd_time_unit;
+                    std::to_string(it * vcd_header_struct_.vcd_time_scale) + vcd_header_struct_.vcd_time_unit + " ";
+            }
             file << signal_glitch_string << std::endl;
         }
     }

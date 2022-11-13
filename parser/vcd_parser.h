@@ -80,6 +80,7 @@ class VCDParser {
   std::list<std::pair<std::string, tsl::hopscotch_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
   tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
   tsl::hopscotch_map<std::string, int8_t> vcd_signal_alias_table_;
+  tsl::hopscotch_map<std::string, std::string> signal_glitch_table_;
   uint64_t total_time{};
 
   void parse_vcd_header_();
@@ -90,7 +91,6 @@ class VCDParser {
   void initialize_vcd_signal_flip_table_();
   void vcd_signal_flip_post_processing_(uint64_t timestamp, tsl::hopscotch_map<std::string, int8_t> *burr_hash_table);
   void vcd_statistic_glitch_(tsl::hopscotch_map<std::string, int8_t> *burr_hash_table, uint64_t current_timestamp);
-  std::string get_vcd_signal_(std::string label);
 };
 
 #endif //EDA_CHALLENGE_PARSER_VCD_PARSER_H_
