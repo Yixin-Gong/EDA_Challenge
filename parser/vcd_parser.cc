@@ -851,24 +851,16 @@ void VCDParser::printf_glitch_csv(const std::string &filepath) {
 
         if (it.second.empty() != 1) {
             for (auto &signal : it.second) {
-                bool output_new_line = false;
                 SignalGlitchStruct *glitch_signal_buf;
                 if (signal.second.vcd_signal_width != 1) {
                     for (int pos = 0; pos < signal.second.vcd_signal_width; pos++) {
                         std::string width = "[" + std::to_string(pos) + "]";
-//                        file << signal_key << '\n';
-                        if (signal_glitch_position_.find(signal.first + width)
-                            == signal_glitch_position_.end()) {
+                        if (signal_glitch_position_.find(signal.first + width) == signal_glitch_position_.end()) {
                             continue;
                         }
                         glitch_signal_buf =
                             signal_glitch_position_.find(signal.first + width)->second;
-
-                        if (glitch_signal_buf == nullptr)
-                            continue;
-
-                        std::string All_Module;
-                        All_Module = All_module + signal.second.vcd_signal_title;
+                        std::string All_Module = All_module + signal.second.vcd_signal_title;
                         All_Module += width;
                         fprintf(glitch_fp_, "%s ", All_Module.c_str());
                         while (true) {
