@@ -510,11 +510,11 @@ void VCDParser::get_vcd_signal_flip_info() {
         if (reading_buffer[0] == 'b') {
             reading_buffer[last_word_position] = '[';
             size_t first_pos = std::string(reading_buffer).find_first_of(' ');
-            size_t signal_length = first_pos - 1;
+            size_t signal_length = first_pos;
             std::string signal_alias = std::string(&reading_buffer[first_pos + 1]);
 
             /* Split the vector signals to scalar signals by its bit ,and parse them one by one */
-            for (unsigned long count = signal_length; count > 0; count--) {
+            for (unsigned long count = signal_length - 1; count > 0; count--) {
                 /* Find position of matched signals, if current status is unequal to last status of the signal, parse the signal */
                 std::string temp_alias = signal_alias + std::to_string(count - 1) + std::string("]");
                 auto iter = vcd_signal_flip_table_.find(temp_alias);
@@ -607,8 +607,8 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
             size_t first_pos = std::string(reading_buffer).find_first_of(' ');
             std::string signal_alias = std::string(&reading_buffer[first_pos + 1]);
             if (vcd_signal_alias_table_.find(signal_alias) != vcd_signal_alias_table_.end()) {
-                size_t signal_length = first_pos - 1;
-                for (unsigned long count = signal_length; count > 0; count--) {
+                size_t signal_length = first_pos;
+                for (unsigned long count = signal_length - 1; count > 0; count--) {
                     std::string temp_alias = signal_alias + std::to_string(count - 1) + std::string("]");
                     auto iter = vcd_signal_flip_table_.find(temp_alias);
                     if (reading_buffer[signal_length - count] != iter->second.last_level_status)
@@ -675,9 +675,9 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
                 if (reading_buffer[0] == 'b') {
                     reading_buffer[last_word_position] = '[';
                     size_t first_pos = std::string(reading_buffer).find_first_of(' ');
-                    size_t signal_length = first_pos - 1;
+                    size_t signal_length = first_pos;
                     std::string signal_alias = std::string(&reading_buffer[first_pos + 1]);
-                    for (unsigned long count = signal_length; count > 0; count--) {
+                    for (unsigned long count = signal_length - 1; count > 0; count--) {
                         std::string temp_alias = signal_alias + std::to_string(count - 1) + std::string("]");
                         auto iter = vcd_signal_flip_table_.find(temp_alias);
                         iter.value().last_level_status = reading_buffer[signal_length - count];
@@ -695,9 +695,9 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
                 if (reading_buffer[0] == 'b') {
                     reading_buffer[last_word_position] = '[';
                     size_t first_pos = std::string(reading_buffer).find_first_of(' ');
-                    size_t signal_length = first_pos - 1;
+                    size_t signal_length = first_pos;
                     std::string signal_alias = std::string(&reading_buffer[first_pos + 1]);
-                    for (unsigned long count = signal_length; count > 0; count--) {
+                    for (unsigned long count = signal_length - 1; count > 0; count--) {
                         std::string temp_alias = signal_alias + std::to_string(count - 1) + std::string("]");
                         auto iter = vcd_signal_flip_table_.find(temp_alias);
                         if (reading_buffer[signal_length - count] != iter->second.last_level_status)
@@ -819,8 +819,7 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
 
 void VCDParser::printf_glitch_csv(const std::string &filepath) {
     clock_t startTime = clock();
-    std::ofstream file;
-    file.open(filepath, std::ios::out | std::ios::trunc);
+    FILE *glitch_fp_ = fopen64(filepath.c_str(), "w");
     for (const auto &glitch : signal_glitch_position_) {
         std::string label, signal_bit;
         bool read_bit = false;
@@ -852,7 +851,7 @@ void VCDParser::printf_glitch_csv(const std::string &filepath) {
             file << signal_glitch_string << std::endl;
         }
     }
-    file.close();
+    fclose(glitch_fp_);
     std::cout << "Print glitch time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
