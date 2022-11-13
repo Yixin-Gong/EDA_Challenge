@@ -59,6 +59,9 @@ class VCDParser {
   struct VCDHeaderStruct *get_vcd_header() {
       return &vcd_header_struct_;
   }
+  tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct> *get_signal_flip_table() {
+      return &vcd_signal_flip_table_;
+  }
   void get_vcd_scope();
   void get_vcd_scope(const std::string &module_label);
   void get_vcd_signal_flip_info();
