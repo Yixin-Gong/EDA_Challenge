@@ -34,7 +34,7 @@ class CSVParser {
   void parse_csv();
   void get_vcd_scope(const std::string &vcd_filename);
   void csv_find_vcd();
-
+  struct CSVSignalStatisticStruct *find_signal(const std::string &signal_label);
  private:
   FILE *fp_{};
   tsl::hopscotch_map<std::string, struct CSVSignalStatisticStruct> csv_signal_table_;

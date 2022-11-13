@@ -91,7 +91,6 @@ class VCDParser {
                                     char current_level_status, const std::string &signal_alias);
   void initialize_vcd_signal_flip_table_();
   void vcd_signal_flip_post_processing_(uint64_t timestamp, tsl::hopscotch_map<std::string, int8_t> *burr_hash_table);
-  std::string get_vcd_signal_(std::string label);
   void vcd_statistic_glitch_(tsl::hopscotch_map<std::string, int8_t> *burr_hash_table, uint64_t current_timestamp);
 };
 

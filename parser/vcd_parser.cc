@@ -166,36 +166,6 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
     std::cout << "Init flip time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
-std::string VCDParser::get_vcd_signal_(std::string label) {
-    std::list<std::string> all_module;
-    std::string signal_title, signal_bit = "   ";
-    unsigned long label_length = label.length();
-    if (label_length > 3)
-        signal_bit = label.substr(label_length - 3, label_length);
-    if (signal_bit[0] == '[' && signal_bit[2] == ']')
-        label = label.substr(0, (label_length - 3));
-
-    for (auto &it : vcd_signal_list_) {
-        if (it.second.find(label) != it.second.end()) {
-            std::string module;
-            for (auto &iter : all_module) {
-                module += iter + "/";
-            }
-            module += it.first;
-            signal_title = module + "." + it.second.find(label).value().vcd_signal_title;
-            break;
-        }
-        if (it.first == "upscope") {
-            all_module.pop_back();
-            continue;
-        }
-        all_module.emplace_back(it.first);
-    }
-    if (signal_bit[0] == '[' && signal_bit[2] == ']')
-        signal_title = signal_title + signal_bit;
-    return signal_title;
-}
-
 void VCDParser::vcd_statistic_glitch_(tsl::hopscotch_map<std::string, int8_t> *burr_hash_table,
                                       uint64_t current_timestamp) {
     for (const auto &glitch : *burr_hash_table) {
@@ -848,28 +818,79 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
 void VCDParser::printf_glitch_csv(const std::string &filepath) {
     clock_t startTime = clock();
     FILE *glitch_fp_ = fopen64(filepath.c_str(), "w");
-    for (const auto &glitch : signal_glitch_position_) {
-        auto *glitch_signal_buf = glitch.second;
-        std::string signal_string = get_vcd_signal_(glitch.first);
-        if (!signal_string.empty()) {
-            fprintf(glitch_fp_, "%s ", signal_string.c_str());
-            while (true) {
-                for (int counter = 0; counter < glitch_signal_buf->counter; ++counter)
-                    fprintf(glitch_fp_,
-                            "%lu%s ",
-                            glitch_signal_buf->buffer[counter] * vcd_header_struct_.vcd_time_scale,
-                            vcd_header_struct_.vcd_time_unit.c_str());
-                delete glitch_signal_buf->buffer;
-                if (glitch_signal_buf->next != nullptr)
-                    glitch_signal_buf = glitch_signal_buf->next;
-                else
-                    break;
+    std::ofstream file;
+    file.open(filepath, std::ios::out | std::ios::trunc);
+    std::list<std::string> all_module;
+
+    for (auto &it : vcd_signal_list_) {
+        /* If read upscope delete a module*/
+        if (it.first == "upscope") {
+            all_module.pop_back();
+            continue;
+        }
+
+        /* Merging of modules at all levels.*/
+        std::string All_module;
+        All_module.clear();
+        for (auto &module : all_module)
+            All_module += module + "/";
+        All_module += it.first + ".";
+        all_module.emplace_back(it.first);
+
+        if (it.second.empty() != 1) {
+            for (auto &signal : it.second) {
+                SignalGlitchStruct *glitch_signal_buf;
+                if (signal.second.vcd_signal_width != 1) {
+                    for (int pos = 0; pos < signal.second.vcd_signal_width; pos++) {
+                        std::string width = "[" + std::to_string(pos) + "]";
+                        if (signal_glitch_position_.find(signal.first + width) == signal_glitch_position_.end()) {
+                            continue;
+                        }
+                        glitch_signal_buf =
+                            signal_glitch_position_.find(signal.first + width)->second;
+                        std::string All_Module = All_module + signal.second.vcd_signal_title;
+                        All_Module += width;
+                        fprintf(glitch_fp_, "%s ", All_Module.c_str());
+                        while (true) {
+                            for (int counter = 0; counter < glitch_signal_buf->counter; ++counter)
+                                fprintf(glitch_fp_,
+                                        "%lu%s ",
+                                        glitch_signal_buf->buffer[counter] * vcd_header_struct_.vcd_time_scale,
+                                        vcd_header_struct_.vcd_time_unit.c_str());
+                            if (glitch_signal_buf->next != nullptr)
+                                glitch_signal_buf = glitch_signal_buf->next;
+                            else
+                                break;
+                        }
+                        fprintf(glitch_fp_, "\n");
+                    }
+                } else {
+                    std::string signal_key = signal.first;
+                    if (signal_glitch_position_.find(signal.first) == signal_glitch_position_.end())
+                        continue;
+                    glitch_signal_buf = signal_glitch_position_.find(signal_key)->second;
+
+                    std::string All_Module;
+                    All_Module = All_module + signal.second.vcd_signal_title;
+                    fprintf(glitch_fp_, "%s ", All_Module.c_str());
+                    while (true) {
+                        for (int counter = 0; counter < glitch_signal_buf->counter; ++counter)
+                            fprintf(glitch_fp_,
+                                    "%lu%s ",
+                                    glitch_signal_buf->buffer[counter] * vcd_header_struct_.vcd_time_scale,
+                                    vcd_header_struct_.vcd_time_unit.c_str());
+                        if (glitch_signal_buf->next != nullptr)
+                            glitch_signal_buf = glitch_signal_buf->next;
+                        else
+                            break;
+                    }
+                    fprintf(glitch_fp_, "\n");
+                }
             }
-            delete glitch_signal_buf;
-            fprintf(glitch_fp_, "\n");
         }
     }
     fclose(glitch_fp_);
+    file.close();
     std::cout << "Print glitch time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
