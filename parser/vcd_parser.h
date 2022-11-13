@@ -73,12 +73,10 @@ class VCDParser {
                                      std::vector<double> *y_value);
 
  private:
-  struct SignalGlitchStruct { uint32_t counter; uint64_t *buffer;struct SignalGlitchStruct *next; };
-  const uint32_t kglitch_max_size = 1024;
   FILE *fp_;
   struct VCDHeaderStruct vcd_header_struct_{};
 
-  tsl::hopscotch_map<std::string, struct SignalGlitchStruct *> signal_glitch_position_;
+  tsl::hopscotch_map<std::string, std::list<uint64_t>> signal_glitch_position_;
   std::list<std::pair<std::string, tsl::hopscotch_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
   tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
   tsl::hopscotch_map<std::string, int8_t> vcd_signal_alias_table_;
@@ -92,6 +90,7 @@ class VCDParser {
   void initialize_vcd_signal_flip_table_();
   void vcd_signal_flip_post_processing_(uint64_t timestamp, tsl::hopscotch_map<std::string, int8_t> *burr_hash_table);
   void vcd_statistic_glitch_(tsl::hopscotch_map<std::string, int8_t> *burr_hash_table, uint64_t current_timestamp);
+  std::string get_vcd_signal_(std::string label);
 };
 
 #endif //EDA_CHALLENGE_PARSER_VCD_PARSER_H_
