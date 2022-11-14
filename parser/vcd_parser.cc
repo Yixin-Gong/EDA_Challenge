@@ -239,11 +239,11 @@ void VCDParser::get_vcd_scope() {
             int space_pos = 0;
             std::string width, signal_label;
             signal->next_signal = nullptr;
+            std::string judgment;
             for (int pos = 0; read_string[pos] != 0; pos++) {
                 if (read_string[pos] == ' ') {
                     space_pos++;
-                    if (space_pos == 5) {
-                        signal->vcd_signal_width = std::stoi(width);
+                    if (space_pos == 6) {
                         break;
                     }
                     continue;
@@ -255,8 +255,22 @@ void VCDParser::get_vcd_scope() {
                         break;
                     case 4:signal->vcd_signal_title += read_string[pos];
                         break;
+                    case 5:judgment += read_string[pos];
+                        break;
                     default:break;
                 }
+            }
+            signal->vcd_signal_width = std::stoi(width);
+
+            if (judgment != "$end") {
+                if (judgment.find(':') != std::string::npos) {
+                    std::string number;
+                    number = judgment.substr(judgment.find(':') + 1, judgment.length() - judgment.find(':') - 2);
+                    if (number != "0") {
+                        signal->declare_width_start = std::stoi(number);
+                    }
+                }
+
             }
 
             if (signal_glitch_table_.find(signal_label) == signal_glitch_table_.end()) {
