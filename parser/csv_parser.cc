@@ -157,8 +157,9 @@ void CSVParser::csv_find_vcd() {
 }
 
 struct CSVSignalStatisticStruct *CSVParser::find_signal(const std::string &signal_label) {
-    if (merge_csv_vcd_table_.find(signal_label) == merge_csv_vcd_table_.end())
+    if (merge_csv_vcd_table_.find(signal_label) == merge_csv_vcd_table_.end()) {
+        std::cout << "Cannot find " << signal_label << std::endl;
         return nullptr;
-    return &merge_csv_vcd_table_.find(signal_label)->second;
+    }
+    return &(merge_csv_vcd_table_.find(signal_label)->second);
 }
-
