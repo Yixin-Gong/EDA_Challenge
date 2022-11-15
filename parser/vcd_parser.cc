@@ -210,9 +210,10 @@ void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp,
         }
 
         /* Count total change times of signals */
-        if (it->second.last_level_status != it->second.final_level_status)
+        if (it->second.last_level_status != it->second.final_level_status && it->second.last_level_status != 'x')
             it.value().total_invert_counter++;
-        it.value().total_invert_counter--;
+        if (it->second.total_invert_counter != 0)
+            it.value().total_invert_counter--;
     }
     total_time = current_timestamp;
 }
