@@ -116,15 +116,21 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
     }
 
     /* Read VCD file and insert signals. */
+    int flag = 0;
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
         VCDSignalStatisticStruct cnt{0, 0, 0, 0, 0, 0, 0, 0};
 
         /* Skip useless lines and define cut-off range. */
-        if (reading_buffer[0] == '#' || read_string == "$dumpvars")
-            continue;
-        if (read_string == "$end")
+
+        if ((flag == 0 && reading_buffer[0] == '#') || read_string == "$dumpvars")
+            flag = 1;
+        if (read_string == "$end") {
+            flag = 1;
+            second_position = ftello64(fp_);
+        }
+        if (flag == 1 && reading_buffer[0] == '#')
             break;
 
         /* If meet b, parse the signal as vectors' standard */
@@ -509,6 +515,7 @@ void VCDParser::get_vcd_signal_flip_info() {
     clock_t startTime = clock();
     static uint64_t current_timestamp = 0, buf_counter = 0;
     tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
+    fseeko64(fp_, second_position, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 
@@ -555,19 +562,26 @@ void VCDParser::get_vcd_signal_flip_info() {
 void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
     vcd_signal_flip_table_.clear();
     signal_glitch_position_.clear();
+
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
         if (read_string == "#0")
             break;
     }
+    int flag = 0;
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
         VCDSignalStatisticStruct cnt{0, 0, 0, 0, 0, 0, 0};
-        if (reading_buffer[0] == '#' || read_string == "$dumpvars")
-            continue;
-        if (read_string == "$end")
+        /* Skip useless lines and define cut-off range. */
+        if ((flag == 0 && reading_buffer[0] == '#') || read_string == "$dumpvars")
+            flag = 1;
+        if (read_string == "$end") {
+            flag = 1;
+            second_position = ftello64(fp_);
+        }
+        if (flag == 1 && reading_buffer[0] == '#')
             break;
         if (reading_buffer[0] == 'b') {
             std::string signal_alias = read_string.substr(read_string.find_last_of(' ') + 1, read_string.length());
@@ -606,7 +620,7 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
 
     static uint64_t current_timestamp = 0;
     tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
-
+    fseeko64(fp_, second_position, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 
@@ -656,7 +670,7 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
     initialize_vcd_signal_flip_table_();
     tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
     static uint64_t current_timestamp = 0;
-
+    fseeko64(fp_, second_position, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 
@@ -903,4 +917,12 @@ void VCDParser::get_total_flips_in_time_range(uint64_t begin_time,
         } else if (reading_buffer[0] == '0' || reading_buffer[0] == '1' || reading_buffer[0] == 'b')
             signal_counter++;
     }
+}
+struct VCDSignalStruct *VCDParser::test(const std::string &label) {
+    for (auto &it : vcd_signal_list_) {
+        if (it.second.find(label) != it.second.end())
+            return &it.second.find(label).value();
+
+    }
+    return nullptr;
 }
