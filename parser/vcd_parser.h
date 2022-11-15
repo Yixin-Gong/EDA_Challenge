@@ -41,6 +41,11 @@ struct VCDSignalStatisticStruct {
   int32_t total_glitch_counter;
 };
 
+struct VCDGlitchStruct {
+  std::string all_module_signal;
+  int declare_width_start = 0;
+};
+
 class VCDParser {
  public:
   explicit VCDParser(const std::string &filename) {
@@ -84,7 +89,7 @@ class VCDParser {
   std::list<std::pair<std::string, tsl::hopscotch_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
   tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
   tsl::hopscotch_map<std::string, int8_t> vcd_signal_alias_table_;
-  tsl::hopscotch_map<std::string, std::string> signal_glitch_table_;
+  tsl::hopscotch_map<std::string, struct VCDGlitchStruct> signal_glitch_table_;
   uint64_t total_time{};
 
   void parse_vcd_header_();

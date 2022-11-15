@@ -275,13 +275,17 @@ void VCDParser::get_vcd_scope() {
             }
 
             if (signal_glitch_table_.find(signal_label) == signal_glitch_table_.end()) {
-                std::string all_module_signal;
+                struct VCDGlitchStruct glitch;
+                std::string module_signal;
                 for (auto &iter : Module)
-                    all_module_signal += iter + '/';
-                all_module_signal.pop_back();
-                all_module_signal += '.' + signal->vcd_signal_title;
-                signal_glitch_table_.insert(std::pair<std::string, std::string>(signal_label,
-                                                                                all_module_signal));
+                    module_signal += iter + '/';
+                module_signal.pop_back();
+                module_signal += '.' + signal->vcd_signal_title;
+                glitch.all_module_signal = module_signal;
+                if (signal->declare_width_start != 0)
+                    glitch.declare_width_start = signal->declare_width_start;
+                signal_glitch_table_.insert(std::pair<std::string, struct VCDGlitchStruct>(signal_label,
+                                                                                           glitch));
             }
 
             /* Store information in a hash table.*/
@@ -851,8 +855,16 @@ void VCDParser::printf_glitch_csv(const std::string &filepath) {
         }
 
         if (signal_glitch_table_.find(label) != signal_glitch_table_.end()) {
+
+            if (signal_glitch_table_.find(label).value().declare_width_start != 0) {
+                int wid_pos = std::stoi(signal_bit.substr(1, signal_bit.find(']') - 1))
+                    + signal_glitch_table_.find(label).value().declare_width_start;
+                signal_bit.clear();
+                signal_bit = std::string("[") + std::to_string(wid_pos) + std::string("]");
+            }
+
             auto signal_list = glitch.second;
-            std::string signal_string = signal_glitch_table_.find(label).value();
+            std::string signal_string = signal_glitch_table_.find(label).value().all_module_signal;
             std::string signal_glitch_string;
             if (!read_bit)
                 signal_glitch_string = signal_string;
