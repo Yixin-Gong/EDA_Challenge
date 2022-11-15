@@ -62,11 +62,11 @@ void CSVParser::get_vcd_scope(const std::string &vcd_filename) {
             int space_pos = 0;
             std::string width;
             std::string signal_title;
+            std::string judgment;
             for (int pos = 0; read_string[pos] != 0; pos++) {
                 if (read_string[pos] == ' ') {
                     space_pos++;
-                    if (space_pos == 5) {
-                        signal.vcd_signal_width = std::stoi(width);
+                    if (space_pos == 6) {
                         break;
                     }
                     continue;
@@ -78,9 +78,23 @@ void CSVParser::get_vcd_scope(const std::string &vcd_filename) {
                         break;
                     case 4:signal_title += read_string[pos];
                         break;
+                    case 5:judgment += read_string[pos];
+                        break;
                     default:break;
                 }
             }
+            signal.vcd_signal_width = std::stoi(width);
+
+            if (judgment != "$end") {
+                if (judgment.find(':') != std::string::npos) {
+                    std::string number;
+                    number = judgment.substr(judgment.find(':') + 1, judgment.length() - judgment.find(':') - 2);
+                    if (number != "0") {
+                        signal.declare_width_start = std::stoi(number);
+                    }
+                }
+            }
+
             std::string module_signal_title;
             std::string All_module;
             All_module.clear();
@@ -147,7 +161,12 @@ void CSVParser::csv_find_vcd() {
         if (csv_vcd_signal_table_.find(label) == csv_vcd_signal_table_.end()) {
             continue;
         }
-
+        if (csv_vcd_signal_table_.find(label).value().declare_width_start != 0) {
+            int width_pos = std::stoi(width.substr(1, width.find(']') - 1));
+            width_pos = width_pos - csv_vcd_signal_table_.find(label).value().declare_width_start;
+            width.clear();
+            width = '[' + std::to_string(width_pos) + ']';
+        }
         std::string signal_label;
         if (width.empty())
             signal_label = csv_vcd_signal_table_.find(label).value().vcd_signal_label;

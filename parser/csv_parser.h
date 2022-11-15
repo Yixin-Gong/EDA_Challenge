@@ -20,6 +20,7 @@ struct CSVSignalStatisticStruct {
 struct CSV_VCDSignalStruct {
   unsigned int vcd_signal_width;
   std::string vcd_signal_label;
+  int declare_width_start = 0;
 };
 
 class CSVParser {
