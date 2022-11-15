@@ -854,6 +854,13 @@ void VCDParser::printf_glitch_csv(const std::string &filepath) {
 
         if (signal_glitch_table_.find(label) != signal_glitch_table_.end()) {
 
+            if (signal_glitch_table_.find(label).value().declare_width_start != 0) {
+                int wid_pos = std::stoi(signal_bit.substr(1, signal_bit.find(']') - 1))
+                    + signal_glitch_table_.find(label).value().declare_width_start;
+                signal_bit.clear();
+                signal_bit = std::string("[") + std::to_string(wid_pos) + std::string("]");
+            }
+
             auto signal_list = glitch.second;
             std::string signal_string = signal_glitch_table_.find(label).value().all_module_signal;
             std::string signal_glitch_string;
