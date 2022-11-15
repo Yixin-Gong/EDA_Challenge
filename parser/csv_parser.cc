@@ -120,9 +120,10 @@ void CSVParser::get_vcd_scope(const std::string &vcd_filename) {
 void CSVParser::csv_find_vcd() {
     merge_csv_vcd_table_.clear();
     for (auto &iter : csv_signal_table_) {
-
         std::string label, width;
-        if ((iter.first.length() - iter.first.rfind('[')) <= 4) {
+        if ((iter.first.length() - iter.first.rfind(']')) == 1 &&
+            (iter.first.rfind('[') != std::string::npos) &&
+            iter.first.length() >= 4) {
             bool read_label = true;
             for (auto &pos : iter.first) {
                 if (pos == '[')
