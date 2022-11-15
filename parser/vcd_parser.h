@@ -27,6 +27,7 @@ struct VCDSignalStruct {
   unsigned int vcd_signal_width;
   std::string vcd_signal_title;
   struct VCDSignalStruct *next_signal;
+  int declare_width_start = 0;
 };
 
 struct VCDSignalStatisticStruct {
