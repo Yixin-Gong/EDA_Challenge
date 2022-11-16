@@ -522,6 +522,20 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
                 }
             }
 
+            if (signal_glitch_table_.find(signal_label) == signal_glitch_table_.end()) {
+                struct VCDGlitchStruct glitch;
+                std::string module_signal;
+                for (auto &iter : all_module)
+                    module_signal += iter + '/';
+                module_signal.pop_back();
+                module_signal += '.' + signal->vcd_signal_title;
+                glitch.all_module_signal = module_signal;
+                if (signal->declare_width_start != 0)
+                    glitch.declare_width_start = signal->declare_width_start;
+                signal_glitch_table_.insert(std::pair<std::string, struct VCDGlitchStruct>(signal_label,
+                                                                                           glitch));
+            }
+
             /* Store information in a hash table.*/
             vcd_signal_alias_table_.insert(std::pair<std::string, int8_t>(signal_label, 0));
             auto current_signal = vcd_signal_table_.find(signal_label);
