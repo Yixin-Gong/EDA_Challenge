@@ -40,4 +40,4 @@ jobs:
       - name: Run Testcase
         run: |
           chmod +x EDA_Challenge
-          ./EDA_Challenge -f /home/public/BM/BM2/test.vcd
+          ./EDA_Challenge --file /home/public/BM/BM2/test.vcd
