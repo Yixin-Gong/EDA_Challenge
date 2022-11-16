@@ -18,10 +18,14 @@ CLIParser::CLIParser(std::string filepath,
                      const std::string &end_time,
                      std::string scope,
                      std::string output,
-                     bool using_gui) {
+                     bool using_gui,
+                     bool using_glitch,
+                     bool using_multi) {
     filepath_ = std::move(filepath);
     begin_time_ = begin_time;
     end_time_ = end_time;
+    using_glitch_ = using_glitch;
+    using_multi_ = using_multi;
     scope_ = std::move(scope);
     output_ = std::move(output);
     using_gui_ = using_gui;

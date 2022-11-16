@@ -41,21 +41,26 @@ int main(int argc, char **argv) {
                            ' ', software_version);
 
         /* Define value arguments and add it to the command line */
-        TCLAP::ValueArg<std::string> filename_arg("f", "file", "The vcd file to be parsed",
+        TCLAP::ValueArg<std::string> filename_arg("", "file", "The vcd file to be parsed",
                                                   false, "", "string");
-        TCLAP::ValueArg<std::string> begin_time_arg("b", "begin",
+        TCLAP::ValueArg<std::string> begin_time_arg("", "begin",
                                                     "Specify the start time of the signal to be counted",
                                                     false, "", "string");
-        TCLAP::ValueArg<std::string> end_time_arg("e", "end",
+        TCLAP::ValueArg<std::string> end_time_arg("", "end",
                                                   "Specify the termination time of the signal to be counted",
                                                   false, "", "string");
-        TCLAP::ValueArg<std::string> scope_arg("s", "scope",
+        TCLAP::ValueArg<std::string> scope_arg("", "scope",
                                                "Specify the module where the signal to be counted is located",
                                                false, "", "string");
-        TCLAP::ValueArg<std::string> output_arg("o", "output", "Location of the output csv file",
+        TCLAP::ValueArg<std::string> output_arg("", "output", "Location of the output csv file",
                                                 false, software_path, "string");
-        TCLAP::SwitchArg using_gui_switch("g", "gui", "Whether to display the gui interface",
+        TCLAP::SwitchArg using_gui_switch("", "gui", "Whether to display the gui interface",
                                           cmd, false);
+        TCLAP::SwitchArg using_glitch_switch("", "glitch", "Whether to count glitch information",
+                                             cmd, false);
+        TCLAP::SwitchArg using_multi_switch("", "multi", "Whether to enable multi-threaded statistics",
+                                            cmd, false);
+
         cmd.add(filename_arg);
         cmd.add(begin_time_arg);
         cmd.add(end_time_arg);
@@ -71,7 +76,9 @@ int main(int argc, char **argv) {
                              end_time_arg.getValue(),
                              scope_arg.getValue(),
                              output_arg.getValue(),
-                             using_gui_switch.getValue());
+                             using_gui_switch.getValue(),
+                             using_glitch_switch.getValue(),
+                             using_multi_switch.getValue());
 
         if (cli_parser.using_gui()) {
 #ifndef IS_NOT_RUNNING_GUI
@@ -115,43 +122,42 @@ int main(int argc, char **argv) {
     }
     return 0;
 #else
+    //    auto *parser = new CSVParser("../testcase/case1/test.csv");
+    //    parser->parse_csv();
+    //    parser->get_vcd_scope("../testcase/case1/test.vcd");
+    //    parser->csv_find_vcd();
+    //    delete parser;
 
-//    auto *parser = new CSVParser("../testcase/case1/test.csv");
-//    parser->parse_csv();
-//    parser->get_vcd_scope("../testcase/case1/test.vcd");
-//    parser->csv_find_vcd();
-//    delete parser;
+    //    std::ofstream output_file;
+    //    output_file.open("./signal_extract.txt", std::ios::out | std::ios::trunc);
+    //    uint64_t current_timestamp = 0, last_timestamp = 0;
+    //    FILE *fp_ = fopen64("../testcase/case1/test.vcd", "r");
+    //    static char reading_buffer[1024 * 1024] = {0};
+    //    while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
+    //        reading_buffer[strlen(reading_buffer) - 1] = '\0';
+    //        std::string read_string = reading_buffer;
+    //        if (reading_buffer[0] == '#')
+    //            current_timestamp = strtoll(&reading_buffer[1], nullptr, 0);
+    //        else if (reading_buffer[0] == 'b') {
+    //            std::string signal_alias = read_string.substr(read_string.find_last_of(' ') + 1, read_string.length());
+    //            if (signal_alias == "d1") {
+    //                if (current_timestamp != last_timestamp || current_timestamp == 0) {
+    //                    output_file << "#" << std::to_string(current_timestamp) << "\n";
+    //                    last_timestamp = current_timestamp;
+    //                }
+    //                output_file << read_string << "\n";
+    //            }
+    //        } else if (std::string(&reading_buffer[1]) == "d1") {
+    //            if (current_timestamp != last_timestamp || current_timestamp == 0) {
+    //                output_file << "#" << std::to_string(current_timestamp) << "\n";
+    //                last_timestamp = current_timestamp;
+    //            }
+    //            output_file << read_string << "\n";
+    //        }
+    //    }
+    //    output_file.close();
 
-//    std::ofstream output_file;
-//    output_file.open("./signal_extract.txt", std::ios::out | std::ios::trunc);
-//    uint64_t current_timestamp = 0, last_timestamp = 0;
-//    FILE *fp_ = fopen64("../testcase/case1/test.vcd", "r");
-//    static char reading_buffer[1024 * 1024] = {0};
-//    while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
-//        reading_buffer[strlen(reading_buffer) - 1] = '\0';
-//        std::string read_string = reading_buffer;
-//        if (reading_buffer[0] == '#')
-//            current_timestamp = strtoll(&reading_buffer[1], nullptr, 0);
-//        else if (reading_buffer[0] == 'b') {
-//            std::string signal_alias = read_string.substr(read_string.find_last_of(' ') + 1, read_string.length());
-//            if (signal_alias == "d1") {
-//                if (current_timestamp != last_timestamp || current_timestamp == 0) {
-//                    output_file << "#" << std::to_string(current_timestamp) << "\n";
-//                    last_timestamp = current_timestamp;
-//                }
-//                output_file << read_string << "\n";
-//            }
-//        } else if (std::string(&reading_buffer[1]) == "d1") {
-//            if (current_timestamp != last_timestamp || current_timestamp == 0) {
-//                output_file << "#" << std::to_string(current_timestamp) << "\n";
-//                last_timestamp = current_timestamp;
-//            }
-//            output_file << read_string << "\n";
-//        }
-//    }
-//    output_file.close();
-
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+        ::testing::InitGoogleTest(&argc, argv);
+        return RUN_ALL_TESTS();
 #endif
 }

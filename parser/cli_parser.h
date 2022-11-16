@@ -25,7 +25,9 @@ class CLIParser {
             const std::string &end_time,
             std::string scope,
             std::string output,
-            bool using_gui);
+            bool using_gui,
+            bool using_glitch,
+            bool using_multi);
   bool using_gui();
   CLITimeStruct *get_time_range();
   bool valid_file() const {
@@ -48,6 +50,12 @@ class CLIParser {
           scope_.erase(0, 1);
       return scope_;
   }
+  bool using_glitch() const {
+      return using_glitch_;
+  }
+  bool using_multithread() const {
+      return using_multi_;
+  }
 
  private:
   std::string filepath_;
@@ -56,6 +64,8 @@ class CLIParser {
   std::string scope_;
   std::string output_;
   bool using_gui_;
+  bool using_glitch_;
+  bool using_multi_;
   bool valid_filename_;
   bool valid_time_rage_;
   bool valid_scope_;
