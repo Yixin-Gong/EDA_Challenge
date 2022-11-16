@@ -5,11 +5,14 @@ cmake_minimum_required(VERSION 3.19)
 project(EDA_Challenge CXX)
 set(CMAKE_CXX_STANDARD 14)
 
+add_compile_options(-Ofast)
+
 if (NOT COMPILE_ON_SERVER)
-    add_compile_options(-Og)
     include_directories(system gtest/include gui . parser)
     file(GLOB_RECURSE SOURCES "main.cc" "system/*.cc" "gui/*.cc" "parser/*.cc")
     file(GLOB_RECURSE TEST_SOURCES "test/*.cc")
+
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 
     add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/../system/version.h"
             COMMAND ${CMAKE_COMMAND} -D SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}"
@@ -21,10 +24,6 @@ if (NOT COMPILE_ON_SERVER)
     pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
     pkg_check_modules(GTKMM3 REQUIRED gtkmm-3.0)
     pkg_check_modules(GTKMM_PLPLOT REQUIRED gtkmm-plplot-2.0)
-
-    if (NO_STATISTIC_GLITCH)
-        add_compile_definitions(NO_STATISTIC_GLITCH)
-    endif ()
 
     add_compile_definitions(GTK_LIBRARY_VERSION="${GTK3_VERSION}" GTKMM_LIBRARY_VERSION="${GTKMM3_VERSION}")
     add_compile_definitions(CXX_COMPILER_VERSION="${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
@@ -38,20 +37,15 @@ if (NOT COMPILE_ON_SERVER)
     find_library(GTEST gtest ${CMAKE_SOURCE_DIR}/gtest)
     find_library(GTEST_MAIN gtest_main ${CMAKE_SOURCE_DIR}/gtest)
 
-    target_link_libraries(Google_Test ${GTEST} ${GTEST_MAIN} ${GTK3_LIBRARIES} ${GTKMM3_LIBRARIES} ${GTKMM_PLPLOT_LIBRARIES} m)
-    target_link_libraries(${PROJECT_NAME} ${GTK3_LIBRARIES} ${GTKMM3_LIBRARIES} ${GTKMM_PLPLOT_LIBRARIES} m)
+    target_link_libraries(Google_Test ${GTEST} ${GTEST_MAIN} ${GTK3_LIBRARIES} ${GTKMM3_LIBRARIES} ${GTKMM_PLPLOT_LIBRARIES} m pthread)
+    target_link_libraries(${PROJECT_NAME} ${GTK3_LIBRARIES} ${GTKMM3_LIBRARIES} ${GTKMM_PLPLOT_LIBRARIES} m pthread)
     add_dependencies(${PROJECT_NAME} version_h)
 
     set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS "IS_NOT_RUNNING_GOOGLE_TEST")
     set_target_properties(version_h PROPERTIES COMPILE_DEFINITIONS "IS_NOT_RUNNING_GOOGLE_TEST")
 else ()
-    add_compile_options(-Ofast)
     include_directories(system . parser)
     file(GLOB_RECURSE SOURCES "main.cc" "system/*.cc" "parser/*.cc")
-
-    if (NO_STATISTIC_GLITCH)
-        add_compile_definitions(NO_STATISTIC_GLITCH)
-    endif ()
 
     add_compile_definitions(GTK_LIBRARY_VERSION="No gtk library" GTKMM_LIBRARY_VERSION="No gtkmm library")
     add_compile_definitions(CXX_COMPILER_VERSION="${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
@@ -62,7 +56,7 @@ else ()
             COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/system/system.cc)
 
     add_executable(${PROJECT_NAME} ${SOURCES})
-    target_link_libraries(${PROJECT_NAME} m)
+    target_link_libraries(${PROJECT_NAME} m pthread)
 
     add_dependencies(${PROJECT_NAME} version_h)
     set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS "IS_NOT_RUNNING_GUI")
