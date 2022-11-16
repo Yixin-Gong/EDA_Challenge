@@ -110,7 +110,7 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
     }
 
     /* Read VCD file and insert signals. */
-    long last_line_position = 0;
+    int flag = 0;
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
@@ -118,13 +118,14 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
 
         /* Skip useless lines and define cut-off range. */
 
-        if (reading_buffer[0] == '#')
+        if ((flag == 0 && reading_buffer[0] == '#') || read_string == "$dumpvars")
+            flag = 1;
+        if (read_string == "$end")
+            flag = 2;
+        if (flag == 2 && reading_buffer[0] != '#')
+            second_position = ftello64(fp_);
+        if (flag == 2 && reading_buffer[0] == '#')
             break;
-
-        if (read_string == "$end" || read_string == "$dumpvars")
-            continue;
-
-        last_line_position = ftello64(fp_);
 
         /* If meet b, parse the signal as vectors' standard */
         if (reading_buffer[0] == 'b') {
@@ -164,7 +165,6 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
             }
         }
     }
-    fseeko64(fp_, (long) last_line_position, SEEK_SET);
     std::cout << "Init flip time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
@@ -177,19 +177,20 @@ void VCDParser::initialize_vcd_signal_flip_table_(const std::string &module_labe
         if (read_string == "#0")
             break;
     }
-    long last_line_position;
+    int flag = 0;
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
         VCDSignalStatisticStruct cnt{0, 0, 0, 0, 0, 0, 0};
         /* Skip useless lines and define cut-off range. */
-        if (reading_buffer[0] == '#')
+        if ((flag == 0 && reading_buffer[0] == '#') || read_string == "$dumpvars")
+            flag = 1;
+        if (read_string == "$end")
+            flag = 2;
+        if (flag == 2 && reading_buffer[0] != '#')
+            second_position = ftello64(fp_);
+        if (flag == 2 && reading_buffer[0] == '#')
             break;
-
-        if (read_string == "$end" || read_string == "$dumpvars")
-            continue;
-
-        last_line_position = ftello64(fp_);
         if (reading_buffer[0] == 'b') {
             std::string signal_alias = read_string.substr(read_string.find_last_of(' ') + 1, read_string.length());
             if (vcd_signal_alias_table_.find(signal_alias) != vcd_signal_alias_table_.end()) {
@@ -223,7 +224,6 @@ void VCDParser::initialize_vcd_signal_flip_table_(const std::string &module_labe
             }
         }
     }
-    fseeko64(fp_, last_line_position, SEEK_SET);
     std::cout << "Init flip time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
@@ -564,6 +564,7 @@ void VCDParser::get_vcd_signal_flip_info() {
     initialize_vcd_signal_flip_table_();
     clock_t startTime = clock();
     static uint64_t current_timestamp = 0, buf_counter = 0;
+    fseeko64(fp_, second_position, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 
@@ -608,6 +609,7 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
     initialize_vcd_signal_flip_table_(module_label);
     clock_t startTime = clock();
     static uint64_t current_timestamp = 0;
+    fseeko64(fp_, second_position, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 
@@ -653,6 +655,7 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
     int8_t status = (begin_time == 0) ? 1 : 0;
     initialize_vcd_signal_flip_table_();
     static uint64_t current_timestamp = 0;
+    fseeko64(fp_, second_position, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 

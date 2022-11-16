@@ -91,7 +91,7 @@ class VCDParser {
  private:
   FILE *fp_;
   struct VCDHeaderStruct vcd_header_struct_{};
-
+  long second_position;
   std::list<std::pair<std::string, tsl::hopscotch_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
   tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
   tsl::hopscotch_map<std::string, int8_t> vcd_signal_alias_table_;
