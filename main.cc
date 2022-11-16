@@ -9,6 +9,7 @@
 #if (defined(IS_NOT_RUNNING_GOOGLE_TEST) || defined(IS_NOT_RUNNING_GUI))
 #include <iostream>
 #include <unistd.h>
+#include <pthread.h>
 #ifndef IS_NOT_RUNNING_GUI
 #include "mainwindow.h"
 #endif
@@ -20,6 +21,76 @@
 #include "gtest/gtest.h"
 #include "csv_parser.h"
 #endif
+
+pthread_t thread_variable[4];
+
+[[noreturn]] void *threadFun(void *arg) {
+    cpu_set_t mask;
+    int *a = (int *) arg;
+    CPU_ZERO(&mask);
+    CPU_SET(*a, &mask);
+    if (sched_setaffinity(0, sizeof(cpu_set_t), &mask) == -1)
+        printf("warning: could not set CPU affinity, continuing...\n");
+    while (true);
+}
+
+void *statistic_vcd_file(void *arg) {
+    auto *cli_parser = (CLIParser *) arg;
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    if (cli_parser->using_multithread())
+        CPU_SET(3, &mask);
+    else
+        CPU_SET(0, &mask);
+    if (sched_setaffinity(0, sizeof(cpu_set_t), &mask) == -1)
+        printf("warning: could not set CPU affinity, continuing...\n");
+
+    VCDParser parser(cli_parser->get_filename());
+    if (!cli_parser->using_glitch()) {
+        if (cli_parser->valid_scope() && cli_parser->valid_time()) {
+            uint64_t begin_timestamp = 0, end_timestamp = 0;
+            SystemInfo::check_time_range_exists(cli_parser, &parser, &begin_timestamp, &end_timestamp);
+            parser.get_vcd_scope(cli_parser->get_scope());
+            parser.get_vcd_signal_flip_info(cli_parser->get_scope(), begin_timestamp, end_timestamp);
+        } else if (cli_parser->valid_scope()) {
+            parser.get_vcd_scope(cli_parser->get_scope());
+            parser.get_vcd_signal_flip_info(cli_parser->get_scope());
+        } else if (cli_parser->valid_time()) {
+            uint64_t begin_timestamp = 0, end_timestamp = 0;
+            SystemInfo::check_time_range_exists(cli_parser, &parser, &begin_timestamp, &end_timestamp);
+            parser.get_vcd_scope();
+            parser.get_vcd_signal_flip_info(begin_timestamp, end_timestamp);
+        } else {
+            parser.get_vcd_scope();
+            parser.get_vcd_signal_flip_info();
+        }
+    } else {
+        if (cli_parser->valid_scope() && cli_parser->valid_time()) {
+            uint64_t begin_timestamp = 0, end_timestamp = 0;
+            SystemInfo::check_time_range_exists(cli_parser, &parser, &begin_timestamp, &end_timestamp);
+            parser.get_vcd_scope(cli_parser->get_scope(), cli_parser->using_glitch());
+            parser.get_vcd_signal_flip_info(cli_parser->get_scope(), begin_timestamp,
+                                            end_timestamp, cli_parser->using_glitch());
+        } else if (cli_parser->valid_scope()) {
+            parser.get_vcd_scope(cli_parser->get_scope(), cli_parser->using_glitch());
+            parser.get_vcd_signal_flip_info(cli_parser->get_scope(), cli_parser->using_glitch());
+        } else if (cli_parser->valid_time()) {
+            uint64_t begin_timestamp = 0, end_timestamp = 0;
+            SystemInfo::check_time_range_exists(cli_parser, &parser, &begin_timestamp, &end_timestamp);
+            parser.get_vcd_scope(cli_parser->using_glitch());
+            parser.get_vcd_signal_flip_info(begin_timestamp, end_timestamp, cli_parser->using_glitch());
+        } else {
+            parser.get_vcd_scope(cli_parser->using_glitch());
+            parser.get_vcd_signal_flip_info(cli_parser->using_glitch());
+        }
+        parser.printf_glitch_csv(cli_parser->get_output() + "/glitch.csv");
+    }
+    parser.printf_source_csv(cli_parser->get_output() + "/summary.csv");
+    if (cli_parser->using_multithread())
+        for (int counter = 0; counter < 3; ++counter)
+            pthread_cancel(thread_variable[counter]);
+    return nullptr;
+}
 
 /*!
     \brief      Program entry
@@ -91,47 +162,18 @@ int main(int argc, char **argv) {
 #endif
         } else {
             clock_t startTime = clock();
-            VCDParser parser(cli_parser.get_filename());
-            if (!cli_parser.using_glitch()) {
-                if (cli_parser.valid_scope() && cli_parser.valid_time()) {
-                    uint64_t begin_timestamp = 0, end_timestamp = 0;
-                    SystemInfo::check_time_range_exists(&cli_parser, &parser, &begin_timestamp, &end_timestamp);
-                    parser.get_vcd_scope(cli_parser.get_scope());
-                    parser.get_vcd_signal_flip_info(cli_parser.get_scope(), begin_timestamp, end_timestamp);
-                } else if (cli_parser.valid_scope()) {
-                    parser.get_vcd_scope(cli_parser.get_scope());
-                    parser.get_vcd_signal_flip_info(cli_parser.get_scope());
-                } else if (cli_parser.valid_time()) {
-                    uint64_t begin_timestamp = 0, end_timestamp = 0;
-                    SystemInfo::check_time_range_exists(&cli_parser, &parser, &begin_timestamp, &end_timestamp);
-                    parser.get_vcd_scope();
-                    parser.get_vcd_signal_flip_info(begin_timestamp, end_timestamp);
-                } else {
-                    parser.get_vcd_scope();
-                    parser.get_vcd_signal_flip_info();
-                }
+            if (cli_parser.using_multithread()) {
+                std::cout << "System has " << sysconf(_SC_NPROCESSORS_CONF) << "Processors\n";
+                int tid[4] = {1, 2, 3, 4};
+                for (int counter = 0; counter < 3; ++counter)
+                    pthread_create(&thread_variable[counter], nullptr, threadFun, (void *) &tid[counter]);
+                pthread_create(&thread_variable[3], nullptr, statistic_vcd_file, (void *) &cli_parser);
+                pthread_join(thread_variable[3], nullptr);
             } else {
-                if (cli_parser.valid_scope() && cli_parser.valid_time()) {
-                    uint64_t begin_timestamp = 0, end_timestamp = 0;
-                    SystemInfo::check_time_range_exists(&cli_parser, &parser, &begin_timestamp, &end_timestamp);
-                    parser.get_vcd_scope(cli_parser.get_scope(), cli_parser.using_glitch());
-                    parser.get_vcd_signal_flip_info(cli_parser.get_scope(), begin_timestamp,
-                                                    end_timestamp, cli_parser.using_glitch());
-                } else if (cli_parser.valid_scope()) {
-                    parser.get_vcd_scope(cli_parser.get_scope(), cli_parser.using_glitch());
-                    parser.get_vcd_signal_flip_info(cli_parser.get_scope(), cli_parser.using_glitch());
-                } else if (cli_parser.valid_time()) {
-                    uint64_t begin_timestamp = 0, end_timestamp = 0;
-                    SystemInfo::check_time_range_exists(&cli_parser, &parser, &begin_timestamp, &end_timestamp);
-                    parser.get_vcd_scope(cli_parser.using_glitch());
-                    parser.get_vcd_signal_flip_info(begin_timestamp, end_timestamp, cli_parser.using_glitch());
-                } else {
-                    parser.get_vcd_scope(cli_parser.using_glitch());
-                    parser.get_vcd_signal_flip_info(cli_parser.using_glitch());
-                }
-                parser.printf_glitch_csv(cli_parser.get_output() + "/glitch.csv");
+                pthread_t thread;
+                pthread_create(&thread, nullptr, statistic_vcd_file, (void *) &cli_parser);
+                pthread_join(thread, nullptr);
             }
-            parser.printf_source_csv(cli_parser.get_output() + "/summary.csv");
             std::cout << "Total time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
         }
     } catch (TCLAP::ArgException &e) {
