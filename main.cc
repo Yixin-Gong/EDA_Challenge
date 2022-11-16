@@ -92,29 +92,46 @@ int main(int argc, char **argv) {
         } else {
             clock_t startTime = clock();
             VCDParser parser(cli_parser.get_filename());
-            if (!cli_parser.valid_time()) {
-                if (!cli_parser.valid_scope()) {
-                    parser.get_vcd_scope();
-                    parser.get_vcd_signal_flip_info();
-                } else {
+            if (!cli_parser.using_glitch()) {
+                if (cli_parser.valid_scope() && cli_parser.valid_time()) {
+                    uint64_t begin_timestamp = 0, end_timestamp = 0;
+                    SystemInfo::check_time_range_exists(&cli_parser, &parser, &begin_timestamp, &end_timestamp);
+                    parser.get_vcd_scope(cli_parser.get_scope());
+                    parser.get_vcd_signal_flip_info(cli_parser.get_scope(), begin_timestamp, end_timestamp);
+                } else if (cli_parser.valid_scope()) {
                     parser.get_vcd_scope(cli_parser.get_scope());
                     parser.get_vcd_signal_flip_info(cli_parser.get_scope());
+                } else if (cli_parser.valid_time()) {
+                    uint64_t begin_timestamp = 0, end_timestamp = 0;
+                    SystemInfo::check_time_range_exists(&cli_parser, &parser, &begin_timestamp, &end_timestamp);
+                    parser.get_vcd_scope();
+                    parser.get_vcd_signal_flip_info(begin_timestamp, end_timestamp);
+                } else {
+                    parser.get_vcd_scope();
+                    parser.get_vcd_signal_flip_info();
                 }
             } else {
-                if ((cli_parser.get_time_range()->end_time_unit != parser.get_vcd_header()->vcd_time_unit) ||
-                    (cli_parser.get_time_range()->begin_time_unit != parser.get_vcd_header()->vcd_time_unit)) {
-                    std::cout << "The time units you entered do not match the vcd file.\n";
-                    exit(8);
+                if (cli_parser.valid_scope() && cli_parser.valid_time()) {
+                    uint64_t begin_timestamp = 0, end_timestamp = 0;
+                    SystemInfo::check_time_range_exists(&cli_parser, &parser, &begin_timestamp, &end_timestamp);
+                    parser.get_vcd_scope(cli_parser.get_scope(), cli_parser.using_glitch());
+                    parser.get_vcd_signal_flip_info(cli_parser.get_scope(), begin_timestamp,
+                                                    end_timestamp, cli_parser.using_glitch());
+                } else if (cli_parser.valid_scope()) {
+                    parser.get_vcd_scope(cli_parser.get_scope(), cli_parser.using_glitch());
+                    parser.get_vcd_signal_flip_info(cli_parser.get_scope(), cli_parser.using_glitch());
+                } else if (cli_parser.valid_time()) {
+                    uint64_t begin_timestamp = 0, end_timestamp = 0;
+                    SystemInfo::check_time_range_exists(&cli_parser, &parser, &begin_timestamp, &end_timestamp);
+                    parser.get_vcd_scope(cli_parser.using_glitch());
+                    parser.get_vcd_signal_flip_info(begin_timestamp, end_timestamp, cli_parser.using_glitch());
+                } else {
+                    parser.get_vcd_scope(cli_parser.using_glitch());
+                    parser.get_vcd_signal_flip_info(cli_parser.using_glitch());
                 }
-                uint64_t begin_timestamp =
-                    (cli_parser.get_time_range()->begin_time) / (parser.get_vcd_header()->vcd_time_scale);
-                uint64_t end_timestamp =
-                    (cli_parser.get_time_range()->end_time) / (parser.get_vcd_header()->vcd_time_scale);
-                parser.get_vcd_scope();
-                parser.get_vcd_signal_flip_info(begin_timestamp, end_timestamp);
+                parser.printf_glitch_csv(cli_parser.get_output() + "/glitch.csv");
             }
             parser.printf_source_csv(cli_parser.get_output() + "/summary.csv");
-            parser.printf_glitch_csv(cli_parser.get_output() + "/glitch.csv");
             std::cout << "Total time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
         }
     } catch (TCLAP::ArgException &e) {

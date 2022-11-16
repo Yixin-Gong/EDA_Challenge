@@ -69,35 +69,49 @@ class VCDParser {
       return &vcd_signal_flip_table_;
   }
   void get_vcd_scope();
+  void get_vcd_scope(bool enable_gitch);
   void get_vcd_scope(const std::string &module_label);
+  void get_vcd_scope(const std::string &module_label, bool enable_gitch);
   void get_vcd_signal_flip_info();
+  void get_vcd_signal_flip_info(bool enable_gitch);
   void get_vcd_signal_flip_info(const std::string &module_label);
+  void get_vcd_signal_flip_info(const std::string &module_label, bool enable_gitch);
   void get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time);
+  void get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time, bool enable_gitch);
+  void get_vcd_signal_flip_info(const std::string &module_label, uint64_t begin_time, uint64_t end_time);
+  void get_vcd_signal_flip_info(const std::string &module_label, uint64_t begin_time,
+                                uint64_t end_time, bool enable_gitch);
   void printf_source_csv(const std::string &filepath);
   void printf_glitch_csv(const std::string &filepath);
   VCDSignalStatisticStruct *get_signal_flip_info(const std::string &signal_alias);
-  void get_total_flips_in_time_range(uint64_t begin_time,
-                                     uint64_t end_time,
+  void get_total_flips_in_time_range(uint64_t begin_time, uint64_t end_time,
                                      std::vector<double> *x_value,
                                      std::vector<double> *y_value);
-  struct VCDSignalStruct *test(const std::string &label);
+
  private:
   FILE *fp_;
   struct VCDHeaderStruct vcd_header_struct_{};
 
-  tsl::hopscotch_map<std::string, std::list<uint64_t>> signal_glitch_position_;
   std::list<std::pair<std::string, tsl::hopscotch_map<std::string, struct VCDSignalStruct>>> vcd_signal_list_;
   tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct> vcd_signal_flip_table_;
   tsl::hopscotch_map<std::string, int8_t> vcd_signal_alias_table_;
+  tsl::hopscotch_map<std::string, std::list<uint64_t>> signal_glitch_position_;
   tsl::hopscotch_map<std::string, struct VCDGlitchStruct> signal_glitch_table_;
   uint64_t total_time{};
 
   void parse_vcd_header_();
   static void vcd_statistic_signal_(uint64_t current_timestamp,
                                     struct VCDSignalStatisticStruct *signal,
+                                    char current_level_status, const std::string &signal_alias);
+  static void vcd_statistic_signal_(uint64_t current_timestamp,
+                                    struct VCDSignalStatisticStruct *signal,
                                     tsl::hopscotch_map<std::string, int8_t> *burr_hash_table,
                                     char current_level_status, const std::string &signal_alias);
   void initialize_vcd_signal_flip_table_();
+  void initialize_vcd_signal_flip_table_(bool enable_gitch);
+  void initialize_vcd_signal_flip_table_(const std::string &module_label);
+  void initialize_vcd_signal_flip_table_(const std::string &module_label, bool enable_gitch);
+  void vcd_signal_flip_post_processing_(uint64_t timestamp);
   void vcd_signal_flip_post_processing_(uint64_t timestamp, tsl::hopscotch_map<std::string, int8_t> *burr_hash_table);
   void vcd_statistic_glitch_(tsl::hopscotch_map<std::string, int8_t> *burr_hash_table, uint64_t current_timestamp);
 };

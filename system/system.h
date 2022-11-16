@@ -10,11 +10,15 @@
 #define EDA_CHALLENGE_SYSTEM_SYSTEM_H_
 
 #include <string>
+#include "cli_parser.h"
+#include "vcd_parser.h"
+
 class SystemInfo {
  public:
   static void DisplayCompileInfo(const std::string &version);
   static bool FileExists(const std::string &filename);
   static void set_priority_to_max() noexcept;
+  static void check_time_range_exists(CLIParser *cli_parser, VCDParser *vcd_parser, uint64_t *begin, uint64_t *end);
 
  private:
   static bool write_all_bytes_(const char *path, const void *data) noexcept;

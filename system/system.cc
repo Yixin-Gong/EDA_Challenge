@@ -59,3 +59,13 @@ void SystemInfo::set_priority_to_max() noexcept {
     param_.sched_priority = sched_get_priority_max(SCHED_FIFO); // SCHED_RR
     sched_setscheduler(getpid(), SCHED_RR, &param_);
 }
+
+void SystemInfo::check_time_range_exists(CLIParser *cli_parser, VCDParser *vcd_parser, uint64_t *begin, uint64_t *end) {
+    if ((cli_parser->get_time_range()->end_time_unit != vcd_parser->get_vcd_header()->vcd_time_unit) ||
+        (cli_parser->get_time_range()->begin_time_unit != vcd_parser->get_vcd_header()->vcd_time_unit)) {
+        std::cout << "The time units you entered do not match the vcd file.\n";
+        exit(8);
+    }
+    *begin = (cli_parser->get_time_range()->begin_time) / (vcd_parser->get_vcd_header()->vcd_time_scale);
+    *end = (cli_parser->get_time_range()->end_time) / (vcd_parser->get_vcd_header()->vcd_time_scale);
+}
