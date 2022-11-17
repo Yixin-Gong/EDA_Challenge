@@ -8,7 +8,6 @@
 
 #include "gtest/gtest.h"
 #include "vcd_parser.h"
-#include "csv_parser.h"
 
 TEST(TestParser, ParseHeader) {
     auto *parser = new VCDParser("../testcase/case0/test.vcd");
@@ -439,29 +438,4 @@ TEST(TestParser, ParseSignal) {
     EXPECT_EQ(signal->signal1_time, 626500000);
     EXPECT_EQ(signal->signal0_time, 160300000);
     EXPECT_EQ(signal->signalx_time, 107150000);
-}
-
-TEST(RegressionTest, VCDParser) {
-    auto *vcd_parser = new VCDParser("../testcase/case1/test.vcd");
-    auto *csv_parser = new CSVParser("../testcase/case1/test.csv");
-    csv_parser->parse_csv();
-    csv_parser->get_vcd_scope("../testcase/case1/test.vcd");
-    csv_parser->csv_find_vcd();
-    vcd_parser->get_vcd_scope();
-    vcd_parser->get_vcd_signal_flip_info();
-    uint64_t time_scale = vcd_parser->get_vcd_header()->vcd_time_scale;
-
-    auto *vcd_flip_table = vcd_parser->get_signal_flip_table();
-    for (const auto &it : *vcd_flip_table) {
-        auto *csv_signal = csv_parser->find_signal(it.first);
-        auto *vcd_signal = vcd_parser->get_signal_flip_info(it.first);
-        if (csv_signal != nullptr && vcd_signal != nullptr) {
-            EXPECT_EQ(csv_signal->tc, vcd_signal->total_invert_counter);
-            EXPECT_EQ(csv_signal->t1, vcd_signal->signal1_time * time_scale);
-            EXPECT_EQ(csv_signal->t0, vcd_signal->signal0_time * time_scale);
-            EXPECT_EQ(csv_signal->tx, vcd_signal->signalx_time * time_scale);
-        }
-    }
-    delete csv_parser;
-    delete vcd_parser;
 }
