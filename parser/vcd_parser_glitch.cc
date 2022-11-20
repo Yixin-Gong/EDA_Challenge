@@ -262,7 +262,10 @@ void VCDParser::get_vcd_scope(bool enable_gitch) {
     tsl::hopscotch_map<std::string, struct VCDSignalStruct> vcd_signal_table_;
     vcd_signal_table_.clear();
     vcd_signal_list_.clear();
+
+    /* Module is used to store modules that have not yet been upscope.*/
     std::list<std::string> Module;
+
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
@@ -298,6 +301,8 @@ void VCDParser::get_vcd_scope(bool enable_gitch) {
             }
             signal->vcd_signal_width = std::stoi(width);
 
+            /* Judgment start width.
+             * The default is 0, if it is not 0, it will be stored.*/
             if (judgment != "$end") {
                 if (judgment.find(':') != std::string::npos) {
                     std::string number;
@@ -309,6 +314,7 @@ void VCDParser::get_vcd_scope(bool enable_gitch) {
 
             }
 
+            /* Save glitch and module name to storage.*/
             if (signal_glitch_table_.find(signal_label) == signal_glitch_table_.end()) {
                 struct VCDGlitchStruct glitch;
                 std::string module_signal;
@@ -521,6 +527,9 @@ void VCDParser::get_vcd_scope(const std::string &module_label, bool enable_gitch
             }
             signal->vcd_signal_width = std::stoi(width);
 
+
+            /* Judgment start width.
+             * The default is 0, if it is not 0, it will be stored.*/
             if (judgment != "$end") {
                 if (judgment.find(':') != std::string::npos) {
                     std::string number;
@@ -845,11 +854,15 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, uint64
     std::cout << "Get flip time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
+/*!
+    \brief          Output glitch.csv file.
+ */
 void VCDParser::printf_glitch_csv(const std::string &filepath) {
     clock_t startTime = clock();
     std::ofstream output_file;
     output_file.open(filepath, std::ios::out | std::ios::trunc);
     for (const auto &glitch : signal_glitch_position_) {
+        /* Cut the bit width of the vector signal label.*/
         std::string label, signal_bit;
         bool read_bit = false;
         for (auto &pos : glitch.first) {
@@ -862,7 +875,7 @@ void VCDParser::printf_glitch_csv(const std::string &filepath) {
         }
 
         if (signal_glitch_table_.find(label) != signal_glitch_table_.end()) {
-
+            /* Determine whether the start bit width is 0.*/
             if (signal_glitch_table_.find(label).value().declare_width_start != 0) {
                 int wid_pos = std::stoi(signal_bit.substr(1, signal_bit.find(']') - 1))
                     + signal_glitch_table_.find(label).value().declare_width_start;
@@ -870,6 +883,7 @@ void VCDParser::printf_glitch_csv(const std::string &filepath) {
                 signal_bit = std::string("[") + std::to_string(wid_pos) + std::string("]");
             }
 
+            /* Output module title and glitch.*/
             auto signal_list = glitch.second;
             std::string signal_string = signal_glitch_table_.find(label).value().all_module_signal;
             std::string signal_glitch_string;

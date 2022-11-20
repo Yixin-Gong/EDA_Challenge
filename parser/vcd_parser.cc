@@ -268,7 +268,6 @@ void VCDParser::get_vcd_scope() {
     tsl::hopscotch_map<std::string, struct VCDSignalStruct> vcd_signal_table_;
     vcd_signal_table_.clear();
     vcd_signal_list_.clear();
-    std::list<std::string> Module;
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
         std::string read_string = reading_buffer;
@@ -304,6 +303,8 @@ void VCDParser::get_vcd_scope() {
             }
             signal->vcd_signal_width = std::stoi(width);
 
+            /* Judgment start width.
+             * The default is 0, if it is not 0, it will be stored.*/
             if (judgment != "$end") {
                 if (judgment.find(':') != std::string::npos) {
                     std::string number;
@@ -312,7 +313,6 @@ void VCDParser::get_vcd_scope() {
                         signal->declare_width_start = std::stoi(number);
                     }
                 }
-
             }
 
             /* Store information in a hash table.*/
@@ -329,7 +329,6 @@ void VCDParser::get_vcd_scope() {
                 }
                 current_signal_struct->next_signal = signal;
             }
-
         }
 
             /* If read the information of the module.*/
@@ -354,8 +353,6 @@ void VCDParser::get_vcd_scope() {
             } else
                 vcd_signal_list_.emplace_back(scope_module, 0);
             vcd_signal_table_.clear();
-
-            Module.emplace_back(scope_module);
         }
 
             /* If read the upscope*/
@@ -368,7 +365,6 @@ void VCDParser::get_vcd_scope() {
 
             /* Store the upscope in the list*/
             vcd_signal_list_.emplace_back("upscope", 0);
-            Module.pop_back();
         }
 
             /* If read the enddefinitions*/
@@ -512,6 +508,8 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
             }
             signal->vcd_signal_width = std::stoi(width);
 
+            /* Judgment start width.
+             * The default is 0, if it is not 0, it will be stored.*/
             if (judgment != "$end") {
                 if (judgment.find(':') != std::string::npos) {
                     std::string number;
@@ -522,6 +520,7 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
                 }
             }
 
+            /* Save glitch and module name to storage.*/
             if (signal_glitch_table_.find(signal_label) == signal_glitch_table_.end()) {
                 struct VCDGlitchStruct glitch;
                 std::string module_signal;
