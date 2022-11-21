@@ -1,9 +1,9 @@
 /**************************************************************************//**
   \file     cli_parser.cc
   \brief    Command line input validity check source code.
-  \author   Lao·Zhu
+  \author   Yanzhen Zhu
   \version  V1.0.1
-  \date     20. September 2022
+  \date     21. November 2022
  ******************************************************************************/
 
 #include "cli_parser.h"
@@ -13,6 +13,7 @@
 #include <sstream>
 #include "system.h"
 
+/*!  \brief  Constructor for the command line parser to check if the input information is available. */
 CLIParser::CLIParser(std::string filepath,
                      const std::string &begin_time,
                      const std::string &end_time,
@@ -67,6 +68,9 @@ CLIParser::CLIParser(std::string filepath,
     valid_scope_ = (!scope_.empty());
 }
 
+/*!  \brief  Determine if the GUI interface is used and check if the VCD file is available.
+ *   \return Is the VCD file available.
+ */
 bool CLIParser::using_gui() {
     if (using_gui_)
         std::cout << "Starting software with GUI ...\n";
@@ -86,6 +90,9 @@ bool CLIParser::using_gui() {
     return using_gui_;
 }
 
+/*!  \brief  Returns the time range entered on the command line.
+ *   \return Time range entered on the command line.
+ */
 CLITimeStruct *CLIParser::get_time_range() {
     if (valid_time_rage_) {
         std::istringstream begin_time_stream(begin_time_);

@@ -1,9 +1,9 @@
 /**************************************************************************//**
   \file     main.cc
   \brief    This source file is the program entry file.
-  \author   Lao·Zhu
+  \author   Yanzhen Zhu
   \version  V1.0.1
-  \date     20. September 2022
+  \date     21. November 2022
  ******************************************************************************/
 
 #if (defined(IS_NOT_RUNNING_GOOGLE_TEST) || defined(IS_NOT_RUNNING_GUI))
@@ -21,11 +21,17 @@
 #endif
 
 #if defined(IS_NOT_RUNNING_GOOGLE_TEST)
+/*! \brief Thread handles for multi-threaded threads. */
 pthread_t thread_variable[4];
 
+/*! \brief     Threaded functions for empty threads.
+ *  \param[in] arg: Thread parameters passed in
+ */
 [[noreturn]] void *threadFun(void *arg) {
     cpu_set_t mask;
     int *a = (int *) arg;
+
+    /* Bind this thread to the CPU. */
     CPU_ZERO(&mask);
     CPU_SET(*a, &mask);
     if (sched_setaffinity(0, sizeof(cpu_set_t), &mask) == -1)
@@ -33,8 +39,13 @@ pthread_t thread_variable[4];
     while (true);
 }
 
+/*! \brief     Threaded functions for statistical threads.
+ *  \param[in] arg: Pointers to command line parser class
+ */
 void *statistic_vcd_file(void *arg) {
     auto *cli_parser = (CLIParser *) arg;
+
+    /* Bind this thread to the CPU. */
     cpu_set_t mask;
     CPU_ZERO(&mask);
     if (cli_parser->using_multithread())
@@ -85,6 +96,8 @@ void *statistic_vcd_file(void *arg) {
         parser.printf_glitch_csv(cli_parser->get_output() + "/glitch.csv");
     }
     parser.printf_source_csv(cli_parser->get_output() + "/summary.csv");
+
+    /* Destroy other threads */
     if (cli_parser->using_multithread())
         for (int counter = 0; counter < 3; ++counter)
             pthread_cancel(thread_variable[counter]);
