@@ -35,5 +35,5 @@ jobs:
       - name: Run gtest
         run: |
           wget http://www.acmetech.top/wp-content/eda_files/testcase.7z
-          7z x testcase.7z && rm testcase.7z cd build
+          7z x testcase.7z && rm testcase.7z && cd build
           sudo chmod +x Google_Test && ./Google_Test

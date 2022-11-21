@@ -1,9 +1,9 @@
 /**************************************************************************//**
   \file     vcd_parser_glitch.cc
   \brief    VCD parser with glitch statistic source code file.
-  \author   Lao·Zhu
+  \author   Yanzhen Zhu, Yixin Gong, Zijie Chou
   \version  V1.0.1
-  \date     25. September 2022
+  \date     21. November 2022
  ******************************************************************************/
 
 #include "vcd_parser.h"
@@ -76,7 +76,7 @@ void VCDParser::initialize_vcd_signal_flip_table_(bool enable_gitch) {
         if (read_string == "$end")
             flag = 2;
         if (flag == 2 && reading_buffer[0] != '#')
-            second_position = ftello64(fp_);
+            second_position_ = ftello64(fp_);
         if (flag == 2 && reading_buffer[0] == '#')
             break;
 
@@ -163,7 +163,7 @@ void VCDParser::initialize_vcd_signal_flip_table_(const std::string &module_labe
         if (read_string == "$end")
             flag = 2;
         if (flag == 2 && reading_buffer[0] != '#')
-            second_position = ftello64(fp_);
+            second_position_ = ftello64(fp_);
         if (flag == 2 && reading_buffer[0] == '#')
             break;
 
@@ -274,7 +274,7 @@ void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp,
         if (it->second.total_invert_counter != 0)
             it.value().total_invert_counter--;
     }
-    total_time = current_timestamp;
+    total_time_ = current_timestamp;
 }
 
 /*!
@@ -595,7 +595,7 @@ void VCDParser::get_vcd_signal_flip_info(bool enable_gitch) {
     clock_t startTime = clock();
     static uint64_t current_timestamp = 0, buf_counter = 0;
     tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
-    fseeko64(fp_, second_position, SEEK_SET);
+    fseeko64(fp_, second_position_, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 
@@ -651,7 +651,7 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, bool e
     clock_t startTime = clock();
     static uint64_t current_timestamp = 0;
     tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
-    fseeko64(fp_, second_position, SEEK_SET);
+    fseeko64(fp_, second_position_, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 
@@ -709,7 +709,7 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time,
     clock_t startTime = clock();
     tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
     static uint64_t current_timestamp = 0;
-    fseeko64(fp_, second_position, SEEK_SET);
+    fseeko64(fp_, second_position_, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 
@@ -786,7 +786,7 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time,
             break;
     }
     vcd_signal_flip_post_processing_(current_timestamp, &burr_hash_table);
-    total_time = end_time - begin_time;
+    total_time_ = end_time - begin_time;
     std::cout << "Get flip time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
@@ -807,7 +807,7 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, uint64
     clock_t startTime = clock();
     tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
     static uint64_t current_timestamp = 0;
-    fseeko64(fp_, second_position, SEEK_SET);
+    fseeko64(fp_, second_position_, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 
@@ -892,7 +892,7 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, uint64
             break;
     }
     vcd_signal_flip_post_processing_(current_timestamp, &burr_hash_table);
-    total_time = end_time - begin_time;
+    total_time_ = end_time - begin_time;
     std::cout << "Get flip time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 

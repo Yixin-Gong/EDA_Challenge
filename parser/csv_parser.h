@@ -1,6 +1,10 @@
-//
-// Created by ubuntu on 22-11-9.
-//
+/**************************************************************************//**
+  \file     csv_parser.h
+  \brief    CSV file parser header file.
+  \author   Zijie Chou
+  \version  V1.0.1
+  \date     21. November 2022
+ ******************************************************************************/
 
 #ifndef EDA_CHALLENGE_PARSER_CSV_PARSER_H_
 #define EDA_CHALLENGE_PARSER_CSV_PARSER_H_
@@ -15,8 +19,9 @@
 
 struct CSVSignalStatisticStruct {
   int tc, t1, t0, tx, tg;
-  float sp;
+  double sp;
 };
+
 struct CSV_VCDSignalStruct {
   unsigned int vcd_signal_width;
   std::string vcd_signal_label;

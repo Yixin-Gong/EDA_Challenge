@@ -1,14 +1,22 @@
+/**************************************************************************//**
+  \file     csv_parser.cc
+  \brief    CSV file parser source code.
+  \author   Zijie Chou
+  \version  V1.0.1
+  \date     21. November 2022
+ ******************************************************************************/
+
 #include "csv_parser.h"
-#include <fstream>
 #include <sstream>
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
 
+/*! \brief Line buffer for reading lines from a file. */
 static char reading_buffer[1024 * 1024] = {0};
 
 /*!
-    \brief          Parse csv file and stores information in a hash table
+    \brief Parse csv file and stores information in a hash table
  */
 void CSVParser::parse_csv() {
 
@@ -47,15 +55,12 @@ void CSVParser::parse_csv() {
 }
 
 /*!
- *   \brief      Get all modules and information of signals and store them in a hash table.
- *   \param[in]  csv_vcd_signal_table_:A hash table to store information of signals.
+ *   \brief     Get all modules and information of signals and store them in a hash table.
+ *   \param[in] csv_vcd_signal_table_:A hash table to store information of signals.
  */
 void CSVParser::get_vcd_scope(const std::string &vcd_filename) {
-    clock_t startTime = clock();
-
     fclose(fp_);
     fp_ = fopen64(vcd_filename.c_str(), "r");
-    std::cout << "\nOpen file: " << vcd_filename << "\n";
 
     csv_vcd_signal_table_.clear();
     std::list<std::string> all_module;
@@ -116,6 +121,7 @@ void CSVParser::get_vcd_scope(const std::string &vcd_filename) {
             All_module = All_module.substr(0, All_module.length() - 1);
             All_module += ".";
             module_signal_title = All_module + signal_title;
+
             /* Store information in a hash table.*/
             csv_vcd_signal_table_.insert(std::pair<std::string, struct CSV_VCDSignalStruct>(module_signal_title,
                                                                                             signal));
@@ -146,13 +152,12 @@ void CSVParser::get_vcd_scope(const std::string &vcd_filename) {
             }
         }
     }
-    std::cout << "Get scope time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
-/*!
- *   \brief      Use the stored label in the csv file to find the corresponding signal name in the vcd file and merge it
- *   \param[in]  merge_csv_vcd_table_:A hash table to store information of merged signal.
- */
 
+/*!
+ *   \brief     Use the stored label in the csv file to find the corresponding signal name in the vcd file and merge it
+ *   \param[in] merge_csv_vcd_table_:A hash table to store information of merged signal.
+ */
 void CSVParser::csv_find_vcd() {
     merge_csv_vcd_table_.clear();
     for (auto &iter : csv_signal_table_) {
@@ -178,13 +183,11 @@ void CSVParser::csv_find_vcd() {
                     width += pos;
             }
 
-        } else {
+        } else
             label = iter.first;
-        }
 
-        if (csv_vcd_signal_table_.find(label) == csv_vcd_signal_table_.end()) {
+        if (csv_vcd_signal_table_.find(label) == csv_vcd_signal_table_.end())
             continue;
-        }
 
         /* Determine what the starting bit width is.*/
         if (csv_vcd_signal_table_.find(label).value().declare_width_start != 0) {

@@ -1,9 +1,9 @@
 /**************************************************************************//**
-  \file     parser.cc
-  \brief    VCD parser source code file.
-  \author   Lao·Zhu
+  \file     vcd_parser.cc
+  \brief    VCD file parser source code.
+  \author   Yanzhen Zhu, Yixin Gong, Zijie Chou
   \version  V1.0.1
-  \date     25. September 2022
+  \date     21. November 2022
  ******************************************************************************/
 
 #include "vcd_parser.h"
@@ -14,8 +14,12 @@
 #include <cstdio>
 #include <unistd.h>
 
+/*! \brief Line buffer for reading lines from a file. */
 static char reading_buffer[1024 * 1024] = {0};
 
+/*!
+    \brief Parse VCD file headers to obtain information such as time scaling factors.
+*/
 void VCDParser::parse_vcd_header_() {
     unsigned int parse_status = 0;
     static char week[32], month[32];
@@ -64,6 +68,7 @@ void VCDParser::parse_vcd_header_() {
             break;
     }
 
+    /* Print the information in the VCD file header */
     strftime(reading_buffer, sizeof(reading_buffer), "%Y-%m-%d %H:%M:%S", &vcd_header_struct_.vcd_create_time);
     std::cout << "File create time: " << reading_buffer << "\n";
     std::cout << "File time scale: " << vcd_header_struct_.vcd_time_scale << vcd_header_struct_.vcd_time_unit << "\n";
@@ -111,6 +116,7 @@ void VCDParser::vcd_statistic_signal_(uint64_t current_timestamp,
 */
 void VCDParser::initialize_vcd_signal_flip_table_() {
     clock_t startTime = clock();
+
     /* Seek the fp_ pointer to timestamp 0 */
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
@@ -132,7 +138,7 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
         if (read_string == "$end")
             flag = 2;
         if (flag == 2 && reading_buffer[0] != '#')
-            second_position = ftello64(fp_);
+            second_position_ = ftello64(fp_);
         if (flag == 2 && reading_buffer[0] == '#')
             break;
 
@@ -205,7 +211,7 @@ void VCDParser::initialize_vcd_signal_flip_table_(const std::string &module_labe
         if (read_string == "$end")
             flag = 2;
         if (flag == 2 && reading_buffer[0] != '#')
-            second_position = ftello64(fp_);
+            second_position_ = ftello64(fp_);
         if (flag == 2 && reading_buffer[0] == '#')
             break;
 
@@ -282,7 +288,7 @@ void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp) {
         if (it->second.total_invert_counter != 0)
             it.value().total_invert_counter--;
     }
-    total_time = current_timestamp;
+    total_time_ = current_timestamp;
 }
 
 /*!
@@ -444,22 +450,22 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
         if (!read_label_start && read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'u') {
             all_module.pop_back();
         }
+
             /* If read the upscope and read_label_start is true.*/
         else if (read_label_start && read_string.c_str()[0] == '$' && read_string.c_str()[1] == 'u') {
-
             if (vcd_signal_table_.empty() != 1) {
                 vcd_signal_list_.back().second = vcd_signal_table_;
                 vcd_signal_table_.clear();
             }
 
             /* When the specified scope is to be upscope*/
-            if (all_module.back() == break_module) {
+            if (all_module.back() == break_module)
                 break;
-            }
 
             vcd_signal_list_.emplace_back("upscope", 0);
             all_module.pop_back();
         }
+
             /* If read the scope module.*/
         else if (read_string.c_str()[0] == '$' && read_string.c_str()[1] == 's') {
             /* Cut the module title.*/
@@ -477,6 +483,7 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
                 vcd_signal_list_.back().second = vcd_signal_table_;
                 vcd_signal_table_.clear();
             }
+
             /* Compare scope_module and module_label in order.
              * Start with the first in module_label.
              * When the comparison is successful, the next one of the module_label will be compared.*/
@@ -495,9 +502,8 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
                 module += scope_module;
                 read_label_start = true;
                 vcd_signal_list_.emplace_back(module, 0);
-            } else if (read_label_start) {
+            } else if (read_label_start)
                 vcd_signal_list_.emplace_back(scope_module, 0);
-            }
             all_module.emplace_back(scope_module);
         }
 
@@ -514,9 +520,8 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
             for (int pos = 0; read_string[pos] != 0; pos++) {
                 if (read_string[pos] == ' ') {
                     space_pos++;
-                    if (space_pos == 6) {
+                    if (space_pos == 6)
                         break;
-                    }
                     continue;
                 }
                 switch (space_pos) {
@@ -588,7 +593,7 @@ void VCDParser::get_vcd_signal_flip_info() {
     initialize_vcd_signal_flip_table_();
     clock_t startTime = clock();
     static uint64_t current_timestamp = 0, buf_counter = 0;
-    fseeko64(fp_, second_position, SEEK_SET);
+    fseeko64(fp_, second_position_, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 
@@ -638,7 +643,7 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
     clock_t startTime = clock();
     static uint64_t current_timestamp = 0;
 
-    fseeko64(fp_, second_position, SEEK_SET);
+    fseeko64(fp_, second_position_, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 
@@ -688,7 +693,7 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
     int8_t status = (begin_time == 0) ? 1 : 0;
     initialize_vcd_signal_flip_table_();
     static uint64_t current_timestamp = 0;
-    fseeko64(fp_, second_position, SEEK_SET);
+    fseeko64(fp_, second_position_, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         size_t last_word_position = strlen(reading_buffer) - 1;
 
@@ -761,7 +766,7 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
             break;
     }
     vcd_signal_flip_post_processing_(current_timestamp);
-    total_time = end_time - begin_time;
+    total_time_ = end_time - begin_time;
 }
 
 /*!
@@ -802,7 +807,7 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, uint64
         }
         /*Set a finite stats machine */
         switch (status) {
-            /* Update every signal appeared */
+            /* Update every signal appeared but not parse*/
             case 0:
                 if (reading_buffer[0] == 'b') {
                     reading_buffer[last_word_position] = '[';
@@ -825,6 +830,7 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, uint64
                     }
                 }
                 break;
+
                 /* Parse all signals*/
             case 2:
             case 1:
@@ -858,7 +864,7 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, uint64
             break;
     }
     vcd_signal_flip_post_processing_(current_timestamp);
-    total_time = end_time - begin_time;
+    total_time_ = end_time - begin_time;
 }
 
 /*!  \brief      Output the stored and counted results to file.
@@ -898,11 +904,11 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
                 if (it.second.vcd_signal_width == 1) {
                     if (vcd_signal_flip_table_.find(it.first) == vcd_signal_flip_table_.end()) {
                         memset(&signal, 0x00, sizeof(struct VCDSignalStatisticStruct));
-                        signal.signalx_time = total_time;
+                        signal.signalx_time = total_time_;
                     } else
                         signal = vcd_signal_flip_table_.find(it.first)->second;
-                    sprintf(sp_buffer, "%.5lf", (double) (total_time - signal.signal0_time
-                        - signal.signalx_time) / (double) total_time);
+                    sprintf(sp_buffer, "%.5lf", (double) (total_time_ - signal.signal0_time
+                        - signal.signalx_time) / (double) total_time_);
 
                     auto *current_signal = &(it.second);
                     while (true) {
@@ -928,11 +934,11 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
                                 + std::string("]");
                         if (vcd_signal_flip_table_.find(temp_alias) == vcd_signal_flip_table_.end()) {
                             memset(&signal, 0x00, sizeof(struct VCDSignalStatisticStruct));
-                            signal.signalx_time = total_time;
+                            signal.signalx_time = total_time_;
                         } else
                             signal = vcd_signal_flip_table_.find(temp_alias)->second;
-                        sprintf(sp_buffer, "%.5lf", (double) (total_time - signal.signal0_time
-                            - signal.signalx_time) / (double) total_time);
+                        sprintf(sp_buffer, "%.5lf", (double) (total_time_ - signal.signal0_time
+                            - signal.signalx_time) / (double) total_time_);
 
                         auto *current_signal = &(it.second);
                         while (true) {
@@ -959,16 +965,28 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
     std::cout << "Print summary time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
+/*!  \brief     Returns the signal statistics for the specified alias, used only in unit tests.
+ *   \param[in] signal_alias: Start time of time range.
+ *   \return    Signal statistics of this alias.
+ */
 VCDSignalStatisticStruct *VCDParser::get_signal_flip_info(const std::string &signal_alias) {
     VCDSignalStatisticStruct *signal = &(vcd_signal_flip_table_.find(signal_alias).value());
     return signal;
 }
 
+/*!  \brief         Returns a vector of the number of signal reversals over a period of time.
+ *   \param[in]     begin_time: Start time of time range.
+ *   \param[in]     end_time: End time of time range.
+ *   \param[in,out] x_value: The returned x-axis vector.
+ *   \param[in,out] y_value: The returned y-axis vector.
+ */
 void VCDParser::get_total_flips_in_time_range(uint64_t begin_time,
                                               uint64_t end_time,
                                               std::vector<double> *x_value,
                                               std::vector<double> *y_value) {
     uint64_t current_timestamp = 0, signal_counter = 0;
+
+    /* Seek the fp_ pointer to timestamp 0 */
     fseeko64(fp_, 1, SEEK_SET);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
@@ -978,6 +996,8 @@ void VCDParser::get_total_flips_in_time_range(uint64_t begin_time,
                 break;
         }
     }
+
+    /* Count the signals and store them in a vector */
     (*x_value).push_back((double) current_timestamp - 1);
     (*y_value).push_back(0);
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
