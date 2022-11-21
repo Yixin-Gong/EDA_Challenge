@@ -22,8 +22,12 @@
   \brief  Structs for signal statistics
  */
 struct CSVSignalStatisticStruct {
-  int tc, t1, t0, tx, tg;          ///< The information cut from the csv file
-  double sp;
+  int tc,                           ///< Number of signal flips
+  t1,                               ///< Duration of the 1 level
+  t0,                               ///< Duration of the 0 level
+  tx,                               ///< Duration of the x level
+  tg;                               ///< Number of glitch
+  double sp;                        ///< Probability of duration of the 1 level
 };
 
 /*!
@@ -31,9 +35,9 @@ struct CSVSignalStatisticStruct {
   \brief  Structs for signal properties
  */
 struct CSV_VCDSignalStruct {
-  unsigned int vcd_signal_width;   ///< Signal bit width
-  std::string vcd_signal_label;    ///< Label of the signal
-  int declare_width_start = 0;     ///< Initial bits of the vector signal
+  unsigned int vcd_signal_width;    ///< Signal bit width
+  std::string vcd_signal_label;     ///< Label of the signal
+  int declare_width_start = 0;      ///< Initial bits of the vector signal
 };
 
 /*!  \brief CSV parser class, which contains all the CSV file parsing functions. */
@@ -59,9 +63,17 @@ class CSVParser {
   void csv_find_vcd();
   struct CSVSignalStatisticStruct *find_signal(const std::string &signal_label);
  private:
+
+  /*! \brief File stream structure for VCD files. */
   FILE *fp_{};
+
+  /*! \brief Hash table for CSV signals statistics. */
   tsl::hopscotch_map<std::string, struct CSVSignalStatisticStruct> csv_signal_table_;
+
+  /*! \brief Hash table for VCD signals. */
   tsl::hopscotch_map<std::string, struct CSV_VCDSignalStruct> csv_vcd_signal_table_;
+
+  /*! \brief Hash table for the complete signal name. */
   std::unordered_map<std::string, struct CSVSignalStatisticStruct> merge_csv_vcd_table_;
 };
 
