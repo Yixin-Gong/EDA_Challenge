@@ -1,6 +1,6 @@
 /**************************************************************************//**
   \file     vcd_parser_glitch.cc
-  \brief    VCD parser with glitch statistic source code file.
+  \brief    VCD parser with glitch statistic source code.
   \author   Yanzhen Zhu, Yixin Gong, Zijie Chou
   \version  V1.0.1
   \date     21. November 2022
@@ -292,8 +292,8 @@ void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp,
 }
 
 /*!
-     \brief Get all modules and information of signals and store them in a list.(with glitch)
-     \param enable_gitch: A bool value that determine whether to output a glitch
+     \brief     Get all modules and information of signals and store them in a list.(with glitch)
+     \param[in] enable_gitch: A bool value that determine whether to output a glitch
 */
 void VCDParser::get_vcd_scope(bool enable_gitch) {
     clock_t startTime = clock();
@@ -437,7 +437,8 @@ void VCDParser::get_vcd_scope(bool enable_gitch) {
 
 /*!
      \brief     Get specified scope contains information of signals and store them in a hash table. (with glitch)
-     \param[in] vcd_signal_alias_table_:A hash table to store information of signals.
+     \param[in] module_label: The name of the specified scope
+     \param[in] enable_gitch: A bool value that determine whether to output a glitch
  */
 void VCDParser::get_vcd_scope(const std::string &module_label, bool enable_gitch) {
     vcd_signal_list_.clear();

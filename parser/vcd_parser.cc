@@ -412,7 +412,7 @@ void VCDParser::get_vcd_scope() {
 
 /*!
      \brief     Get specified scope contains information of signals and store them in a hash table.
-     \param[in] module_label:Input scope name
+     \param[in] module_label: Input scope name
  */
 void VCDParser::get_vcd_scope(const std::string &module_label) {
     vcd_signal_list_.clear();
@@ -636,7 +636,7 @@ void VCDParser::get_vcd_signal_flip_info() {
 
 /*!
      \brief     Parse Signal by Scope Function
-     \param[in] module_label:Input module name
+     \param[in] module_label: Input module name
 */
 void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
     vcd_signal_flip_table_.clear();
