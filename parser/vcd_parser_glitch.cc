@@ -14,8 +14,17 @@
 #include <cstdio>
 #include <unistd.h>
 
+/*! \brief Line buffer for reading lines from a file. */
 static char reading_buffer[1024 * 1024] = {0};
 
+/*!
+     \brief     Statistic vcd signals (with glitch)
+     \param[in] current_timestamp: The current timestamp at which the signal was processed
+     \param[in] signal: A struct to store signals' flip information
+     \param[in] burr_hash_table: Temporary hash table for glitch statistics
+     \param[in] current_level_status: The current status of the input signal
+     \param[in] signal_alias: Input signal's identifier
+*/
 void VCDParser::vcd_statistic_signal_(uint64_t current_timestamp,
                                       struct VCDSignalStatisticStruct *signal,
                                       tsl::hopscotch_map<std::string, int8_t> *burr_hash_table,
@@ -48,12 +57,13 @@ void VCDParser::vcd_statistic_signal_(uint64_t current_timestamp,
 }
 
 /*!
-    \brief     Get the signal initialization information and store it in the hash table, and execute it at zero time(with glitch)
-    \param[in] enable_gitch: A bool value that determine whether to output a glitch
+     \brief     Get the signal initialization information and store it in the hash table, and execute it at zero time (with glitch)
+     \param[in] enable_gitch: A bool value that determine whether to output a glitch
 */
 void VCDParser::initialize_vcd_signal_flip_table_(bool enable_gitch) {
     clock_t startTime = clock();
     tsl::hopscotch_map<std::string, int8_t> burr_hash_table;
+
     /* Seek the fp_ pointer to timestamp 0 */
     while (fgets(reading_buffer, sizeof(reading_buffer), fp_) != nullptr) {
         reading_buffer[strlen(reading_buffer) - 1] = '\0';
@@ -70,7 +80,6 @@ void VCDParser::initialize_vcd_signal_flip_table_(bool enable_gitch) {
         VCDSignalStatisticStruct cnt{0, 0, 0, 0, 0, 0, 0, 0};
 
         /* Skip useless lines and define cut-off range. */
-
         if ((flag == 0 && reading_buffer[0] == '#') || read_string == "$dumpvars")
             flag = 1;
         if (read_string == "$end")
@@ -136,9 +145,9 @@ void VCDParser::initialize_vcd_signal_flip_table_(bool enable_gitch) {
 }
 
 /*!
-    \brief     Get the signal initialization information and store it in the hash table, and execute it at zero time(with glitch)
-    \param[in] module_label: Input scope name
-    \param[in] enable_gitch: A bool value that determine whether to output a glitch
+     \brief     Get the signal initialization information and store it in the hash table, and execute it at zero time (with glitch)
+     \param[in] module_label: Input scope name
+     \param[in] enable_gitch: A bool value that determine whether to output a glitch
 */
 void VCDParser::initialize_vcd_signal_flip_table_(const std::string &module_label, bool enable_gitch) {
     clock_t startTime = clock();
@@ -227,6 +236,11 @@ void VCDParser::initialize_vcd_signal_flip_table_(const std::string &module_labe
     std::cout << "Init flip time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
+/*!
+     \brief     Count the signals and timestamps in the temporary glitch list into the global glitch hash table
+     \param[in] burr_hash_table: a hash table to store glitches' information.
+     \param[in] current_timestamp: time in current parsing section.
+*/
 void VCDParser::vcd_statistic_glitch_(tsl::hopscotch_map<std::string, int8_t> *burr_hash_table,
                                       uint64_t current_timestamp) {
     for (const auto &glitch : *burr_hash_table) {
@@ -421,8 +435,9 @@ void VCDParser::get_vcd_scope(bool enable_gitch) {
     std::cout << "Get scope time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
-/*!  \brief      Get specified scope contains information of signals and store them in a hash table.(with glitch)
- *   \param[in]  vcd_signal_alias_table_:A hash table to store information of signals.
+/*!
+     \brief     Get specified scope contains information of signals and store them in a hash table. (with glitch)
+     \param[in] vcd_signal_alias_table_:A hash table to store information of signals.
  */
 void VCDParser::get_vcd_scope(const std::string &module_label, bool enable_gitch) {
     vcd_signal_list_.clear();
@@ -585,8 +600,8 @@ void VCDParser::get_vcd_scope(const std::string &module_label, bool enable_gitch
 }
 
 /*!
-    \brief     Total Signal Parse Function(with glitch)
-    \param[in] enable_gitch: A bool value that determine whether to output a glitch
+     \brief     Total Signal Parse Function (with glitch)
+     \param[in] enable_gitch: A bool value that determine whether to output a glitch
  */
 void VCDParser::get_vcd_signal_flip_info(bool enable_gitch) {
     vcd_signal_flip_table_.clear();
@@ -640,9 +655,9 @@ void VCDParser::get_vcd_signal_flip_info(bool enable_gitch) {
 }
 
 /*!
-    \brief     Parse Signal by Scope Function(with glitch)
-    \param[in] module_label: Input module name
-    \param[in] enable_gitch: A bool value that determine whether to output a glitch
+     \brief     Parse Signal by Scope Function (with glitch)
+     \param[in] module_label: Input module name
+     \param[in] enable_gitch: A bool value that determine whether to output a glitch
 */
 void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, bool enable_gitch) {
     vcd_signal_flip_table_.clear();
@@ -695,14 +710,15 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, bool e
 }
 
 /*!
-    \brief     Parse Signal by Time Range Function(with glitch)
-    \param[in] begin_time: Begin time of the parsing process
-    \param[in] end_time: End time of the parsing process
-    \param[in] enable_gitch: A bool value that determine whether to output a glitch
+     \brief     Parse Signal by Time Range Function (with glitch)
+     \param[in] begin_time: Begin time of the parsing process
+     \param[in] end_time: End time of the parsing process
+     \param[in] enable_gitch: A bool value that determine whether to output a glitch
  */
 void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time, bool enable_gitch) {
     vcd_signal_flip_table_.clear();
     signal_glitch_position_.clear();
+
     /* If begin time is 0, start to parse. */
     int8_t status = (begin_time == 0) ? 1 : 0;
     initialize_vcd_signal_flip_table_(enable_gitch);
@@ -731,6 +747,7 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time,
                 status = 3;
                 current_timestamp = end_time;
             }
+
             /* Print glitches information */
             vcd_statistic_glitch_(&burr_hash_table, current_timestamp);
             burr_hash_table.clear();
@@ -791,11 +808,11 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time,
 }
 
 /*!
-    \brief     Parse Signal by Time Range and Scope Function(with glitch)
-    \param[in] module_label: Input scope name
-    \param[in] begin_time: Begin time of the parsing process
-    \param[in] end_time: End time of the parsing process
-    \param[in] enable_gitch: A bool value that determine whether to output a glitch
+     \brief     Parse Signal by Time Range and Scope Function (with glitch)
+     \param[in] module_label: Input scope name
+     \param[in] begin_time: Begin time of the parsing process
+     \param[in] end_time: End time of the parsing process
+     \param[in] enable_gitch: A bool value that determine whether to output a glitch
 */
 void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, uint64_t begin_time,
                                          uint64_t end_time, bool enable_gitch) {
@@ -897,8 +914,8 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, uint64
 }
 
 /*!
-    \brief          Output glitch.csv file.
- */
+     \brief Output glitch.csv file.
+*/
 void VCDParser::printf_glitch_csv(const std::string &filepath) {
     clock_t startTime = clock();
     std::ofstream output_file;

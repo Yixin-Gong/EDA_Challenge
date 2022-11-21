@@ -11,7 +11,7 @@
 #include <utility>
 #include <fstream>
 #include <sstream>
-#include "system.h"
+#include "misc_feat.h"
 
 /*!  \brief  Constructor for the command line parser to check if the input information is available. */
 CLIParser::CLIParser(std::string filepath,
@@ -36,7 +36,7 @@ CLIParser::CLIParser(std::string filepath,
         if ((!filepath_.empty()) && (filepath_.find(".vcd") == std::string::npos))
             std::cout << "Please input the VCD file with the .vcd extension\n";
         valid_filename_ = false;
-    } else if (!SystemInfo::FileExists(filepath_)) {
+    } else if (!MiscFeat::file_exists(filepath_)) {
         valid_filename_ = false;
         std::cout << "File " << filepath_ << " doesn't exists!\n";
         if (!using_gui_)
@@ -68,8 +68,9 @@ CLIParser::CLIParser(std::string filepath,
     valid_scope_ = (!scope_.empty());
 }
 
-/*!  \brief  Determine if the GUI interface is used and check if the VCD file is available.
- *   \return Is the VCD file available.
+/*!
+     \brief  Determine if the GUI interface is used and check if the VCD file is available.
+     \return Is the VCD file available.
  */
 bool CLIParser::using_gui() {
     if (using_gui_)
@@ -90,8 +91,9 @@ bool CLIParser::using_gui() {
     return using_gui_;
 }
 
-/*!  \brief  Returns the time range entered on the command line.
- *   \return Time range entered on the command line.
+/*!
+     \brief  Returns the time range entered on the command line.
+     \return Time range entered on the command line.
  */
 CLITimeStruct *CLIParser::get_time_range() {
     if (valid_time_rage_) {

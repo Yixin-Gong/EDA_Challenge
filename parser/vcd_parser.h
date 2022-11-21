@@ -17,8 +17,8 @@
 #include "hopscotch_map.h"
 
 /*!
-  \struct VCDHeaderStruct
-  \brief  Structs of VCD header information
+     \struct VCDHeaderStruct
+     \brief  Structs of VCD header information
  */
 struct VCDHeaderStruct {
   struct tm vcd_create_time;        ///< Creation time of VCD files
@@ -28,8 +28,8 @@ struct VCDHeaderStruct {
 };
 
 /*!
-  \struct VCDSignalStruct
-  \brief  Structs for signal properties
+     \struct VCDSignalStruct
+     \brief  Structs for signal properties
  */
 struct VCDSignalStruct {
   unsigned int vcd_signal_width;    ///< Signal bit width
@@ -39,8 +39,8 @@ struct VCDSignalStruct {
 };
 
 /*!
-  \struct VCDSignalStatisticStruct
-  \brief  Structs for signal statistics
+     \struct VCDSignalStatisticStruct
+     \brief  Structs for signal statistics
  */
 struct VCDSignalStatisticStruct {
   uint64_t total_invert_counter;    ///< Number of signal flips
@@ -54,8 +54,8 @@ struct VCDSignalStatisticStruct {
 };
 
 /*!
-  \struct VCDGlitchStruct
-  \brief  Structs for signal glitch
+     \struct VCDGlitchStruct
+     \brief  Structs for signal glitch
  */
 struct VCDGlitchStruct {
   std::string all_module_signal;    ///< Modular path of the signal
@@ -84,15 +84,17 @@ class VCDParser {
       signal_glitch_position_.clear();
   }
 
-  /*!  \brief  Returns the information in the VCD file header.
-   *   \return VCD file header information.
+  /*!
+       \brief  Returns the information in the VCD file header.
+       \return VCD file header information.
    */
   struct VCDHeaderStruct *get_vcd_header() {
       return &vcd_header_struct_;
   }
 
-  /*!  \brief  Returns a statistical hash table of all signals, used only in regression tests.
-   *   \return Hash table of all signals.
+  /*!
+       \brief  Returns a statistical hash table of all signals, used only in regression tests.
+       \return Hash table of all signals.
    */
   tsl::hopscotch_map<std::string, struct VCDSignalStatisticStruct> *get_signal_flip_table() {
       return &vcd_signal_flip_table_;

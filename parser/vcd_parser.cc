@@ -18,7 +18,7 @@
 static char reading_buffer[1024 * 1024] = {0};
 
 /*!
-    \brief Parse VCD file headers to obtain information such as time scaling factors.
+     \brief Parse VCD file headers to obtain information such as time scaling factors.
 */
 void VCDParser::parse_vcd_header_() {
     unsigned int parse_status = 0;
@@ -76,11 +76,11 @@ void VCDParser::parse_vcd_header_() {
 }
 
 /*!
-    \brief     Statistic vcd signals
-    \param[in] current_timestamp: The current timestamp at which the signal was processed
-    \param[in] signal: A struct to store signals' flip information
-    \param[in] current_level_status: The current status of the input signal
-    \param[in] signal_alias: Input signal's identifier
+     \brief     Statistic vcd signals
+     \param[in] current_timestamp: The current timestamp at which the signal was processed
+     \param[in] signal: A struct to store signals' flip information
+     \param[in] current_level_status: The current status of the input signal
+     \param[in] signal_alias: Input signal's identifier
 */
 void VCDParser::vcd_statistic_signal_(uint64_t current_timestamp,
                                       struct VCDSignalStatisticStruct *signal,
@@ -112,7 +112,7 @@ void VCDParser::vcd_statistic_signal_(uint64_t current_timestamp,
 }
 
 /*!
-    \brief Get the signal initialization information and store it in the hash table, and execute it at zero time
+     \brief Get the signal initialization information and store it in the hash table, and execute it at zero time
 */
 void VCDParser::initialize_vcd_signal_flip_table_() {
     clock_t startTime = clock();
@@ -184,8 +184,8 @@ void VCDParser::initialize_vcd_signal_flip_table_() {
 }
 
 /*!
-    \brief     Get the signal initialization information and store it in the hash table, and execute it at zero time
-    \param[in] module_label: Input module name
+     \brief     Get the signal initialization information and store it in the hash table, and execute it at zero time
+     \param[in] module_label: Input module name
 */
 void VCDParser::initialize_vcd_signal_flip_table_(const std::string &module_label) {
     clock_t startTime = clock();
@@ -292,7 +292,7 @@ void VCDParser::vcd_signal_flip_post_processing_(uint64_t current_timestamp) {
 }
 
 /*!
-    \brief Get all modules and information of signals and store them in a list.
+     \brief Get all modules and information of signals and store them in a list.
 */
 void VCDParser::get_vcd_scope() {
     clock_t startTime = clock();
@@ -410,8 +410,9 @@ void VCDParser::get_vcd_scope() {
     std::cout << "Get scope time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
-/*!  \brief      Get specified scope contains information of signals and store them in a hash table.
- *   \param[in]  module_label:Input scope name
+/*!
+     \brief     Get specified scope contains information of signals and store them in a hash table.
+     \param[in] module_label:Input scope name
  */
 void VCDParser::get_vcd_scope(const std::string &module_label) {
     vcd_signal_list_.clear();
@@ -586,7 +587,7 @@ void VCDParser::get_vcd_scope(const std::string &module_label) {
 }
 
 /*!
- \brief         Total Signal Parse Function
+     \brief Total Signal Parse Function
  */
 void VCDParser::get_vcd_signal_flip_info() {
     vcd_signal_flip_table_.clear();
@@ -634,8 +635,8 @@ void VCDParser::get_vcd_signal_flip_info() {
 }
 
 /*!
-    \brief     Parse Signal by Scope Function
-    \param[in] module_label:Input module name
+     \brief     Parse Signal by Scope Function
+     \param[in] module_label:Input module name
 */
 void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
     vcd_signal_flip_table_.clear();
@@ -681,10 +682,11 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label) {
     vcd_signal_flip_post_processing_(current_timestamp);
     std::cout << "Get flip time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
+
 /*!
-    \brief          Parse Signal by Time Range Function
-    \param[in]      begin_time: Begin time of the parsing process
-    \param[in]      end_time: End time of the parsing process
+     \brief     Parse Signal by Time Range Function
+     \param[in] begin_time: Begin time of the parsing process
+     \param[in] end_time: End time of the parsing process
  */
 void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time) {
     vcd_signal_flip_table_.clear();
@@ -770,10 +772,10 @@ void VCDParser::get_vcd_signal_flip_info(uint64_t begin_time, uint64_t end_time)
 }
 
 /*!
-    \brief     Parse Signal by Time Range and Scope Function
-    \param[in] module_label: Input module name
-    \param[in] begin_time: Begin time of the parsing process
-    \param[in] end_time: End time of the parsing process
+     \brief     Parse Signal by Time Range and Scope Function
+     \param[in] module_label: Input module name
+     \param[in] begin_time: Begin time of the parsing process
+     \param[in] end_time: End time of the parsing process
 */
 void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, uint64_t begin_time, uint64_t end_time) {
     vcd_signal_flip_table_.clear();
@@ -867,8 +869,9 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, uint64
     total_time_ = end_time - begin_time;
 }
 
-/*!  \brief      Output the stored and counted results to file.
- *   \param[in]  filepath: The position to output source.csv file.
+/*!
+     \brief      Output the stored and counted results to file.
+     \param[in]  filepath: The position to output source.csv file.
  */
 void VCDParser::printf_source_csv(const std::string &filepath) {
     std::ofstream file;
@@ -965,20 +968,22 @@ void VCDParser::printf_source_csv(const std::string &filepath) {
     std::cout << "Print summary time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
 
-/*!  \brief     Returns the signal statistics for the specified alias, used only in unit tests.
- *   \param[in] signal_alias: Start time of time range.
- *   \return    Signal statistics of this alias.
+/*!
+     \brief     Returns the signal statistics for the specified alias, used only in unit tests.
+     \param[in] signal_alias: Start time of time range.
+     \return    Signal statistics of this alias.
  */
 VCDSignalStatisticStruct *VCDParser::get_signal_flip_info(const std::string &signal_alias) {
     VCDSignalStatisticStruct *signal = &(vcd_signal_flip_table_.find(signal_alias).value());
     return signal;
 }
 
-/*!  \brief         Returns a vector of the number of signal reversals over a period of time.
- *   \param[in]     begin_time: Start time of time range.
- *   \param[in]     end_time: End time of time range.
- *   \param[in,out] x_value: The returned x-axis vector.
- *   \param[in,out] y_value: The returned y-axis vector.
+/*!
+     \brief         Returns a vector of the number of signal reversals over a period of time.
+     \param[in]     begin_time: Start time of time range.
+     \param[in]     end_time: End time of time range.
+     \param[in,out] x_value: The returned x-axis vector.
+     \param[in,out] y_value: The returned y-axis vector.
  */
 void VCDParser::get_total_flips_in_time_range(uint64_t begin_time,
                                               uint64_t end_time,

@@ -7,7 +7,7 @@
  ******************************************************************************/
 
 #include "mainwindow.h"
-#include "system.h"
+#include "misc_feat.h"
 #include <ctime>
 
 MainWindow::~MainWindow() = default;
@@ -68,7 +68,7 @@ void MainWindow::parse_button_clicked() {
         if (!cli_parser_->using_glitch()) {
             if (cli_parser_->valid_scope() && cli_parser_->valid_time()) {
                 uint64_t begin_timestamp = 0, end_timestamp = 0;
-                SystemInfo::check_time_range_exists(cli_parser_, parser_, &begin_timestamp, &end_timestamp);
+                MiscFeat::check_time_range_exists(cli_parser_, parser_, &begin_timestamp, &end_timestamp);
                 parser_->get_vcd_scope(cli_parser_->get_scope());
                 parser_->get_vcd_signal_flip_info(cli_parser_->get_scope(), begin_timestamp, end_timestamp);
             } else if (cli_parser_->valid_scope()) {
@@ -76,7 +76,7 @@ void MainWindow::parse_button_clicked() {
                 parser_->get_vcd_signal_flip_info(cli_parser_->get_scope());
             } else if (cli_parser_->valid_time()) {
                 uint64_t begin_timestamp = 0, end_timestamp = 0;
-                SystemInfo::check_time_range_exists(cli_parser_, parser_, &begin_timestamp, &end_timestamp);
+                MiscFeat::check_time_range_exists(cli_parser_, parser_, &begin_timestamp, &end_timestamp);
                 parser_->get_vcd_scope();
                 parser_->get_vcd_signal_flip_info(begin_timestamp, end_timestamp);
             } else {
@@ -86,7 +86,7 @@ void MainWindow::parse_button_clicked() {
         } else {
             if (cli_parser_->valid_scope() && cli_parser_->valid_time()) {
                 uint64_t begin_timestamp = 0, end_timestamp = 0;
-                SystemInfo::check_time_range_exists(cli_parser_, parser_, &begin_timestamp, &end_timestamp);
+                MiscFeat::check_time_range_exists(cli_parser_, parser_, &begin_timestamp, &end_timestamp);
                 parser_->get_vcd_scope(cli_parser_->get_scope(), cli_parser_->using_glitch());
                 parser_->get_vcd_signal_flip_info(cli_parser_->get_scope(), begin_timestamp,
                                                   end_timestamp, cli_parser_->using_glitch());
@@ -95,7 +95,7 @@ void MainWindow::parse_button_clicked() {
                 parser_->get_vcd_signal_flip_info(cli_parser_->get_scope(), cli_parser_->using_glitch());
             } else if (cli_parser_->valid_time()) {
                 uint64_t begin_timestamp = 0, end_timestamp = 0;
-                SystemInfo::check_time_range_exists(cli_parser_, parser_, &begin_timestamp, &end_timestamp);
+                MiscFeat::check_time_range_exists(cli_parser_, parser_, &begin_timestamp, &end_timestamp);
                 parser_->get_vcd_scope(cli_parser_->using_glitch());
                 parser_->get_vcd_signal_flip_info(begin_timestamp, end_timestamp, cli_parser_->using_glitch());
             } else {

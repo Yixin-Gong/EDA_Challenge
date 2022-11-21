@@ -24,8 +24,9 @@
 /*! \brief Thread handles for multi-threaded threads. */
 pthread_t thread_variable[4];
 
-/*! \brief     Threaded functions for empty threads.
- *  \param[in] arg: Thread parameters passed in
+/*!
+     \brief     Threaded functions for empty threads.
+     \param[in] arg: Thread parameters passed in
  */
 [[noreturn]] void *threadFun(void *arg) {
     cpu_set_t mask;
@@ -39,8 +40,9 @@ pthread_t thread_variable[4];
     while (true);
 }
 
-/*! \brief     Threaded functions for statistical threads.
- *  \param[in] arg: Pointers to command line parser class
+/*!
+     \brief     Threaded functions for statistical threads.
+     \param[in] arg: Pointers to command line parser class
  */
 void *statistic_vcd_file(void *arg) {
     auto *cli_parser = (CLIParser *) arg;
@@ -59,7 +61,7 @@ void *statistic_vcd_file(void *arg) {
     if (!cli_parser->using_glitch()) {
         if (cli_parser->valid_scope() && cli_parser->valid_time()) {
             uint64_t begin_timestamp = 0, end_timestamp = 0;
-            SystemInfo::check_time_range_exists(cli_parser, &parser, &begin_timestamp, &end_timestamp);
+            MiscFeat::check_time_range_exists(cli_parser, &parser, &begin_timestamp, &end_timestamp);
             parser.get_vcd_scope(cli_parser->get_scope());
             parser.get_vcd_signal_flip_info(cli_parser->get_scope(), begin_timestamp, end_timestamp);
         } else if (cli_parser->valid_scope()) {
@@ -67,7 +69,7 @@ void *statistic_vcd_file(void *arg) {
             parser.get_vcd_signal_flip_info(cli_parser->get_scope());
         } else if (cli_parser->valid_time()) {
             uint64_t begin_timestamp = 0, end_timestamp = 0;
-            SystemInfo::check_time_range_exists(cli_parser, &parser, &begin_timestamp, &end_timestamp);
+            MiscFeat::check_time_range_exists(cli_parser, &parser, &begin_timestamp, &end_timestamp);
             parser.get_vcd_scope();
             parser.get_vcd_signal_flip_info(begin_timestamp, end_timestamp);
         } else {
@@ -77,7 +79,7 @@ void *statistic_vcd_file(void *arg) {
     } else {
         if (cli_parser->valid_scope() && cli_parser->valid_time()) {
             uint64_t begin_timestamp = 0, end_timestamp = 0;
-            SystemInfo::check_time_range_exists(cli_parser, &parser, &begin_timestamp, &end_timestamp);
+            MiscFeat::check_time_range_exists(cli_parser, &parser, &begin_timestamp, &end_timestamp);
             parser.get_vcd_scope(cli_parser->get_scope(), cli_parser->using_glitch());
             parser.get_vcd_signal_flip_info(cli_parser->get_scope(), begin_timestamp,
                                             end_timestamp, cli_parser->using_glitch());
@@ -86,7 +88,7 @@ void *statistic_vcd_file(void *arg) {
             parser.get_vcd_signal_flip_info(cli_parser->get_scope(), cli_parser->using_glitch());
         } else if (cli_parser->valid_time()) {
             uint64_t begin_timestamp = 0, end_timestamp = 0;
-            SystemInfo::check_time_range_exists(cli_parser, &parser, &begin_timestamp, &end_timestamp);
+            MiscFeat::check_time_range_exists(cli_parser, &parser, &begin_timestamp, &end_timestamp);
             parser.get_vcd_scope(cli_parser->using_glitch());
             parser.get_vcd_signal_flip_info(begin_timestamp, end_timestamp, cli_parser->using_glitch());
         } else {
@@ -106,10 +108,10 @@ void *statistic_vcd_file(void *arg) {
 #endif
 
 /*!
-    \brief      Program entry
-    \param[in]  argc: Number of command-line arguments sent to the main function at program runtime
-    \param[in]  argv: Store an array of pointers to string parameters
-    \return     Program execution results
+     \brief     Program entry
+     \param[in] argc: Number of command-line arguments sent to the main function at program runtime
+     \param[in] argv: Store an array of pointers to string parameters
+     \return    Program execution results
 */
 int main(int argc, char **argv) {
 #if (defined(IS_NOT_RUNNING_GOOGLE_TEST) || defined(IS_NOT_RUNNING_GUI))
@@ -118,7 +120,7 @@ int main(int argc, char **argv) {
     std::string software_path = "./";
     if (getcwd(buffer, 512) != nullptr)
         software_path = buffer;
-    SystemInfo::set_priority_to_max();
+    MiscFeat::set_priority_to_max();
     try {
         TCLAP::CmdLine cmd("This software is VCD file parsing and statistics software, optimized for large files."
                            " You can visit https://github.com/ZhuYanzhen1/EDA_Challenge to get more information about this software.",

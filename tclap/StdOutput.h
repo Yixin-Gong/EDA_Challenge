@@ -108,7 +108,7 @@ inline void StdOutput::version(CmdLineInterface &_cmd) {
     std::string progName = _cmd.getProgramName();
     std::string xversion = _cmd.getVersion();
 
-    SystemInfo::DisplayCompileInfo(xversion);
+    MiscFeat::display_software_info(xversion);
 }
 
 inline void StdOutput::usage(CmdLineInterface &_cmd) {

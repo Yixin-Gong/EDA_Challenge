@@ -1,5 +1,5 @@
 /**************************************************************************//**
-  \file     cli_parser.cc
+  \file     cli_parser.h
   \brief    Command line input validity check headers.
   \author   Yanzhen Zhu
   \version  V1.0.1
@@ -12,8 +12,8 @@
 #include <string>
 
 /*!
-  \struct CLITimeStruct
-  \brief  Structs for command line input time
+     \struct CLITimeStruct
+     \brief  Structs for command line input time
  */
 struct CLITimeStruct {
   uint64_t begin_time;          ///< Start time
@@ -36,43 +36,49 @@ class CLIParser {
   bool using_gui();
   CLITimeStruct *get_time_range();
 
-  /*!  \brief  Determine whether the file path is available.
-   *   \return Is the file path available.
+  /*!
+       \brief  Determine whether the file path is available.
+       \return Is the file path available.
    */
   bool valid_file() const {
       return valid_filename_;
   }
 
-  /*!  \brief  Determine whether the time range is available.
-   *   \return Is the time range available.
+  /*!
+       \brief  Determine whether the time range is available.
+       \return Is the time range available.
    */
   bool valid_time() const {
       return valid_time_rage_;
   }
 
-  /*!  \brief  Determine if the scope information is entered.
-   *   \return Is the scope information entered.
+  /*!
+       \brief  Determine if the scope information is entered.
+       \return Is the scope information entered.
    */
   bool valid_scope() const {
       return valid_scope_;
   }
 
-  /*!  \brief  Get the path of the input VCD file.
-   *   \return VCD file path.
+  /*!
+       \brief  Get the path of the input VCD file.
+       \return VCD file path.
    */
   std::string get_filename() {
       return filepath_;
   }
 
-  /*!  \brief  Get the output folder path.
-   *   \return Output folder path.
+  /*!
+       \brief  Get the output folder path.
+       \return Output folder path.
    */
   std::string get_output() {
       return output_;
   }
 
-  /*!  \brief  Get the name of the specified scope.
-   *   \return Name of the specified scope.
+  /*!
+       \brief  Get the name of the specified scope.
+       \return Name of the specified scope.
    */
   std::string get_scope() {
       if (scope_[0] == '/')
@@ -80,15 +86,17 @@ class CLIParser {
       return scope_;
   }
 
-  /*!  \brief  Determine if glitch information is output.
-   *   \return Is the glitch information been output.
+  /*!
+       \brief  Determine if glitch information is output.
+       \return Is the glitch information been output.
    */
   bool using_glitch() const {
       return using_glitch_;
   }
 
-  /*!  \brief  Determining whether to use multithreading.
-   *   \return Is the multithreading been used.
+  /*!
+       \brief  Determining whether to use multithreading.
+       \return Is the multithreading been used.
    */
   bool using_multithread() const {
       return using_multi_;
