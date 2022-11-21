@@ -16,7 +16,7 @@
 static char reading_buffer[1024 * 1024] = {0};
 
 /*!
-    \brief Parse csv file and stores information in a hash table
+     \brief Parse csv file and stores information in a hash table
  */
 void CSVParser::parse_csv() {
 
@@ -44,19 +44,19 @@ void CSVParser::parse_csv() {
         sp = read_str.substr(read_str.find("sp=") + 3,
                              read_str.find("tg=") - read_str.find("sp=") - 3);
         tg = read_str.substr(read_str.find("tg=") + 3, read_str.length() - read_str.find("tg="));
-        signal.tc = std::stoi(tc);
-        signal.t1 = std::stoi(t1);
-        signal.t0 = std::stoi(t0);
-        signal.tx = std::stoi(tx);
+        signal.tc = std::stoull(tc);
+        signal.t1 = std::stoull(t1);
+        signal.t0 = std::stoull(t0);
+        signal.tx = std::stoull(tx);
         signal.sp = atof(sp.c_str());
-        signal.tg = std::stoi(tg);
+        signal.tg = std::stoull(tg);
         csv_signal_table_.insert(std::pair<std::string, struct CSVSignalStatisticStruct>(signal_title, signal));
     }
 }
 
 /*!
- *   \brief     Get all modules and information of signals and store them in a hash table.
- *   \param[in] csv_vcd_signal_table_:A hash table to store information of signals.
+     \brief     Get all modules and information of signals and store them in a hash table.
+     \param[in] vcd_filename: The vcd file that needs to be parsed.
  */
 void CSVParser::get_vcd_scope(const std::string &vcd_filename) {
     fclose(fp_);
@@ -155,8 +155,7 @@ void CSVParser::get_vcd_scope(const std::string &vcd_filename) {
 }
 
 /*!
- *   \brief     Use the stored label in the csv file to find the corresponding signal name in the vcd file and merge it
- *   \param[in] merge_csv_vcd_table_:A hash table to store information of merged signal.
+     \brief Use the stored label in the csv file to find the corresponding signal name in the vcd file and merge it
  */
 void CSVParser::csv_find_vcd() {
     merge_csv_vcd_table_.clear();
@@ -205,6 +204,11 @@ void CSVParser::csv_find_vcd() {
     }
 }
 
+/*!
+     \brief     Returns the signal statistics for the specified signal struct, used only in regression tests.
+     \param[in] signal_label: Input module name.
+     \return    A signal struct pointer.
+ */
 struct CSVSignalStatisticStruct *CSVParser::find_signal(const std::string &signal_label) {
     if (merge_csv_vcd_table_.find(signal_label) == merge_csv_vcd_table_.end())
         return nullptr;
