@@ -22,11 +22,11 @@
   \brief  Structs for signal statistics
  */
 struct CSVSignalStatisticStruct {
-  int tc,                           ///< Number of signal flips
-  t1,                               ///< Duration of the 1 level
-  t0,                               ///< Duration of the 0 level
-  tx,                               ///< Duration of the x level
-  tg;                               ///< Number of glitch
+  uint64_t tc;                      ///< Number of signal flips
+  uint64_t t1;                      ///< Duration of the 1 level
+  uint64_t t0;                      ///< Duration of the 0 level
+  uint64_t tx;                      ///< Duration of the x level
+  uint64_t tg;                      ///< Number of glitch
   double sp;                        ///< Probability of duration of the 1 level
 };
 
@@ -64,7 +64,7 @@ class CSVParser {
   struct CSVSignalStatisticStruct *find_signal(const std::string &signal_label);
  private:
 
-  /*! \brief File stream structure for VCD files. */
+  /*! \brief File stream structure for VCD file and CSV file. */
   FILE *fp_{};
 
   /*! \brief Hash table for CSV signals statistics. */
