@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <unistd.h>
 
+/*! \brief Line buffer for reading lines from a file. */
 static char reading_buffer[1024 * 1024] = {0};
 
 void VCDParser::vcd_statistic_signal_(uint64_t current_timestamp,
@@ -422,7 +423,8 @@ void VCDParser::get_vcd_scope(bool enable_gitch) {
 }
 
 /*!  \brief      Get specified scope contains information of signals and store them in a hash table.(with glitch)
- *   \param[in]  vcd_signal_alias_table_:A hash table to store information of signals.
+ *   \param[in]  module_label:Input module names.
+ *   \param[in]  enable_gitch: A bool value that determine whether to output a glitch
  */
 void VCDParser::get_vcd_scope(const std::string &module_label, bool enable_gitch) {
     vcd_signal_list_.clear();
