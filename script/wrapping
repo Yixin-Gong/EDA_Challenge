@@ -19,4 +19,4 @@ cd gtkmm-plplot-2.5 && mkdir build && cd build && meson .. --prefix=$PWD/../../p
 ninja && ninja install && cd ../.. && rm -rf gtkmm-plplot-2.5
 
 cp ./require/control ./pack/DEBIAN && cp ./require/postinst ./pack/DEBIAN && cp ./require/postrm ./pack/DEBIAN
-#cd pack && dpkg -b . EDA_Challenge.deb && mv EDA_Challenge.deb ../ && cd .. && rm -rf pack EDA_Challenge
+cd pack && dpkg -b . EDA_Challenge.deb && mv EDA_Challenge.deb ../ && cd .. && rm -rf pack EDA_Challenge
