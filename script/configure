@@ -1,0 +1,39 @@
+#!/bin/bash
+
+sudo apt update && sudo apt -y upgrade
+sudo apt install -y cmake gcc g++ automake autoconf libtool make build-essential wget libgtk-3-dev unzip wget
+sudo apt install -y libxml2-utils libgtkmm-3.0-dev meson libplplot-dev plplot-driver-cairo valgrind p7zip-full
+sudo apt install -y python3-pip python3
+sudo snap install massif-visualizer --edge
+wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/dependence/gtest.zip
+rm -rf gtest && unzip gtest.zip && rm gtest.zip
+
+# shellcheck disable=SC2034
+remain_str=`df --output=avail -B 1 "$PWD" |tail -n 1`
+# shellcheck disable=SC2034
+remain=$((remain_str / (1024 * 1024)))
+
+if [ $remain -gt 5120 ]
+then
+  # shellcheck disable=SC2164
+  wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/dependence/testcase.7z
+  7z x testcase.7z && rm testcase.7z && cd ..
+
+  wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/dependence/gtkmm-plplot-2.5.tar.gz
+  tar xfvz gtkmm-plplot-2.5.tar.gz && rm gtkmm-plplot-2.5.tar.gz
+  # shellcheck disable=SC2164
+  cd gtkmm-plplot-2.5 && mkdir -p build && cd build && meson ..
+  ninja && sudo ninja install && cd ../.. && rm -rf gtkmm-plplot-2.5
+
+  # shellcheck disable=SC2164
+  rm -rf build && mkdir -p build && cd build
+  cmake .. -G Ninja && cmake --build . --target version_h
+  cmake .. -G Ninja
+  # shellcheck disable=SC2046
+  cmake --build . --target EDA_Challenge -j$(nproc)
+  # shellcheck disable=SC2046
+  cmake --build . --target Google_Test -j$(nproc)
+  cd ../script && pip3 install -r requirements.txt
+else
+  echo 'Your computer does not have enough space to complete the installation of dependencies, require at least 5GB space'
+fi

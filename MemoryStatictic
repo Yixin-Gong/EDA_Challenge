@@ -1,6 +1,0 @@
-#!/bin/bash
-valgrind --tool=massif --quiet ./build/EDA_Challenge -f ./testcase/case17/test.vcd --scope /wujian100_open_tb/x_wujian100_open_top/x_aou_top/x_gpio_sec_top
-ls
-rm massif.out
-mv massif.out* massif.out
-massif-visualizer files ${PWD}/massif.out

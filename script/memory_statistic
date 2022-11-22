@@ -1,0 +1,6 @@
+#!/bin/bash
+valgrind --tool=massif --quiet ../build/EDA_Challenge --file ../testcase/case9/test.vcd --glitch
+rm glitch.csv summary.csv
+rm massif.out
+mv massif.out* massif.out
+massif-visualizer files ${PWD}/massif.out
