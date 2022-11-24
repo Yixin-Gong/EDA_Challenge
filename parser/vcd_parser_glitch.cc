@@ -919,8 +919,7 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, uint64
 */
 void VCDParser::printf_glitch_csv(const std::string &filepath) {
     clock_t startTime = clock();
-    std::ofstream output_file;
-    output_file.open(filepath, std::ios::out | std::ios::trunc);
+    FILE *glitch_fp_ = fopen64(filepath.c_str(), "w");
     for (const auto &glitch : signal_glitch_position_) {
         /* Cut the bit width of the vector signal label.*/
         uint64_t last_pos = glitch.first.find_last_of('['), signal_alias_length = glitch.first.length();
@@ -939,15 +938,13 @@ void VCDParser::printf_glitch_csv(const std::string &filepath) {
             }
 
             /* Output module title and glitch.*/
-            auto signal_list = glitch.second;
-            std::string signal_string = signal_module_it.value().all_module_signal;
-            output_file << signal_string << signal_bit;
-            for (auto &it : signal_list)
-                output_file << std::to_string(it * vcd_header_struct_.vcd_time_scale)
-                            << vcd_header_struct_.vcd_time_unit << " ";
-            output_file << std::endl;
+            std::string glitch_info = signal_module_it.value().all_module_signal + signal_bit;
+            for (auto &it : glitch.second)
+                glitch_info += std::to_string(it * vcd_header_struct_.vcd_time_scale)
+                    + vcd_header_struct_.vcd_time_unit + " ";
+            fprintf(glitch_fp_, "%s\n", glitch_info.c_str());
         }
     }
-    output_file.close();
+    fclose(glitch_fp_);
     std::cout << "Print glitch time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }
