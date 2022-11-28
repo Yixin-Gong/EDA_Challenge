@@ -13,11 +13,11 @@
 &nbsp;&nbsp;&nbsp;We provide a deb installation package based on the Ubuntu 22.04.1 LTS operating system, which you can find on the [Release](https://github.com/ZhuYanzhen1/EDA_Challenge/releases/latest) page. After downloading the installation package, use `sudo dpkg -i EDA_Challenge.deb` to install it, and you can use this program after the installation is complete. Basic usage of the program:
 
 ```bash
-$ EDA_Challenge -h									# Get help information
-$ EDA_Challenge -v									# Get version information
-$ EDA_Challenge --gui								# Start the program as a GUI
-$ EDA_Challenge --file <VCD file path>				# Specify the VCD file to be counted
-$ EDA_Challenge --glitch --file <VCD file path>		# Enable glitch counting
+$ EDA_Challenge -h                               # Get help information
+$ EDA_Challenge -v                               # Get version information
+$ EDA_Challenge --gui                            # Start the program as a GUI
+$ EDA_Challenge --file <VCD file path>           # Specify the VCD file to be counted
+$ EDA_Challenge --glitch --file <VCD file path>  # Enable glitch counting
 ```
 
 &nbsp;&nbsp;&nbsp;&nbsp;The advanced usage of the program is to specify the statistical time range and specify the module statistics. The advanced usage can only be achieved through the command line, you cannot specify the statistical time range and specify the module statistics through the GUI interface: 

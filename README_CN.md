@@ -13,11 +13,11 @@
 &nbsp;&nbsp;&nbsp;&nbsp;我们提供了基于Ubuntu22.04.1 LTS操作系统的deb安装包，你可以在[Release](https://github.com/ZhuYanzhen1/EDA_Challenge/releases/latest)页面找到。下载安装包后使用`sudo dpkg -i EDA_Challenge.deb`进行安装，安装完成后即可使用本程序。程序基本用法：
 
 ```bash
-$ EDA_Challenge -h									# 获取程序帮助信息
-$ EDA_Challenge -v									# 获取程序版本信息
-$ EDA_Challenge --gui								# 以GUI的形式启动程序
-$ EDA_Challenge --file <VCD file path>				# 指定待统计的VCD文件
-$ EDA_Challenge --glitch --file <VCD file path>		# 使能毛刺统计
+$ EDA_Challenge -h                               # 获取程序帮助信息
+$ EDA_Challenge -v                               # 获取程序版本信息
+$ EDA_Challenge --gui                            # 以GUI的形式启动程序
+$ EDA_Challenge --file <VCD file path>           # 指定待统计的VCD文件
+$ EDA_Challenge --glitch --file <VCD file path>  # 使能毛刺统计
 ```
 
 &nbsp;&nbsp;&nbsp;&nbsp;程序的高级用法为指定统计时间范围和指定模块统计。高级用法只能通过命令行实现，你无法通过GUI界面来进行指定统计时间范围和指定模块统计。
