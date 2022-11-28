@@ -1,0 +1,9 @@
+#!/bin/sh
+for user in /home/*
+do
+    if test -f ${user}/Desktop/EDA_Challenge.desktop
+    then
+        rm ${user}/Desktop/EDA_Challenge.desktop
+    fi
+done
+

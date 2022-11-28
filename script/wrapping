@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# shellcheck disable=SC2164
+cd .. && rm -rf build && mkdir -p build && cd build
+cmake .. -G Ninja && cmake --build . --target version_h
+cmake .. -G Ninja && cmake --build . --target EDA_Challenge
+cp EDA_Challenge ../script && cd ../script
+
+mkdir -p pack/usr/share/icons/hicolor/256x256/apps && mkdir -p pack/usr/bin
+mkdir -p pack/usr/share/applications && mkdir -p pack/usr/share/applications
+cp ./require/EDA_Challenge.desktop ./pack/usr/share/applications
+cp ./require/EDA_Challenge.png ./pack/usr/share/icons/hicolor/256x256/apps
+mkdir -p pack/DEBIAN && cp EDA_Challenge pack/usr/bin/EDA_Challenge
+cp ./require/EDA_Challenge.desktop ./pack/usr/share/applications
+
+wget https://github.com/tschoonj/gtkmm-plplot/releases/download/gtkmm-plplot-2.5/gtkmm-plplot-2.5.tar.gz
+tar xfvz gtkmm-plplot-2.5.tar.gz && rm gtkmm-plplot-2.5.tar.gz
+cd gtkmm-plplot-2.5 && mkdir build && cd build && meson .. --prefix=$PWD/../../pack
+ninja && ninja install && cd ../.. && rm -rf gtkmm-plplot-2.5
+
+cp ./require/control ./pack/DEBIAN && cp ./require/postinst ./pack/DEBIAN && cp ./require/postrm ./pack/DEBIAN
+cd pack && dpkg -b . EDA_Challenge.deb && mv EDA_Challenge.deb ../ && cd .. && rm -rf pack EDA_Challenge

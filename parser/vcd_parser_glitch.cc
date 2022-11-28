@@ -919,46 +919,32 @@ void VCDParser::get_vcd_signal_flip_info(const std::string &module_label, uint64
 */
 void VCDParser::printf_glitch_csv(const std::string &filepath) {
     clock_t startTime = clock();
-    std::ofstream output_file;
-    output_file.open(filepath, std::ios::out | std::ios::trunc);
+    FILE *glitch_fp_ = fopen64(filepath.c_str(), "w");
     for (const auto &glitch : signal_glitch_position_) {
         /* Cut the bit width of the vector signal label.*/
-        std::string label, signal_bit;
-        bool read_bit = false;
-        for (auto &pos : glitch.first) {
-            if (pos == '[' && glitch.first.length() - label.length() >= 3)
-                read_bit = true;
-            if (!read_bit)
-                label += pos;
-            else
-                signal_bit += pos;
-        }
+        uint64_t last_pos = glitch.first.find_last_of('['), signal_alias_length = glitch.first.length();
+        std::string label = glitch.first.substr(0, last_pos), signal_bit;
+        if (last_pos != std::string::npos && signal_alias_length - last_pos != 2
+            && glitch.first[signal_alias_length - 1] == ']')
+            signal_bit = glitch.first.substr(last_pos);
 
-        if (signal_glitch_table_.find(label) != signal_glitch_table_.end()) {
+        auto signal_module_it = signal_glitch_table_.find(label);
+        if (signal_module_it != signal_glitch_table_.end()) {
             /* Determine whether the start bit width is 0.*/
-            if (signal_glitch_table_.find(label).value().declare_width_start != 0) {
-                int wid_pos = std::stoi(signal_bit.substr(1, signal_bit.find(']') - 1))
-                    + signal_glitch_table_.find(label).value().declare_width_start;
-                signal_bit.clear();
+            if (signal_module_it.value().declare_width_start != 0) {
+                int wid_pos = std::stoi(signal_bit.substr(1, signal_bit.length() - 1))
+                    + signal_module_it.value().declare_width_start;
                 signal_bit = std::string("[") + std::to_string(wid_pos) + std::string("]");
             }
 
             /* Output module title and glitch.*/
-            auto signal_list = glitch.second;
-            std::string signal_string = signal_glitch_table_.find(label).value().all_module_signal;
-            std::string signal_glitch_string;
-            if (!read_bit)
-                signal_glitch_string = signal_string;
-            else
-                signal_glitch_string = signal_string + signal_bit;
-            signal_glitch_string += " ";
-            for (auto &it : signal_list) {
-                signal_glitch_string +=
-                    std::to_string(it * vcd_header_struct_.vcd_time_scale) + vcd_header_struct_.vcd_time_unit + " ";
-            }
-            output_file << signal_glitch_string << std::endl;
+            std::string glitch_info = signal_module_it.value().all_module_signal + signal_bit;
+            for (auto &it : glitch.second)
+                glitch_info += std::to_string(it * vcd_header_struct_.vcd_time_scale)
+                    + vcd_header_struct_.vcd_time_unit + " ";
+            fprintf(glitch_fp_, "%s\n", glitch_info.c_str());
         }
     }
-    output_file.close();
+    fclose(glitch_fp_);
     std::cout << "Print glitch time: " << (double) (clock() - startTime) / CLOCKS_PER_SEC << "s\n";
 }

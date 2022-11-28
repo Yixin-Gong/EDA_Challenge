@@ -1,0 +1,8 @@
+#!/bin/sh
+for user in /home/*
+do
+    cp /usr/share/applications/EDA_Challenge.desktop ${user}/Desktop/
+    chmod 755 ${user}/Desktop/EDA_Challenge.desktop
+    chown ${user#/home/} ${user}/Desktop/EDA_Challenge.desktop
+done
+

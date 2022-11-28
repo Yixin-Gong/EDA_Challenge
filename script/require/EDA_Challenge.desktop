@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=EDA_Challenge
+Comment=this is a VCD file signal flipping statistics tool
+Exec=/usr/bin/EDA_Challenge --gui
+Icon=/usr/share/icons/hicolor/256x256/apps/EDA_Challenge.png
+Terminal=false
+Categories=Office;
