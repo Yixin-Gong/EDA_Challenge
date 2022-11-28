@@ -5,7 +5,7 @@ sudo apt install -y cmake gcc g++ automake autoconf libtool make build-essential
 sudo apt install -y libxml2-utils libgtkmm-3.0-dev meson libplplot-dev plplot-driver-cairo valgrind p7zip-full
 sudo apt install -y python3-pip python3
 sudo snap install massif-visualizer --edge
-wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/dependence/gtest.zip
+cd .. && wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/dependence/gtest.zip
 rm -rf gtest && unzip gtest.zip && rm gtest.zip
 
 # shellcheck disable=SC2034
@@ -17,7 +17,7 @@ if [ $remain -gt 5120 ]
 then
   # shellcheck disable=SC2164
   wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/dependence/testcase.7z
-  7z x testcase.7z && rm testcase.7z && cd ..
+  7z x testcase.7z && rm testcase.7z
 
   wget https://github.com/ZhuYanzhen1/EDA_Challenge/releases/download/dependence/gtkmm-plplot-2.5.tar.gz
   tar xfvz gtkmm-plplot-2.5.tar.gz && rm gtkmm-plplot-2.5.tar.gz
