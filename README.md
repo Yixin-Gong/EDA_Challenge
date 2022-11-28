@@ -28,9 +28,9 @@ $ EDA_Challenge --file <VCD file path> --output <Output directory>
 # Specify the module for which the signal is to be counted:
 $ EDA_Challenge --file <VCD file path> --scope <Scope name>
 # Specify the time range of the signal to be counted:
-$ EDA_Challenge --file <Specify the file path> --begin <Begin time> --end <End time>
+$ EDA_Challenge --file <VCD file path> --begin <Begin time> --end <End time>
 # Specify the module and time range of the signal to be counted:
-$ EDA_Challenge --file <Specify the file path> --begin <Begin time> --end <End time> --scope <Scope name>
+$ EDA_Challenge --file <VCD file path> --begin <Begin time> --end <End time> --scope <Scope name>
 ```
 
 ***

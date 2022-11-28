@@ -28,9 +28,9 @@ $ EDA_Challenge --file <VCD file path> --output <Output directory>
 # 指定待统计信号的模块：
 $ EDA_Challenge --file <VCD file path> --scope <Scope name>
 # 指定待统计信号的统计时间范围：
-$ EDA_Challenge --file <Specify the file path> --begin <Begin time> --end <End time>
+$ EDA_Challenge --file <VCD file path> --begin <Begin time> --end <End time>
 # 指定待统计信号的模块和时间范围：
-$ EDA_Challenge --file <Specify the file path> --begin <Begin time> --end <End time> --scope <Scope name>
+$ EDA_Challenge --file <VCD file path> --begin <Begin time> --end <End time> --scope <Scope name>
 ```
 
 ***
